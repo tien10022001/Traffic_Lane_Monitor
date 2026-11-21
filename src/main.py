@@ -4,11 +4,34 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import os
 import shutil
+import sys
 import time
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
+# Windows asyncio ProactorEventLoop fix: Suppress spurious [WinError 10054] ConnectionResetError on browser disconnect/refresh
+if sys.platform == "win32":
+    try:
+        from asyncio.proactor_events import _ProactorBasePipeTransport
+
+        _orig_call_connection_lost = _ProactorBasePipeTransport._call_connection_lost
+
+        def _silenced_call_connection_lost(self, exc):
+            try:
+                _orig_call_connection_lost(self, exc)
+            except (ConnectionResetError, ConnectionAbortedError):
+                pass
+            except OSError as e:
+                if getattr(e, "winerror", None) in (10053, 10054):
+                    pass
+                else:
+                    raise
+
+        _ProactorBasePipeTransport._call_connection_lost = _silenced_call_connection_lost
+    except Exception:
+        pass
 
 from src.ai.detector import SharedDetector
 from src.ai.ocr_worker import AsyncOCRWorkerPool
@@ -85,6 +108,22 @@ async def lifespan(app: FastAPI):
 
     cfg = get_config()
     loop = asyncio.get_running_loop()
+
+    # Suppress spurious connection reset / aborted errors on Windows when clients disconnect
+    _orig_handler = loop.get_exception_handler()
+
+    def _loop_exception_handler(loop, context):
+        exc = context.get("exception")
+        if isinstance(exc, (ConnectionResetError, ConnectionAbortedError)):
+            return
+        if isinstance(exc, OSError) and getattr(exc, "winerror", None) in (10053, 10054):
+            return
+        if _orig_handler is not None:
+            _orig_handler(loop, context)
+        else:
+            loop.default_exception_handler(context)
+
+    loop.set_exception_handler(_loop_exception_handler)
 
     # 1. Initialize SQLite database
     init_db(cfg.paths.db_path)
@@ -171,6 +210,11 @@ def create_app() -> FastAPI:
 
     # Serve Web Dashboard
     web_dir = Path("web").resolve()
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return Response(status_code=204)
+
     if web_dir.is_dir():
         app.mount("/static", StaticFiles(directory=str(web_dir)), name="static")
 
