@@ -262,19 +262,18 @@
           </div>
 
           <!-- Dwell Time (Ngưỡng giây) -->
-          <div id="onScreenDwellGroup" class="space-y-0.5 shrink-0">
-            <div class="flex justify-between items-center text-[10px]">
-              <span class="text-slate-400">Thời gian:</span>
-              <div class="flex items-center space-x-1">
-                <input type="number" id="onScreenDwellInput" min="1.0" max="60.0" step="0.5" value="10.0"
+          <div id="onScreenDwellGroup" class="flex items-center justify-between text-[11px] shrink-0">
+            <span class="text-slate-400 font-medium">Thời gian:</span>
+            <div class="flex items-center space-x-1">
+              <button type="button" onclick="adjustDwell(-1)" class="w-6 h-6 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-xs select-none transition shadow-sm" title="Giảm 1 giây">-</button>
+              <div class="flex items-center bg-darkpanel border border-slate-700 rounded px-1.5 py-0.5 shadow-inner">
+                <input type="number" id="onScreenDwellInput" min="0.5" max="120.0" step="0.5" value="10.0"
                        oninput="syncDwellFromInput(this.value)"
-                       class="w-12 bg-darkpanel border border-slate-700 rounded px-1 py-0.5 text-right font-bold text-amber-400 font-mono text-[11px] outline-none focus:border-amber-400">
-                <span class="text-slate-400 text-[10px]">s</span>
+                       class="w-11 bg-transparent text-center font-bold text-amber-400 font-mono text-[11px] outline-none">
+                <span class="text-slate-400 text-[10px] ml-0.5">s</span>
               </div>
+              <button type="button" onclick="adjustDwell(1)" class="w-6 h-6 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-xs select-none transition shadow-sm" title="Tăng 1 giây">+</button>
             </div>
-            <input type="range" id="onScreenRuleDwell" min="1.0" max="60.0" step="0.5" value="10.0"
-                   oninput="syncDwellFromSlider(this.value)"
-                   class="w-full h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-amber-500">
           </div>
 
           <!-- Direction (for line crossing) -->
@@ -1781,19 +1780,19 @@
       }
     }
 
-    function syncDwellFromSlider(val) {
-      const num = parseFloat(val);
+    function adjustDwell(delta) {
       const inp = document.getElementById('onScreenDwellInput');
-      if (inp) inp.value = num.toFixed(1);
+      if (!inp) return;
+      let cur = parseFloat(inp.value) || 10.0;
+      cur = Math.max(0.5, Math.min(120.0, parseFloat((cur + delta).toFixed(1))));
+      inp.value = cur.toFixed(1);
       if (currentEditingRuleId) redrawOnScreenCanvas();
     }
 
     function syncDwellFromInput(val) {
       const num = parseFloat(val);
-      if (!isNaN(num)) {
-        const slider = document.getElementById('onScreenRuleDwell');
-        if (slider) slider.value = Math.max(1.0, Math.min(60.0, num));
-        if (currentEditingRuleId) redrawOnScreenCanvas();
+      if (!isNaN(num) && currentEditingRuleId) {
+        redrawOnScreenCanvas();
       }
     }
 
@@ -2292,10 +2291,8 @@
         onOnScreenRuleTypeChange();
       }
 
-      const dwellSlider = document.getElementById('onScreenRuleDwell');
       const dwellInput = document.getElementById('onScreenDwellInput');
       const dwellVal = r.dwell_threshold_sec != null ? parseFloat(r.dwell_threshold_sec) : 10.0;
-      if (dwellSlider) dwellSlider.value = dwellVal;
       if (dwellInput) dwellInput.value = dwellVal.toFixed(1);
 
       const dirSelect = document.getElementById('onScreenRuleDirection');
@@ -2341,9 +2338,7 @@
       const nameInput = document.getElementById('onScreenRoiName');
       if (nameInput) nameInput.value = '';
 
-      const dwellSlider = document.getElementById('onScreenRuleDwell');
       const dwellInput = document.getElementById('onScreenDwellInput');
-      if (dwellSlider) dwellSlider.value = 10.0;
       if (dwellInput) dwellInput.value = '10.0';
 
       const banner = document.getElementById('editingRuleBanner');
@@ -2400,7 +2395,7 @@
       }
 
       const geom = onScreenDrawnPoints.map(p => [parseFloat(p.x.toFixed(4)), parseFloat(p.y.toFixed(4))]);
-      const dwellVal = parseFloat(document.getElementById('onScreenRuleDwell').value) || 10.0;
+      const dwellVal = parseFloat(document.getElementById('onScreenDwellInput')?.value) || 10.0;
 
       const payload = {
         name: roiName,
