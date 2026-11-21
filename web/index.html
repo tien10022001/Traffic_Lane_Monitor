@@ -228,7 +228,7 @@
         </div>
 
         <!-- DOCKED COMPACT ROI & RULE PANEL (Side-by-side, always visible, sleek & minimal text) -->
-        <div id="onScreenRuleDrawer" class="w-56 shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2.5 text-xs flex flex-col space-y-2 overflow-y-auto shadow-xl">
+        <div id="onScreenRuleDrawer" class="w-60 shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2.5 text-xs flex flex-col space-y-2 overflow-y-auto shadow-xl">
           <!-- Drawer Header -->
           <div class="flex items-center justify-between pb-1 border-b border-darkborder shrink-0">
             <div class="flex items-center space-x-1.5">
@@ -238,11 +238,10 @@
             <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase font-mono">CAM #1</span>
           </div>
 
-          <!-- Nút Logo Vẽ ROI (Nằm ngay trên hàng Cam & Kiểu ROI) -->
+          <!-- Nút Bật/Tắt Chế Độ Vẽ ROI (Nằm ngay trên hàng Cam & Kiểu ROI, không có icon bút) -->
           <button type="button" id="roiDrawToggleBtn" onclick="toggleRoiDrawingMode()"
-                  class="w-full py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1.5 font-bold text-[11px] transition border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white shadow-sm shrink-0 select-none cursor-pointer"
-                  title="Click để bật chế độ vẽ và thiết lập ROI">
-            <span class="text-xs">✏️</span>
+                  class="w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white shadow-sm shrink-0 select-none cursor-pointer"
+                  title="Click để bật/tắt chế độ vẽ và thiết lập ROI">
             <span id="roiDrawToggleText">Vẽ vùng ROI</span>
           </button>
 
@@ -310,7 +309,7 @@
 
           <!-- Edit Mode Indicator (Shown only when editing an existing rule) -->
           <div id="editingRuleBanner" class="hidden flex items-center justify-between bg-amber-500/15 border border-amber-500/40 rounded px-2 py-1 text-[10px] text-amber-300 shrink-0">
-            <span id="editingRuleText" class="truncate font-semibold">✎ Đang sửa ROI</span>
+            <span id="editingRuleText" class="truncate font-semibold">Đang sửa ROI</span>
             <button type="button" onclick="cancelEditingRule()" class="text-slate-400 hover:text-white font-bold px-1 text-xs transition" title="Xong sửa">✓ Xong</button>
           </div>
 
@@ -319,11 +318,11 @@
           <!-- Existing Rules of this Camera -->
           <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
             <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-0.5" onclick="toggleExistingRulesList()">
-              <span>📋 Luật hiện có (<span id="onScreenRuleCount">0</span>)</span>
+              <span>📋 ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
               <span id="rulesToggleArrow">▲</span>
             </div>
-            <div id="onScreenExistingRulesList" class="space-y-1 mt-1 flex-1 overflow-y-auto pr-0.5">
-              <p class="text-slate-500 text-[10px] py-1">Chưa có luật nào.</p>
+            <div id="onScreenExistingRulesList" class="space-y-1.5 mt-1 flex-1 overflow-y-auto pr-0.5">
+              <p class="text-slate-500 text-[10px] py-1 text-center">Chưa có ROI nào.</p>
             </div>
           </div>
         </div>
@@ -1695,11 +1694,11 @@
       if (isRoiDrawingActive) {
         if (btn) {
           if (currentEditingRuleId) {
-            btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1.5 font-bold text-[11px] transition border border-amber-500 bg-amber-600 text-white shadow-md shadow-amber-950/50 ring-1 ring-amber-400 shrink-0 select-none cursor-pointer";
-            if (btnText) btnText.innerText = "✎ Đang sửa ROI (Bấm để thoát)";
+            btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-amber-500 bg-amber-600 text-white shadow-md shadow-amber-950/50 ring-1 ring-amber-400 shrink-0 select-none cursor-pointer";
+            if (btnText) btnText.innerText = "Đang sửa ROI (Bấm để thoát)";
           } else {
-            btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1.5 font-bold text-[11px] transition border border-emerald-500 bg-emerald-600 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-400 shrink-0 select-none cursor-pointer";
-            if (btnText) btnText.innerText = "✏️ Đang vẽ ROI (Bấm để tắt)";
+            btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-emerald-500 bg-emerald-600 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-400 shrink-0 select-none cursor-pointer";
+            if (btnText) btnText.innerText = "Đang vẽ ROI (Bấm để tắt)";
           }
         }
         if (container) {
@@ -1708,8 +1707,8 @@
         if (canvas) canvas.style.cursor = 'crosshair';
       } else {
         if (btn) {
-          btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center space-x-1.5 font-bold text-[11px] transition border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white shadow-sm shrink-0 select-none cursor-pointer";
-          if (btnText) btnText.innerText = "✏️ Vẽ vùng ROI";
+          btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white shadow-sm shrink-0 select-none cursor-pointer";
+          if (btnText) btnText.innerText = "Vẽ vùng ROI";
         }
         if (container) {
           container.classList.add('opacity-40', 'pointer-events-none', 'filter', 'grayscale', 'select-none');
@@ -1920,7 +1919,7 @@
       const n = onScreenDrawnPoints.length;
 
       if (currentEditingRuleId) {
-        el.innerHTML = `<span class="text-amber-400 font-bold">✎ Đang sửa (${n} điểm)</span> • Kéo góc chỉnh hình, chỉnh giây rồi bấm Cập Nhật`;
+        el.innerHTML = `<span class="text-amber-400 font-bold">Đang sửa (${n} điểm)</span> • Kéo góc chỉnh hình, chỉnh giây rồi bấm Cập Nhật`;
         return;
       }
 
@@ -2133,14 +2132,20 @@
           const pts = JSON.parse(r.geometry_json);
           if (pts.length >= 2) {
             const isHighlighted = hoveredRuleId === r.id;
+            const isActive = Boolean(r.is_active != null ? r.is_active : 1);
             ctx.save();
             ctx.beginPath();
             const isParking = r.rule_type === 'no_parking';
             const isSidewalk = r.rule_type === 'sidewalk_encroachment';
-            const color = isHighlighted ? '#facc15' : (isParking ? '#ef4444' : (isSidewalk ? '#f59e0b' : '#3b82f6'));
+            const color = isHighlighted ? '#facc15' : (isActive ? (isParking ? '#ef4444' : (isSidewalk ? '#f59e0b' : '#3b82f6')) : '#94a3b8');
             ctx.strokeStyle = color;
             ctx.lineWidth = isHighlighted ? 3 : 2;
-            ctx.fillStyle = isHighlighted ? 'rgba(250, 204, 21, 0.22)' : (isParking ? 'rgba(239, 68, 68, 0.14)' : 'rgba(245, 158, 11, 0.14)');
+            if (!isActive) {
+              ctx.setLineDash([5, 5]); // Dashed line for inactive ROI
+              ctx.fillStyle = isHighlighted ? 'rgba(250, 204, 21, 0.15)' : 'rgba(148, 163, 184, 0.08)';
+            } else {
+              ctx.fillStyle = isHighlighted ? 'rgba(250, 204, 21, 0.22)' : (isParking ? 'rgba(239, 68, 68, 0.14)' : 'rgba(245, 158, 11, 0.14)');
+            }
 
             pts.forEach((p, i) => {
               const px = box.left + p[0] * box.width;
@@ -2159,12 +2164,13 @@
             const firstPx = box.left + pts[0][0] * box.width;
             const firstPy = box.top + pts[0][1] * box.height;
             const dwellStr = r.rule_type !== 'lane_line' ? ` (${r.dwell_threshold_sec}s)` : '';
-            const label = (r.name || RULE_TYPE_LABELS[r.rule_type] || r.rule_type) + dwellStr;
+            const statusTag = isActive ? '' : ' [Tắt]';
+            const label = (r.name || RULE_TYPE_LABELS[r.rule_type] || r.rule_type) + dwellStr + statusTag;
             ctx.font = 'bold 10px Inter, sans-serif';
             const textWidth = ctx.measureText(label).width;
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.fillStyle = isActive ? 'rgba(15, 23, 42, 0.88)' : 'rgba(30, 41, 59, 0.85)';
             ctx.fillRect(firstPx, Math.max(2, firstPy - 18), textWidth + 10, 16);
-            ctx.fillStyle = isHighlighted ? '#facc15' : '#ffffff';
+            ctx.fillStyle = isHighlighted ? '#facc15' : (isActive ? '#ffffff' : '#94a3b8');
             ctx.fillText(label, firstPx + 5, Math.max(13, firstPy - 6));
             ctx.restore();
           }
@@ -2242,7 +2248,7 @@
           const firstPy = box.top + onScreenDrawnPoints[0].y * box.height;
           const roiName = document.getElementById('onScreenRoiName')?.value || 'ROI';
           const dwellVal = document.getElementById('onScreenDwellInput')?.value || '10.0';
-          const label = `✎ ${roiName} (${dwellVal}s)`;
+          const label = `${roiName} (${dwellVal}s)`;
           ctx.font = 'bold 10px Inter, sans-serif';
           const textWidth = ctx.measureText(label).width;
           ctx.fillStyle = 'rgba(245, 158, 11, 0.95)';
@@ -2328,35 +2334,115 @@
       if (!list) return;
 
       if (existingCameraRules.length === 0) {
-        list.innerHTML = '<p class="text-slate-500 text-[10px] py-1">Chưa có luật nào.</p>';
+        list.innerHTML = '<p class="text-slate-500 text-[10px] py-1 text-center">Chưa có ROI nào.</p>';
         return;
       }
 
       list.innerHTML = existingCameraRules.map(r => {
         const typeLabel = RULE_TYPE_LABELS[r.rule_type] || r.rule_type;
-        const dwellLabel = r.rule_type !== 'lane_line' ? ` • ${r.dwell_threshold_sec}s` : '';
         const isEditing = currentEditingRuleId === r.id;
+        const isActive = Boolean(r.is_active != null ? r.is_active : 1);
+        const dwellVal = r.dwell_threshold_sec != null ? parseFloat(r.dwell_threshold_sec) : 10.0;
+        const camLabel = `Cam #${r.camera_id || activeCameraForEditor}`;
 
         return `
-          <div class="group flex items-center justify-between p-1.5 rounded bg-darkpanel border ${isEditing ? 'border-amber-400 ring-1 ring-amber-400/50 bg-amber-500/15' : 'border-slate-700/70 hover:border-amber-400/60'} text-[10px] transition cursor-pointer select-none"
+          <div class="group p-1.5 rounded-lg bg-darkpanel border ${isEditing ? 'border-amber-400 ring-1 ring-amber-400/50 bg-amber-500/10' : (isActive ? 'border-slate-700/80 hover:border-slate-500' : 'border-slate-800 bg-slate-900/60 opacity-75')} text-[10px] transition cursor-pointer select-none space-y-1"
                onclick="editExistingRule(${r.id})"
                onmouseenter="hoveredRuleId=${r.id}; redrawOnScreenCanvas();"
                onmouseleave="hoveredRuleId=null; redrawOnScreenCanvas();"
-               title="Click để chọn sửa vùng ROI & thời gian">
-            <div class="flex items-center space-x-1.5 flex-1 min-w-0 pr-1">
-              <span class="${isEditing ? 'text-amber-300' : 'text-slate-400 group-hover:text-amber-300'} font-bold text-[10px] shrink-0">✏️</span>
-              <div class="truncate">
-                <span class="font-semibold ${isEditing ? 'text-amber-300' : 'text-slate-200'} block truncate">${r.name || typeLabel}</span>
-                <span class="text-slate-400 text-[9px]">${typeLabel}${dwellLabel}</span>
+               title="Click để chọn sửa tọa độ góc ROI">
+            <!-- Hàng 1: [Trường 1: Cam] + Tên ROI + [Nút Xóa] -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-1 min-w-0 flex-1 pr-1">
+                <span class="px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[8.5px] shrink-0 uppercase font-mono">${camLabel}</span>
+                <span class="font-semibold ${isEditing ? 'text-amber-300' : (isActive ? 'text-slate-200' : 'text-slate-400')} truncate text-[10.5px]" title="${r.name || typeLabel}">
+                  ${r.name || typeLabel}
+                </span>
+              </div>
+              <div class="flex items-center space-x-1 shrink-0">
+                ${isEditing ? '<span class="px-1 py-0.2 rounded bg-amber-500/25 text-amber-300 text-[8px] font-bold">ĐANG SỬA</span>' : ''}
+                <button type="button" onclick="event.stopPropagation(); deleteOnScreenRule(${r.id})" class="text-rose-400 hover:text-rose-300 font-bold px-1 text-xs hover:bg-rose-950/40 rounded transition" title="Xóa ROI này">&times;</button>
               </div>
             </div>
-            <div class="flex items-center space-x-1 shrink-0">
-              ${isEditing ? '<span class="px-1 py-0.2 rounded bg-amber-500/25 text-amber-300 text-[8px] font-bold">ĐANG SỬA</span>' : ''}
-              <button onclick="event.stopPropagation(); deleteOnScreenRule(${r.id})" class="text-rose-400 hover:text-rose-300 font-bold px-1.5 py-0.5 text-xs hover:bg-rose-950/40 rounded transition" title="Xóa luật này">&times;</button>
+
+            <!-- Hàng 2: [Trường 2: Khu vực vi phạm (Loại luật)] -->
+            <div class="flex items-center justify-between text-[9.5px]">
+              <span class="text-slate-400 font-medium truncate" title="Khu vực: ${typeLabel}">
+                Khu vực: <span class="${isActive ? 'text-slate-300 font-semibold' : 'text-slate-500'}">${typeLabel}</span>
+              </span>
+            </div>
+
+            <!-- Hàng 3: [Trường 3: Thời gian theo dõi (Tăng/Giảm)] & [Trường 4: Bật/Tắt cảnh báo] -->
+            <div class="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[9.5px]" onclick="event.stopPropagation()">
+              <!-- Thời gian theo dõi -->
+              <div class="flex items-center space-x-1">
+                <span class="text-slate-400 text-[9px]">Theo dõi:</span>
+                <button type="button" onclick="adjustRuleDwellDirect(${r.id}, -1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Giảm 1 giây">-</button>
+                <span class="font-mono ${isActive ? 'text-amber-400 font-bold' : 'text-slate-500'} text-[10px] min-w-[20px] text-center">${dwellVal.toFixed(1)}s</span>
+                <button type="button" onclick="adjustRuleDwellDirect(${r.id}, 1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Tăng 1 giây">+</button>
+              </div>
+
+              <!-- Bật / Tắt (Tích vào sẽ cảnh báo, bỏ tích thì vẫn giữ vùng trên video nhưng không cảnh báo) -->
+              <label class="flex items-center space-x-1 cursor-pointer select-none" title="Tích để bật cảnh báo, bỏ tích để tắt cảnh báo (vẫn giữ vùng trên video)">
+                <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleRuleActiveDirect(${r.id}, this.checked)" class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
+                <span class="text-[9px] font-semibold ${isActive ? 'text-emerald-400' : 'text-slate-500'}">${isActive ? 'Bật' : 'Tắt'}</span>
+              </label>
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    async function adjustRuleDwellDirect(ruleId, delta) {
+      const r = existingCameraRules.find(x => x.id === ruleId);
+      if (!r) return;
+      let cur = r.dwell_threshold_sec != null ? parseFloat(r.dwell_threshold_sec) : 10.0;
+      cur = Math.max(0.5, Math.min(120.0, parseFloat((cur + delta).toFixed(1))));
+      r.dwell_threshold_sec = cur;
+
+      if (currentEditingRuleId === ruleId) {
+        const inp = document.getElementById('onScreenDwellInput');
+        if (inp) inp.value = cur.toFixed(1);
+      }
+
+      renderExistingRulesListUI();
+      redrawOnScreenCanvas();
+
+      try {
+        await fetch(`/api/cameras/${activeCameraForEditor}/rules/${ruleId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dwell_threshold_sec: cur })
+        });
+      } catch (e) {
+        console.error('Error updating dwell time:', e);
+      }
+    }
+
+    async function toggleRuleActiveDirect(ruleId, isActive) {
+      const r = existingCameraRules.find(x => x.id === ruleId);
+      if (!r) return;
+      r.is_active = isActive ? 1 : 0;
+
+      renderExistingRulesListUI();
+      redrawOnScreenCanvas();
+
+      const toast = document.getElementById('onScreenRuleToast');
+      if (toast) {
+        toast.innerText = isActive ? `✓ Đã bật cảnh báo ROI #${ruleId}` : `ℹ Đã tắt cảnh báo ROI #${ruleId}`;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2000);
+      }
+
+      try {
+        await fetch(`/api/cameras/${activeCameraForEditor}/rules/${ruleId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_active: isActive ? 1 : 0 })
+        });
+      } catch (e) {
+        console.error('Error toggling rule active:', e);
+      }
     }
 
     async function loadExistingRulesForDrawer(camId) {
@@ -2406,7 +2492,7 @@
       const banner = document.getElementById('editingRuleBanner');
       const bannerText = document.getElementById('editingRuleText');
       if (banner) banner.classList.remove('hidden');
-      if (bannerText) bannerText.innerText = `✎ Đang sửa: ${r.name || 'ROI #' + r.id}`;
+      if (bannerText) bannerText.innerText = `Đang sửa: ${r.name || 'ROI #' + r.id}`;
 
       const saveBtn = document.getElementById('onScreenSaveBtn');
       const saveBtnText = document.getElementById('onScreenSaveBtnText');
