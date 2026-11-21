@@ -2423,11 +2423,11 @@
               </div>
 
               <!-- Cảnh báo (Tích vào sẽ bật cảnh báo, bỏ tích để tắt cảnh báo) -->
-              <label class="flex items-center space-x-1.5 cursor-pointer select-none" title="Tích để bật cảnh báo, bỏ tích để tắt cảnh báo (vẫn giữ vùng trên video)">
-                <span class="text-slate-400 text-[9px]">Cảnh báo:</span>
+              <label class="flex items-center space-x-1.5 cursor-pointer select-none group/alert" title="Tích để bật cảnh báo, bỏ tích để tắt cảnh báo (vẫn giữ vùng trên video)">
+                <span class="${isActive ? 'text-slate-300 font-medium' : 'text-slate-400'} group-hover/alert:text-slate-200 text-[9px] transition">Cảnh báo:</span>
                 <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleRuleActiveDirect(${r.id}, this.checked)" class="sr-only">
-                <div class="w-3.5 h-3.5 rounded-sm border border-white bg-slate-900/80 flex items-center justify-center transition shadow-sm">
-                  ${isActive ? '<svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>' : ''}
+                <div class="w-3.5 h-3.5 rounded-sm border ${isActive ? 'border-slate-300' : 'border-slate-400'} group-hover/alert:border-slate-200 bg-slate-900/80 flex items-center justify-center transition shadow-sm">
+                  ${isActive ? '<svg class="w-2.5 h-2.5 text-slate-300 group-hover/alert:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>' : ''}
                 </div>
               </label>
             </div>
