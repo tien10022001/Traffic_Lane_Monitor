@@ -195,15 +195,10 @@
               </div>
             </div>
           </div>
-
-          <button id="roiDrawBtn" onclick="toggleOnScreenDrawMode()" class="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded text-xs font-medium transition flex items-center space-x-1" title="Bật/Tắt chế độ vẽ trực tiếp trên màn hình camera">
-            <span id="roiDrawBtnIcon">✏️</span>
-            <span id="roiDrawBtnText">Vẽ Luật / ROI</span>
-          </button>
         </div>
       </div>
 
-      <!-- Live Stream Viewport + Docked ROI Panel Row (Fills remaining height, zero overlap) -->
+      <!-- Live Stream Viewport + Docked Compact ROI Panel Row (Fills remaining height, zero overlap) -->
       <div class="flex-1 min-h-0 flex flex-row gap-2 overflow-hidden">
         <!-- Live Stream Viewport Container -->
         <div id="cameraViewportContainer" class="flex-1 min-w-0 h-full bg-black rounded-lg overflow-hidden relative flex items-center justify-center border border-darkborder/50">
@@ -218,115 +213,106 @@
             </div>
           </div>
 
-          <!-- ON-SCREEN DIRECT DRAWING OVERLAY CANVAS -->
-          <canvas id="onScreenDrawCanvas" class="hidden absolute inset-0 w-full h-full cursor-crosshair z-30"></canvas>
+          <!-- ON-SCREEN DIRECT DRAWING OVERLAY CANVAS (Always active in single view) -->
+          <canvas id="onScreenDrawCanvas" class="absolute inset-0 w-full h-full cursor-crosshair z-30"></canvas>
         </div>
 
-        <!-- DOCKED ROI & RULE PANEL (Side-by-side, never floats over video) -->
-        <div id="onScreenRuleDrawer" class="hidden w-72 shrink-0 h-full bg-darkbg/95 border border-indigo-500/50 rounded-xl p-3 text-xs flex flex-col space-y-2.5 overflow-y-auto shadow-2xl">
+        <!-- DOCKED COMPACT ROI & RULE PANEL (Side-by-side, always visible, sleek & minimal text) -->
+        <div id="onScreenRuleDrawer" class="w-56 shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2.5 text-xs flex flex-col space-y-2 overflow-y-auto shadow-xl">
           <!-- Drawer Header -->
-          <div class="flex items-center justify-between pb-1.5 border-b border-darkborder shrink-0">
-            <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-              <span class="font-bold text-white text-xs tracking-wider uppercase">VẼ VÙNG ROI</span>
+          <div class="flex items-center justify-between pb-1 border-b border-darkborder shrink-0">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <span class="font-bold text-white text-[11px] tracking-wide uppercase">VẼ ROI & LUẬT</span>
             </div>
-            <button onclick="closeOnScreenDraw()" class="text-slate-400 hover:text-white text-lg font-bold px-1.5 leading-none transition" title="Đóng chế độ vẽ">&times;</button>
+            <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase font-mono">CAM #1</span>
           </div>
 
-          <!-- Active Target Camera Selector -->
-          <div class="space-y-1">
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="text-slate-400 font-medium">Camera:</span>
-              <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase tracking-wide">ĐANG CHỌN</span>
+          <!-- Camera & Hiển thị ROI hàng ngang gọn gàng -->
+          <div class="grid grid-cols-2 gap-1.5 shrink-0">
+            <div>
+              <label class="block text-slate-400 text-[10px] mb-0.5">Cam</label>
+              <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded px-1.5 py-1 text-amber-300 font-semibold text-[11px] outline-none cursor-pointer">
+              </select>
             </div>
-            <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-semibold text-xs outline-none focus:border-amber-400 cursor-pointer">
-              <!-- Dynamically populated from camerasData -->
-            </select>
+            <div>
+              <label class="block text-slate-400 text-[10px] mb-0.5">Kiểu ROI</label>
+              <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()" class="w-full py-1 px-1 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-slate-200 text-[10.5px] font-medium transition truncate flex items-center justify-center shadow-sm" title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
+                <span id="drawerRoiModeText">▦ Sọc chéo</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Kiểu hiển thị ROI trên Video (Chuyển từ thanh trên vào bảng này) -->
-          <div class="space-y-1">
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="text-slate-400 font-medium">Kiểu hiển thị ROI:</span>
-              <button type="button" onclick="cycleRoiDisplayMode()" class="text-indigo-400 hover:text-indigo-300 text-[10px] font-semibold" title="Click để chuyển đổi nhanh">↺ Đổi</button>
-            </div>
-            <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()" class="w-full py-1.5 px-2.5 bg-darkpanel hover:bg-slate-700/80 border border-slate-700 hover:border-indigo-500/60 rounded-lg text-slate-200 text-xs font-medium transition flex items-center justify-between shadow-sm" title="Click để chuyển đổi kiểu hiển thị ROI: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
-              <span id="drawerRoiModeText">▦ ROI: Sọc chéo</span>
-              <span class="text-[10px] text-slate-400 font-mono">Thay đổi ▾</span>
-            </button>
-          </div>
-
-          <!-- Rule Type Select (Only Luật) -->
-          <div>
-            <label class="block text-slate-400 mb-1 text-[11px] font-medium">Luật *</label>
+          <!-- Rule Type Select (Luật) -->
+          <div class="shrink-0">
+            <label class="block text-slate-400 text-[10px] mb-0.5">Luật *</label>
             <select id="onScreenRuleType" onchange="onOnScreenRuleTypeChange()"
-                    class="w-full bg-darkpanel border border-darkborder rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-indigo-500 cursor-pointer">
-              <option value="no_parking">🚫 Dừng đỗ trái phép (no_parking)</option>
-              <option value="lane_roi">⚠️ Đi sai làn vùng cấm (lane_roi)</option>
-              <option value="sidewalk_encroachment">🚶 Lấn chiếm vỉa hè (sidewalk)</option>
-              <option value="lane_line">📏 Đè / Cắt vạch cấm (lane_line)</option>
+                    class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="no_parking">🚫 Dừng đỗ trái phép</option>
+              <option value="lane_roi">⚠️ Đi sai làn</option>
+              <option value="sidewalk_encroachment">🚶 Lấn chiếm vỉa hè</option>
+              <option value="lane_line">📏 Đè vạch cấm</option>
             </select>
           </div>
 
           <!-- Compact ROI Region Name -->
-          <div>
-            <label class="block text-slate-400 mb-1 text-[11px] font-medium">Tên vùng ROI <span class="text-slate-500 font-normal">(tùy chọn)</span></label>
-            <input type="text" id="onScreenRoiName" placeholder="VD: ROI 1"
-                   class="w-full bg-darkpanel border border-darkborder rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-indigo-500">
+          <div class="shrink-0">
+            <input type="text" id="onScreenRoiName" placeholder="Tên ROI (VD: ROI 1)"
+                   class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-white text-[11px] outline-none focus:border-indigo-500">
           </div>
 
-          <!-- Dwell Time (for parking / sidewalk / lane_roi) -->
-          <div id="onScreenDwellGroup">
-            <div class="flex justify-between items-center mb-1 text-[11px]">
-              <label class="text-slate-400 font-medium">Ngưỡng Giây</label>
-              <span id="onScreenDwellVal" class="font-bold text-amber-400 font-mono text-xs">10.0s</span>
+          <!-- Dwell Time (Ngưỡng giây) -->
+          <div id="onScreenDwellGroup" class="space-y-0.5 shrink-0">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="text-slate-400">Thời gian:</span>
+              <span id="onScreenDwellVal" class="font-bold text-amber-400 font-mono text-[11px]">10.0s</span>
             </div>
             <input type="range" id="onScreenRuleDwell" min="1.0" max="60.0" step="0.5" value="10.0"
                    oninput="document.getElementById('onScreenDwellVal').innerText = parseFloat(this.value).toFixed(1) + 's'"
-                   class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                   class="w-full h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-amber-500">
           </div>
 
           <!-- Direction (for line crossing) -->
-          <div id="onScreenDirectionGroup" class="hidden">
-            <label class="block text-slate-400 mb-1 text-[11px] font-medium">Chiều Cắt Vạch</label>
-            <select id="onScreenRuleDirection" class="w-full bg-darkpanel border border-darkborder rounded-lg px-2.5 py-1.5 text-white text-xs outline-none cursor-pointer">
-              <option value="both">Cả 2 chiều (both)</option>
-              <option value="left_to_right">Trái sang Phải (left_to_right)</option>
-              <option value="right_to_left">Phải sang Trái (right_to_left)</option>
+          <div id="onScreenDirectionGroup" class="hidden shrink-0">
+            <label class="block text-slate-400 text-[10px] mb-0.5">Chiều Cắt</label>
+            <select id="onScreenRuleDirection" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none cursor-pointer">
+              <option value="both">↔ Cả 2 chiều</option>
+              <option value="left_to_right">→ Trái sang Phải</option>
+              <option value="right_to_left">← Phải sang Trái</option>
             </select>
           </div>
 
-          <!-- Drawing Status & Quick Guide (Matching screenshot) -->
-          <div id="onScreenDrawStatus" class="text-[10px] text-slate-300 bg-darkpanel/80 border border-darkborder rounded-lg p-2 leading-relaxed">
-            Điểm: <span class="text-white font-bold">0</span> • Click trái thêm điểm (tối thiểu 3 điểm). Chuột phải: lùi.
+          <!-- Drawing Status & Quick Guide (Ngắn gọn, ít chữ) -->
+          <div id="onScreenDrawStatus" class="text-[9.5px] text-slate-300 bg-darkpanel/80 border border-darkborder rounded p-1.5 leading-tight shrink-0">
+            Điểm: <span class="text-white font-bold">0</span> (≥ 3 điểm. Chuột phải: lùi)
           </div>
 
-          <!-- Drawing Action Buttons (Matching screenshot) -->
-          <div class="grid grid-cols-3 gap-1.5">
-            <button type="button" onclick="finishOnScreenPolygon()" class="py-1.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg border border-emerald-500/40 font-semibold text-xs transition text-center shadow" title="Đóng vùng đa giác">
+          <!-- Drawing Action Buttons (Nhỏ gọn) -->
+          <div class="grid grid-cols-3 gap-1 shrink-0">
+            <button type="button" onclick="finishOnScreenPolygon()" class="py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/40 font-semibold text-[10.5px] transition text-center shadow" title="Đóng vùng đa giác">
               ✓ Đóng
             </button>
-            <button type="button" onclick="undoLastOnScreenPoint()" class="py-1.5 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg border border-blue-500/40 font-semibold text-xs transition text-center shadow" title="Xóa điểm vừa click (hoặc click chuột phải trên màn hình)">
+            <button type="button" onclick="undoLastOnScreenPoint()" class="py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded border border-blue-500/40 font-semibold text-[10.5px] transition text-center shadow" title="Xóa điểm vừa click (hoặc click chuột phải)">
               ↩ Lùi
             </button>
-            <button type="button" onclick="clearOnScreenDrawing()" class="py-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 hover:text-white rounded-lg border border-rose-500/30 font-semibold text-xs transition text-center shadow" title="Xóa toàn bộ điểm đang vẽ">
-              ✕ Vẽ lại
+            <button type="button" onclick="clearOnScreenDrawing()" class="py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 hover:text-white rounded border border-rose-500/30 font-semibold text-[10.5px] transition text-center shadow" title="Xóa toàn bộ điểm đang vẽ">
+              ✕ Xóa
             </button>
           </div>
 
-          <!-- Save Button (Matching screenshot: [💾 Lưu Luật (1)]) -->
-          <button type="button" onclick="handleSaveOnScreenRule()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition shadow-lg flex items-center justify-center space-x-1.5 text-xs">
-            <span id="onScreenSaveBtnText">💾 Lưu Luật (1)</span>
+          <!-- Save Button -->
+          <button type="button" onclick="handleSaveOnScreenRule()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0">
+            <span id="onScreenSaveBtnText">💾 Lưu (1)</span>
           </button>
-          <span id="onScreenRuleToast" class="text-[11px] text-emerald-400 hidden text-center font-medium">✓ Đã lưu & áp dụng ngay!</span>
+          <span id="onScreenRuleToast" class="text-[10px] text-emerald-400 hidden text-center font-medium shrink-0">✓ Đã lưu thành công!</span>
 
           <!-- Existing Rules of this Camera -->
-          <div class="border-t border-darkborder pt-2 flex-1 min-h-0 flex flex-col">
-            <div class="flex justify-between items-center text-xs text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-1" onclick="toggleExistingRulesList()">
+          <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
+            <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-0.5" onclick="toggleExistingRulesList()">
               <span>📋 Luật hiện có (<span id="onScreenRuleCount">0</span>)</span>
               <span id="rulesToggleArrow">▲</span>
             </div>
-            <div id="onScreenExistingRulesList" class="space-y-1.5 mt-1 flex-1 overflow-y-auto pr-1">
+            <div id="onScreenExistingRulesList" class="space-y-1 mt-1 flex-1 overflow-y-auto pr-0.5">
               <p class="text-slate-500 text-[10px] py-1">Chưa có luật nào.</p>
             </div>
           </div>
@@ -766,7 +752,7 @@
     let activeCameraForEditor = null;
     let existingCameraRules = [];
     let activeViolationForModal = null;
-    let isOnScreenDrawActive = false;
+    let isOnScreenDrawActive = true;
     let onScreenDrawnPoints = [];
     let isPolygonClosed = false;
     let draggingVertexIdx = -1;
@@ -1080,18 +1066,12 @@
     }
 
     function onCameraTileClick(camId) {
-      if (isOnScreenDrawActive) {
-        bindOnScreenDrawToCamera(camId);
-        return;
-      }
-
-      selectCamera(camId);
-
-      // In focus modes, clicking any side camera promotes it to primary focus
+      currentActiveCamId = camId;
       if (currentLayoutMode === 'focus_2' || currentLayoutMode === 'focus_3') {
         primaryFocusCamId = camId;
-        renderViewport();
       }
+      bindOnScreenDrawToCamera(camId);
+      renderViewport();
     }
 
     function createCameraTileHtml(cam, isFocus = false, labelPrefix = '') {
@@ -1161,6 +1141,19 @@
 
       const focusCam = activeCams.find(c => c.id === primaryFocusCamId) || activeCams[0];
       const otherCams = activeCams.filter(c => c.id !== focusCam.id);
+
+      // Ensure canvas overlay is only active in single layout so multi-grid clicks are not blocked
+      const drawCanvas = document.getElementById('onScreenDrawCanvas');
+      if (currentLayoutMode === 'single') {
+        if (drawCanvas) {
+          drawCanvas.style.display = 'block';
+          drawCanvas.classList.remove('hidden');
+        }
+      } else {
+        if (drawCanvas) {
+          drawCanvas.style.display = 'none';
+        }
+      }
 
       // 1. SINGLE FULL VIEW (1x1)
       if (currentLayoutMode === 'single') {
@@ -1680,11 +1673,7 @@
     };
 
     function toggleOnScreenDrawMode() {
-      if (isOnScreenDrawActive) {
-        closeOnScreenDraw();
-      } else {
-        openOnScreenDraw();
-      }
+      clearOnScreenDrawing();
     }
 
     async function openOnScreenDraw() {
@@ -1692,21 +1681,6 @@
       isPolygonClosed = false;
       draggingVertexIdx = -1;
       hoveredVertexIdx = -1;
-      previousLayoutBeforeDraw = currentLayoutMode || 'single';
-
-      const canvas = document.getElementById('onScreenDrawCanvas');
-      const drawer = document.getElementById('onScreenRuleDrawer');
-      const btn = document.getElementById('roiDrawBtn');
-      const btnIcon = document.getElementById('roiDrawBtnIcon');
-      const btnText = document.getElementById('roiDrawBtnText');
-
-      if (canvas) canvas.classList.remove('hidden');
-      if (drawer) drawer.classList.remove('hidden');
-      if (btn) {
-        btn.className = "px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white border border-rose-400 rounded text-xs font-bold transition flex items-center space-x-1 shadow-lg";
-      }
-      if (btnIcon) btnIcon.innerText = "🔴";
-      if (btnText) btnText.innerText = "Đang Vẽ (Thoát)";
 
       // Switch to single (1x1) of current camera for maximum drawing precision
       if (currentLayoutMode !== 'single') {
@@ -1720,34 +1694,7 @@
     }
 
     function closeOnScreenDraw() {
-      isOnScreenDrawActive = false;
-      onScreenDrawnPoints = [];
-      isPolygonClosed = false;
-      draggingVertexIdx = -1;
-      hoveredVertexIdx = -1;
-      hoveredRuleId = null;
-      currentHoverPoint = null;
-
-      const canvas = document.getElementById('onScreenDrawCanvas');
-      const drawer = document.getElementById('onScreenRuleDrawer');
-      const btn = document.getElementById('roiDrawBtn');
-      const btnIcon = document.getElementById('roiDrawBtnIcon');
-      const btnText = document.getElementById('roiDrawBtnText');
-
-      if (canvas) canvas.classList.add('hidden');
-      if (drawer) drawer.classList.add('hidden');
-      if (btn) {
-        btn.className = "px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded text-xs font-medium transition flex items-center space-x-1";
-      }
-      if (btnIcon) btnIcon.innerText = "✏️";
-      if (btnText) btnText.innerText = "Vẽ Luật / ROI";
-
-      // Restore previous multi-cam layout if was in grid
-      if (previousLayoutBeforeDraw && previousLayoutBeforeDraw !== 'single') {
-        selectLayout(previousLayoutBeforeDraw);
-      } else {
-        renderViewport();
-      }
+      clearOnScreenDrawing();
     }
 
     function getCameraDisplayName(camId) {
@@ -1767,6 +1714,11 @@
         selectCamera(camId);
       }
 
+      const badge = document.getElementById('onScreenCamBadge');
+      if (badge) {
+        badge.innerText = `CAM #${camId}`;
+      }
+
       // Sync drawer camera dropdown with exact camera names
       const selectEl = document.getElementById('onScreenCamSelect');
       if (selectEl) {
@@ -1778,12 +1730,13 @@
         selectEl.value = camId;
       }
 
-      // Update save button target camera label (e.g. 💾 Lưu Luật (1))
-      const saveBtn = document.getElementById('onScreenSaveBtnText') || document.querySelector('#onScreenRuleDrawer button[onclick="handleSaveOnScreenRule()"] span');
+      // Update save button target camera label (e.g. 💾 Lưu (1))
+      const saveBtn = document.getElementById('onScreenSaveBtnText');
       if (saveBtn) {
-        saveBtn.innerText = `💾 Lưu Luật (${camId})`;
+        saveBtn.innerText = `💾 Lưu (${camId})`;
       }
 
+      initOnScreenCanvas();
       await loadExistingRulesForDrawer(camId);
       syncCanvasDimensions();
       redrawOnScreenCanvas();
@@ -1793,7 +1746,12 @@
     function onDrawerCamSelectChange(camIdStr) {
       const camId = parseInt(camIdStr, 10);
       if (!isNaN(camId)) {
-        bindOnScreenDrawToCamera(camId);
+        if (currentLayoutMode !== 'single') {
+          selectLayout('single', camId);
+        } else {
+          selectCamera(camId);
+          bindOnScreenDrawToCamera(camId);
+        }
       }
     }
 
@@ -1873,13 +1831,13 @@
       const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
       const n = onScreenDrawnPoints.length;
       if (isPolygonClosed) {
-        el.innerHTML = `<span class="text-emerald-400 font-semibold">✓ Đã khóa hình (${n} điểm)</span> • Kéo đỉnh để chỉnh hoặc bấm Lưu.`;
+        el.innerHTML = `<span class="text-emerald-400 font-bold">✓ Đã đóng (${n} điểm)</span> • Bấm Lưu`;
       } else if (ruleType === 'lane_line') {
-        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}/2</span> • Click 2 điểm tạo vạch cấm. Chuột phải: lùi.`;
+        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}/2</span> (Chuột phải: lùi)`;
       } else if (n >= 3) {
-        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}</span> • Click lại <span class="text-emerald-400">điểm 1</span> hoặc Double-click để đóng vùng.`;
+        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}</span> • Click lại <span class="text-emerald-400">điểm 1</span> hoặc đúp chuột`;
       } else {
-        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}</span> • Click trái thêm điểm (tối thiểu 3 điểm). Chuột phải: lùi.`;
+        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}</span> (≥ 3 điểm. Chuột phải: lùi)`;
       }
     }
 
@@ -2400,12 +2358,12 @@
       }
     }
 
-    // ROI Quick Display Modes (Striped default)
+    // ROI Quick Display Modes (Striped default, compact)
     const ROI_MODES = [
-      { key: 'striped', label: '▦ ROI: Sọc chéo' },
-      { key: 'full', label: '👁️ ROI: Đầy đủ' },
-      { key: 'border_only', label: '🔲 ROI: Chỉ viền' },
-      { key: 'hidden', label: '🚫 ROI: Ẩn' }
+      { key: 'striped', label: '▦ Sọc chéo' },
+      { key: 'full', label: '👁️ Đầy đủ' },
+      { key: 'border_only', label: '🔲 Chỉ viền' },
+      { key: 'hidden', label: '🚫 Ẩn' }
     ];
     let currentRoiModeIndex = 0;
 
