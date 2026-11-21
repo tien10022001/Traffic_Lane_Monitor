@@ -342,7 +342,7 @@
     </section>
 
     <!-- RIGHT AREA: DANH SÁCH VI PHẠM (REAL-TIME) (Bảng Log Duy Nhất Chiếm Toàn Bộ Chiều Cao) -->
-    <aside class="w-[380px] md:w-[410px] lg:w-[430px] xl:w-[460px] 2xl:w-[490px] shrink-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-3 shadow-xl min-h-0 overflow-hidden">
+    <aside class="w-[290px] sm:w-[305px] md:w-[320px] lg:w-[335px] xl:w-[350px] shrink-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden">
       <!-- Header: Title & Counter -->
       <div class="flex items-center justify-between pb-2 mb-2 border-b border-darkborder shrink-0">
         <div class="flex items-center space-x-2">
@@ -1417,20 +1417,30 @@
         // Violation badge label & style matching real camera events
         let typeBadge = '';
         let violationBehavior = '';
-        let laneLocation = 'Khu vực cấm dừng đỗ';
 
         if (v.violation_type === 'no_parking') {
           typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>DỪNG ĐỖ TRÁI PHÉP</span></span>';
           violationBehavior = `Dừng đỗ xe trái quy định trong khu vực cấm (${durationSec}s)`;
-          laneLocation = 'Khu vực cấm dừng đỗ';
         } else if (v.violation_type === 'sidewalk_encroachment') {
           typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-amber-600 text-white font-bold text-xs uppercase shadow"><span>LẤN CHIẾM VỈA HÈ</span></span>';
           violationBehavior = `Phương tiện lấn chiếm vỉa hè người đi bộ (${durationSec}s)`;
-          laneLocation = 'Vỉa hè người đi bộ';
         } else {
           typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>SAI LÀN</span></span>';
           violationBehavior = 'Đi sai làn đường quy định hoặc đè vạch cấm';
-          laneLocation = 'Làn đường quy định';
+        }
+
+        // Format location based on camera detected and user-configured camera name/region
+        const camIndex = camerasData.findIndex(c => c.id === v.camera_id);
+        const camNum = camIndex >= 0 ? (camIndex + 1) : (v.camera_id || 1);
+        const camDisplayName = getCameraDisplayName(v.camera_id);
+
+        let cameraLocation = '';
+        if (/^cam\s*/i.test(camDisplayName)) {
+          cameraLocation = camDisplayName;
+        } else if (camDisplayName) {
+          cameraLocation = `Cam ${camNum}: ${camDisplayName}`;
+        } else {
+          cameraLocation = `Cam ${camNum}`;
         }
 
         const isConfirmed = v.review_status === 'confirmed';
@@ -1444,7 +1454,7 @@
         const cardId = `vCard_${v.id}`;
 
         return `
-          <div id="${cardId}" class="rounded-xl border ${repeatCount > 1 ? 'border-amber-500/70' : 'border-rose-600/70'} bg-[#13111c] p-3 shadow-xl space-y-2 text-xs transition hover:border-rose-500">
+          <div id="${cardId}" class="rounded-xl border ${repeatCount > 1 ? 'border-amber-500/70' : 'border-rose-600/70'} bg-[#13111c] p-2.5 shadow-xl space-y-2 text-xs transition hover:border-rose-500">
             <!-- Header Row: Event title & Time + Repeat Badge -->
             <div class="flex items-center justify-between text-[11px]">
               <div class="flex items-center space-x-1.5 flex-wrap gap-1">
@@ -1464,14 +1474,6 @@
             <div class="text-[11px] text-slate-300">
               <span class="text-slate-400">Hành vi:</span> <span class="font-medium text-slate-100">${violationBehavior}</span>
             </div>
-
-            <!-- Live Dwell Duration Counter (Layer 4 UI Deduplication) -->
-            ${v.dwell_duration_sec > 0 ? `
-              <div class="flex items-center justify-between p-1.5 rounded bg-darkbg/80 border border-darkborder text-[11px]">
-                <span class="text-slate-400">Thời gian đỗ tích lũy:</span>
-                <span class="font-mono font-bold text-emerald-400">${durationSec}s ${repeatCount > 1 ? `<span class="text-slate-500 text-[10px] font-normal">(x${repeatCount})</span>` : ''}</span>
-              </div>
-            ` : ''}
 
             <!-- Vehicle Class -->
             <div class="text-[11px] text-slate-300">
@@ -1503,13 +1505,17 @@
             </div>
 
             <!-- Footer Meta & Actions -->
-            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
-              <div>Độ tin cậy: <span class="text-emerald-400 font-bold">${confPct}%</span> | Vị trí: <span class="text-slate-200">${laneLocation}</span></div>
-              <div class="flex space-x-1">
-                <button onclick="handleQuickReview(${v.id}, 'confirmed')" class="px-2 py-0.5 rounded bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white font-medium transition text-[10px]" title="Xác nhận vi phạm đúng">
+            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800 gap-1.5">
+              <div class="truncate text-[9.5px]" title="Độ tin cậy: ${confPct}% | Vị trí: ${cameraLocation}">
+                <span>Độ tin cậy: <b class="text-emerald-400">${confPct}%</b></span>
+                <span class="text-slate-600 mx-0.5">|</span>
+                <span>Vị trí: <b class="text-slate-200">${cameraLocation}</b></span>
+              </div>
+              <div class="flex space-x-1 shrink-0">
+                <button onclick="handleQuickReview(${v.id}, 'confirmed')" class="px-2 py-0.5 rounded bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white font-medium transition text-[9.5px]" title="Xác nhận vi phạm đúng">
                   Duyệt
                 </button>
-                <button onclick="handleQuickReview(${v.id}, 'false_positive')" class="px-2 py-0.5 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-medium transition text-[10px]" title="Báo nhận diện sai (Khóa 30 phút)">
+                <button onclick="handleQuickReview(${v.id}, 'false_positive')" class="px-2 py-0.5 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-medium transition text-[9.5px]" title="Báo nhận diện sai (Khóa 30 phút)">
                   Báo sai
                 </button>
               </div>
