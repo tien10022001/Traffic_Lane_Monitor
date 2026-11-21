@@ -317,9 +317,16 @@
 
           <!-- Existing Rules of this Camera -->
           <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
-            <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-0.5" onclick="toggleExistingRulesList()">
-              <span>ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
-              <span id="rulesToggleArrow">▲</span>
+            <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold shrink-0 pb-0.5">
+              <div class="flex items-center space-x-1 cursor-pointer hover:text-white" onclick="toggleExistingRulesList()">
+                <span>ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
+                <span id="rulesToggleArrow">▲</span>
+              </div>
+              <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                <button type="button" id="existingRulesRoiModeBtn" onclick="cycleRoiDisplayMode()" class="px-1.5 py-0.5 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-amber-300 text-[9.5px] font-medium transition shadow-sm" title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
+                  <span id="existingRulesRoiModeText">Sọc chéo</span>
+                </button>
+              </div>
             </div>
             <div id="onScreenExistingRulesList" class="space-y-1.5 mt-1 flex-1 overflow-y-auto pr-0.5">
               <p class="text-slate-500 text-[10px] py-1 text-center">Chưa có ROI nào.</p>
@@ -2108,6 +2115,24 @@
       redrawOnScreenCanvas();
     }
 
+    function getStripeCanvasPattern(ctx, color) {
+      const pCanvas = document.createElement('canvas');
+      pCanvas.width = 12;
+      pCanvas.height = 12;
+      const pCtx = pCanvas.getContext('2d');
+      pCtx.strokeStyle = color;
+      pCtx.lineWidth = 2.5;
+      pCtx.beginPath();
+      pCtx.moveTo(0, 12);
+      pCtx.lineTo(12, 0);
+      pCtx.moveTo(-3, 3);
+      pCtx.lineTo(3, -3);
+      pCtx.moveTo(9, 15);
+      pCtx.lineTo(15, 9);
+      pCtx.stroke();
+      return ctx.createPattern(pCanvas, 'repeat');
+    }
+
     function redrawOnScreenCanvas() {
       const canvas = document.getElementById('onScreenDrawCanvas');
       if (!canvas) return;
@@ -2134,6 +2159,11 @@
           if (pts.length >= 2) {
             const isHighlighted = hoveredRuleId === r.id;
             const isActive = Boolean(r.is_active != null ? r.is_active : 1);
+            const mode = r.display_mode || ROI_MODES[currentRoiModeIndex]?.key || 'striped';
+
+            // Hidden mode: don't render unless mouse is hovering on rule
+            if (mode === 'hidden' && !isHighlighted) return;
+
             ctx.save();
             ctx.beginPath();
             const isParking = r.rule_type === 'no_parking';
@@ -2143,9 +2173,6 @@
             ctx.lineWidth = isHighlighted ? 3 : 2;
             if (!isActive) {
               ctx.setLineDash([5, 5]); // Dashed line for inactive ROI
-              ctx.fillStyle = isHighlighted ? 'rgba(250, 204, 21, 0.15)' : 'rgba(148, 163, 184, 0.08)';
-            } else {
-              ctx.fillStyle = isHighlighted ? 'rgba(250, 204, 21, 0.22)' : (isParking ? 'rgba(239, 68, 68, 0.14)' : 'rgba(245, 158, 11, 0.14)');
             }
 
             pts.forEach((p, i) => {
@@ -2157,7 +2184,17 @@
 
             if (pts.length > 2) {
               ctx.closePath();
-              ctx.fill();
+              if (mode === 'striped') {
+                const stripePattern = getStripeCanvasPattern(ctx, isHighlighted ? 'rgba(250, 204, 21, 0.45)' : (isActive ? (isParking ? 'rgba(239, 68, 68, 0.35)' : 'rgba(245, 158, 11, 0.35)') : 'rgba(148, 163, 184, 0.20)'));
+                if (stripePattern) {
+                  ctx.fillStyle = stripePattern;
+                  ctx.fill();
+                }
+              } else if (mode === 'full') {
+                ctx.fillStyle = isHighlighted ? 'rgba(250, 204, 21, 0.22)' : (isActive ? (isParking ? 'rgba(239, 68, 68, 0.16)' : 'rgba(245, 158, 11, 0.16)') : 'rgba(148, 163, 184, 0.08)');
+                ctx.fill();
+              }
+              // If mode === 'border_only', do not fill
             }
             ctx.stroke();
 
@@ -2345,6 +2382,7 @@
         const isActive = Boolean(r.is_active != null ? r.is_active : 1);
         const dwellVal = r.dwell_threshold_sec != null ? parseFloat(r.dwell_threshold_sec) : 10.0;
         const camLabel = getCameraBadgeName(r.camera_id || activeCameraForEditor);
+        const ruleMode = r.display_mode || ROI_MODES[currentRoiModeIndex]?.key || 'striped';
 
         return `
           <div class="group p-1.5 rounded-lg bg-darkpanel border ${isEditing ? 'border-amber-400 ring-1 ring-amber-400/50 bg-amber-500/10' : (isActive ? 'border-slate-700/80 hover:border-slate-500' : 'border-slate-800 bg-slate-900/60 opacity-75')} text-[10px] transition cursor-pointer select-none space-y-1"
@@ -2366,11 +2404,20 @@
               </div>
             </div>
 
-            <!-- Hàng 2: [Trường 2: Khu vực vi phạm (Loại luật)] -->
+            <!-- Hàng 2: [Trường 2: Khu vực vi phạm] + [Lựa chọn Kiểu ROI] -->
             <div class="flex items-center justify-between text-[9.5px]">
               <span class="text-slate-400 font-medium truncate" title="Khu vực: ${typeLabel}">
                 Khu vực: <span class="${isActive ? 'text-slate-300 font-semibold' : 'text-slate-500'}">${typeLabel}</span>
               </span>
+              <div class="flex items-center space-x-1 shrink-0" onclick="event.stopPropagation()">
+                <span class="text-slate-400 text-[9px]">Kiểu:</span>
+                <select onchange="changeRuleRoiMode(${r.id}, this.value)" class="bg-darkbg border border-slate-700 hover:border-slate-500 rounded px-1 py-0.5 text-amber-300 text-[9px] font-medium outline-none cursor-pointer">
+                  <option value="striped" ${ruleMode === 'striped' ? 'selected' : ''}>Sọc chéo</option>
+                  <option value="full" ${ruleMode === 'full' ? 'selected' : ''}>Đầy đủ</option>
+                  <option value="border_only" ${ruleMode === 'border_only' ? 'selected' : ''}>Chỉ viền</option>
+                  <option value="hidden" ${ruleMode === 'hidden' ? 'selected' : ''}>Ẩn</option>
+                </select>
+              </div>
             </div>
 
             <!-- Hàng 3: [Trường 3: Thời gian theo dõi (Tăng/Giảm)] & [Trường 4: Bật/Tắt cảnh báo] -->
@@ -2773,26 +2820,54 @@
     ];
     let currentRoiModeIndex = 0;
 
-    async function cycleRoiDisplayMode() {
-      currentRoiModeIndex = (currentRoiModeIndex + 1) % ROI_MODES.length;
-      const target = ROI_MODES[currentRoiModeIndex];
+    async function updateRoiDisplayMode(mode, targetRuleId = null) {
+      const idx = ROI_MODES.findIndex(m => m.key === mode);
+      if (idx >= 0) {
+        currentRoiModeIndex = idx;
+      }
+      const targetLabel = ROI_MODES[currentRoiModeIndex]?.label || 'Sọc chéo';
+
       const drawerText = document.getElementById('drawerRoiModeText');
-      if (drawerText) drawerText.innerText = target.label;
+      if (drawerText) drawerText.innerText = targetLabel;
+      const exText = document.getElementById('existingRulesRoiModeText');
+      if (exText) exText.innerText = targetLabel;
       const btnText = document.getElementById('roiDisplayModeText');
-      if (btnText) btnText.innerText = target.label;
+      if (btnText) btnText.innerText = targetLabel;
+
+      if (targetRuleId) {
+        const r = existingCameraRules.find(x => x.id === targetRuleId);
+        if (r) r.display_mode = mode;
+      } else {
+        existingCameraRules.forEach(r => { r.display_mode = mode; });
+      }
+
+      renderExistingRulesListUI();
+      redrawOnScreenCanvas();
 
       try {
         const getRes = await fetch('/api/config/perspective');
-        const curCfg = await getRes.json();
-        curCfg.roi_display_mode = target.key;
-        await fetch('/api/config/perspective', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(curCfg)
-        });
+        if (getRes.ok) {
+          const curCfg = await getRes.json();
+          curCfg.roi_display_mode = mode;
+          await fetch('/api/config/perspective', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(curCfg)
+          });
+        }
       } catch (err) {
-        console.error('Error cycling ROI display mode:', err);
+        console.error('Error updating ROI display mode:', err);
       }
+    }
+
+    async function cycleRoiDisplayMode() {
+      currentRoiModeIndex = (currentRoiModeIndex + 1) % ROI_MODES.length;
+      const target = ROI_MODES[currentRoiModeIndex];
+      await updateRoiDisplayMode(target.key);
+    }
+
+    async function changeRuleRoiMode(ruleId, mode) {
+      await updateRoiDisplayMode(mode, ruleId);
     }
 
     async function syncCurrentRoiDisplayMode() {
@@ -2807,6 +2882,8 @@
             const target = ROI_MODES[idx];
             const drawerText = document.getElementById('drawerRoiModeText');
             if (drawerText) drawerText.innerText = target.label;
+            const exText = document.getElementById('existingRulesRoiModeText');
+            if (exText) exText.innerText = target.label;
             const btnText = document.getElementById('roiDisplayModeText');
             if (btnText) btnText.innerText = target.label;
           }
