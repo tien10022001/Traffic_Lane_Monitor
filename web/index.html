@@ -223,7 +223,7 @@
           <div class="flex items-center justify-between pb-1 border-b border-darkborder shrink-0">
             <div class="flex items-center space-x-1.5">
               <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              <span class="font-bold text-white text-[11px] tracking-wide uppercase">VẼ ROI & LUẬT</span>
+              <span class="font-bold text-white text-[11px] tracking-wide uppercase">ROI</span>
             </div>
             <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase font-mono">CAM #1</span>
           </div>
@@ -265,10 +265,15 @@
           <div id="onScreenDwellGroup" class="space-y-0.5 shrink-0">
             <div class="flex justify-between items-center text-[10px]">
               <span class="text-slate-400">Thời gian:</span>
-              <span id="onScreenDwellVal" class="font-bold text-amber-400 font-mono text-[11px]">10.0s</span>
+              <div class="flex items-center space-x-1">
+                <input type="number" id="onScreenDwellInput" min="1.0" max="60.0" step="0.5" value="10.0"
+                       oninput="syncDwellFromInput(this.value)"
+                       class="w-12 bg-darkpanel border border-slate-700 rounded px-1 py-0.5 text-right font-bold text-amber-400 font-mono text-[11px] outline-none focus:border-amber-400">
+                <span class="text-slate-400 text-[10px]">s</span>
+              </div>
             </div>
             <input type="range" id="onScreenRuleDwell" min="1.0" max="60.0" step="0.5" value="10.0"
-                   oninput="document.getElementById('onScreenDwellVal').innerText = parseFloat(this.value).toFixed(1) + 's'"
+                   oninput="syncDwellFromSlider(this.value)"
                    class="w-full h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-amber-500">
           </div>
 
@@ -300,8 +305,14 @@
             </button>
           </div>
 
+          <!-- Edit Mode Indicator (Shown only when editing an existing rule) -->
+          <div id="editingRuleBanner" class="hidden flex items-center justify-between bg-amber-500/15 border border-amber-500/40 rounded px-2 py-1 text-[10px] text-amber-300 shrink-0">
+            <span id="editingRuleText" class="truncate font-semibold">✎ Đang sửa ROI #1</span>
+            <button type="button" onclick="cancelEditingRule()" class="text-slate-400 hover:text-white font-bold px-1 text-xs transition" title="Hủy chế độ sửa">✕ Hủy</button>
+          </div>
+
           <!-- Save Button -->
-          <button type="button" onclick="handleSaveOnScreenRule()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0">
+          <button type="button" id="onScreenSaveBtn" onclick="handleSaveOnScreenRule()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0">
             <span id="onScreenSaveBtnText">💾 Lưu (1)</span>
           </button>
           <span id="onScreenRuleToast" class="text-[10px] text-emerald-400 hidden text-center font-medium shrink-0">✓ Đã lưu thành công!</span>
@@ -351,7 +362,7 @@
         <div class="flex items-center space-x-2">
           <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
           <h2 class="font-bold text-xs tracking-wider text-slate-200 uppercase flex items-center space-x-1.5">
-            <span>DANH SÁCH VI PHẠM (REAL-TIME)</span>
+            <span>SỰ KIỆN</span>
           </h2>
         </div>
         <div class="flex items-center space-x-1.5">
@@ -758,6 +769,7 @@
     let draggingVertexIdx = -1;
     let hoveredVertexIdx = -1;
     let hoveredRuleId = null;
+    let currentEditingRuleId = null;
     let previousLayoutBeforeDraw = 'single';
     let currentHoverPoint = null;
     let onScreenCanvasInited = false;
@@ -1704,6 +1716,9 @@
 
     async function bindOnScreenDrawToCamera(camId) {
       activeCameraForEditor = camId;
+      if (currentEditingRuleId) {
+        cancelEditingRule();
+      }
       onScreenDrawnPoints = [];
       isPolygonClosed = false;
       draggingVertexIdx = -1;
@@ -1763,6 +1778,22 @@
       if (rect.width > 0 && rect.height > 0) {
         canvas.width = rect.width;
         canvas.height = rect.height;
+      }
+    }
+
+    function syncDwellFromSlider(val) {
+      const num = parseFloat(val);
+      const inp = document.getElementById('onScreenDwellInput');
+      if (inp) inp.value = num.toFixed(1);
+      if (currentEditingRuleId) redrawOnScreenCanvas();
+    }
+
+    function syncDwellFromInput(val) {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        const slider = document.getElementById('onScreenRuleDwell');
+        if (slider) slider.value = Math.max(1.0, Math.min(60.0, num));
+        if (currentEditingRuleId) redrawOnScreenCanvas();
       }
     }
 
@@ -1830,6 +1861,12 @@
       if (!el) return;
       const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
       const n = onScreenDrawnPoints.length;
+
+      if (currentEditingRuleId) {
+        el.innerHTML = `<span class="text-amber-400 font-bold">✎ Đang sửa (${n} điểm)</span> • Kéo góc chỉnh hình, chỉnh giây rồi bấm Cập Nhật`;
+        return;
+      }
+
       if (isPolygonClosed) {
         el.innerHTML = `<span class="text-emerald-400 font-bold">✓ Đã đóng (${n} điểm)</span> • Bấm Lưu`;
       } else if (ruleType === 'lane_line') {
@@ -1871,6 +1908,23 @@
           const box = getVideoRenderBox(canvas);
           const px = getCanvasPixelCoords(e, canvas);
           const nearIdx = findNearVertexIndex(px.x, px.y, box, 11);
+
+          // Click on existing rule vertex on video to start editing it if not drawing
+          if (onScreenDrawnPoints.length === 0) {
+            for (const r of existingCameraRules) {
+              try {
+                const pts = JSON.parse(r.geometry_json);
+                for (const pt of pts) {
+                  const vx = box.left + pt[0] * box.width;
+                  const vy = box.top + pt[1] * box.height;
+                  if (Math.hypot(px.x - vx, px.y - vy) <= 12) {
+                    editExistingRule(r.id);
+                    return;
+                  }
+                }
+              } catch (e) {}
+            }
+          }
 
           // Snap-to-close if clicking vertex 0 when polygon has >= 3 points and is not closed
           const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
@@ -1984,6 +2038,7 @@
 
       // 1. Draw existing rules for activeCameraForEditor
       existingCameraRules.forEach(r => {
+        if (currentEditingRuleId === r.id) return; // Skip rule currently being edited
         try {
           const pts = JSON.parse(r.geometry_json);
           if (pts.length >= 2) {
@@ -2013,7 +2068,8 @@
             // Clean label tag on first vertex
             const firstPx = box.left + pts[0][0] * box.width;
             const firstPy = box.top + pts[0][1] * box.height;
-            const label = r.name || RULE_TYPE_LABELS[r.rule_type] || r.rule_type;
+            const dwellStr = r.rule_type !== 'lane_line' ? ` (${r.dwell_threshold_sec}s)` : '';
+            const label = (r.name || RULE_TYPE_LABELS[r.rule_type] || r.rule_type) + dwellStr;
             ctx.font = 'bold 10px Inter, sans-serif';
             const textWidth = ctx.measureText(label).width;
             ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
@@ -2025,14 +2081,17 @@
         } catch (e) {}
       });
 
-      // 2. Draw currently drawn points
+      // 2. Draw currently drawn or edited points
       if (onScreenDrawnPoints.length > 0) {
         const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
+        const isEditing = Boolean(currentEditingRuleId);
         ctx.save();
         ctx.beginPath();
-        ctx.strokeStyle = isPolygonClosed ? '#10b981' : '#22c55e';
+        const strokeColor = isEditing ? '#f59e0b' : (isPolygonClosed ? '#10b981' : '#22c55e');
+        const fillColor = isEditing ? 'rgba(245, 158, 11, 0.22)' : (isPolygonClosed ? 'rgba(16, 185, 129, 0.25)' : 'rgba(34, 197, 94, 0.18)');
+        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 2.5;
-        ctx.fillStyle = isPolygonClosed ? 'rgba(16, 185, 129, 0.25)' : 'rgba(34, 197, 94, 0.18)';
+        ctx.fillStyle = fillColor;
 
         onScreenDrawnPoints.forEach((p, i) => {
           const px = box.left + p.x * box.width;
@@ -2063,20 +2122,20 @@
 
           ctx.beginPath();
           ctx.arc(px, py, isHovered || isSnapTarget ? 9 : 6, 0, Math.PI * 2);
-          ctx.fillStyle = isSnapTarget && isHovered ? 'rgba(250, 204, 21, 0.5)' : 'rgba(34, 197, 94, 0.35)';
+          ctx.fillStyle = isSnapTarget && isHovered ? 'rgba(250, 204, 21, 0.5)' : (isEditing ? 'rgba(245, 158, 11, 0.4)' : 'rgba(34, 197, 94, 0.35)');
           ctx.fill();
 
           ctx.beginPath();
           ctx.arc(px, py, isHovered ? 5 : 4, 0, Math.PI * 2);
-          ctx.fillStyle = isHovered ? '#facc15' : '#22c55e';
+          ctx.fillStyle = isHovered ? '#ffffff' : (isEditing ? '#f59e0b' : (isSnapTarget ? '#facc15' : '#22c55e'));
           ctx.fill();
 
           // Number bubble
           ctx.beginPath();
           ctx.arc(px + 9, py - 9, 7, 0, Math.PI * 2);
-          ctx.fillStyle = '#0f172a';
+          ctx.fillStyle = isEditing ? '#78350f' : '#0f172a';
           ctx.fill();
-          ctx.strokeStyle = isHovered ? '#facc15' : '#22c55e';
+          ctx.strokeStyle = isHovered ? '#facc15' : (isEditing ? '#f59e0b' : '#22c55e');
           ctx.lineWidth = 1;
           ctx.stroke();
 
@@ -2086,6 +2145,21 @@
           ctx.textBaseline = 'middle';
           ctx.fillText(`${i + 1}`, px + 9, py - 9);
         });
+
+        // Tag label for edited rule
+        if (isEditing && onScreenDrawnPoints.length > 0) {
+          const firstPx = box.left + onScreenDrawnPoints[0].x * box.width;
+          const firstPy = box.top + onScreenDrawnPoints[0].y * box.height;
+          const roiName = document.getElementById('onScreenRoiName')?.value || 'ROI';
+          const dwellVal = document.getElementById('onScreenDwellInput')?.value || '10.0';
+          const label = `✎ ${roiName} (${dwellVal}s)`;
+          ctx.font = 'bold 10px Inter, sans-serif';
+          const textWidth = ctx.measureText(label).width;
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.95)';
+          ctx.fillRect(firstPx, Math.max(2, firstPy - 18), textWidth + 10, 16);
+          ctx.fillStyle = '#0f172a';
+          ctx.fillText(label, firstPx + 5, Math.max(13, firstPy - 6));
+        }
 
         ctx.restore();
       }
@@ -2102,7 +2176,9 @@
         if (dirGroup) dirGroup.classList.add('hidden');
         if (dwellGroup) dwellGroup.classList.remove('hidden');
       }
-      isPolygonClosed = false;
+      if (!currentEditingRuleId) {
+        isPolygonClosed = false;
+      }
       updateDrawStatusHint();
       redrawOnScreenCanvas();
     }
@@ -2152,42 +2228,146 @@
       }
     }
 
+    function renderExistingRulesListUI() {
+      const list = document.getElementById('onScreenExistingRulesList');
+      const countBadge = document.getElementById('onScreenRuleCount');
+      if (countBadge) countBadge.innerText = existingCameraRules.length;
+      if (!list) return;
+
+      if (existingCameraRules.length === 0) {
+        list.innerHTML = '<p class="text-slate-500 text-[10px] py-1">Chưa có luật nào.</p>';
+        return;
+      }
+
+      list.innerHTML = existingCameraRules.map(r => {
+        const typeLabel = RULE_TYPE_LABELS[r.rule_type] || r.rule_type;
+        const dwellLabel = r.rule_type !== 'lane_line' ? ` • ${r.dwell_threshold_sec}s` : '';
+        const isEditing = currentEditingRuleId === r.id;
+
+        return `
+          <div class="group flex items-center justify-between p-1.5 rounded bg-darkpanel border ${isEditing ? 'border-amber-400 ring-1 ring-amber-400/50 bg-amber-500/15' : 'border-slate-700/70 hover:border-amber-400/60'} text-[10px] transition cursor-pointer select-none"
+               onclick="editExistingRule(${r.id})"
+               onmouseenter="hoveredRuleId=${r.id}; redrawOnScreenCanvas();"
+               onmouseleave="hoveredRuleId=null; redrawOnScreenCanvas();"
+               title="Click để chọn sửa vùng ROI & thời gian">
+            <div class="flex items-center space-x-1.5 flex-1 min-w-0 pr-1">
+              <span class="${isEditing ? 'text-amber-300' : 'text-slate-400 group-hover:text-amber-300'} font-bold text-[10px] shrink-0">✏️</span>
+              <div class="truncate">
+                <span class="font-semibold ${isEditing ? 'text-amber-300' : 'text-slate-200'} block truncate">${r.name || typeLabel}</span>
+                <span class="text-slate-400 text-[9px]">${typeLabel}${dwellLabel}</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-1 shrink-0">
+              ${isEditing ? '<span class="px-1 py-0.2 rounded bg-amber-500/25 text-amber-300 text-[8px] font-bold">ĐANG SỬA</span>' : ''}
+              <button onclick="event.stopPropagation(); deleteOnScreenRule(${r.id})" class="text-rose-400 hover:text-rose-300 font-bold px-1.5 py-0.5 text-xs hover:bg-rose-950/40 rounded transition" title="Xóa luật này">&times;</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     async function loadExistingRulesForDrawer(camId) {
       try {
         const res = await fetch(`/api/cameras/${camId}/rules`);
         existingCameraRules = await res.json();
-        const list = document.getElementById('onScreenExistingRulesList');
-        const countBadge = document.getElementById('onScreenRuleCount');
-        if (countBadge) countBadge.innerText = existingCameraRules.length;
-        if (!list) return;
-
-        if (existingCameraRules.length === 0) {
-          list.innerHTML = '<p class="text-slate-500 text-[10px] py-1">Chưa có luật nào.</p>';
-          return;
-        }
-
-        list.innerHTML = existingCameraRules.map(r => {
-          const typeLabel = RULE_TYPE_LABELS[r.rule_type] || r.rule_type;
-          const dwellLabel = r.rule_type !== 'lane_line' ? ` (${r.dwell_threshold_sec}s)` : '';
-          return `
-            <div class="flex items-center justify-between p-1.5 rounded bg-darkpanel border border-slate-700/70 text-[10px] hover:border-amber-400/60 transition"
-                 onmouseenter="hoveredRuleId=${r.id}; redrawOnScreenCanvas();"
-                 onmouseleave="hoveredRuleId=null; redrawOnScreenCanvas();">
-              <div class="truncate max-w-[175px]">
-                <span class="font-semibold text-slate-200 block truncate">${r.name || typeLabel}</span>
-                <span class="text-slate-400 text-[9px]">${typeLabel}${dwellLabel}</span>
-              </div>
-              <button onclick="deleteOnScreenRule(${r.id})" class="text-rose-400 hover:text-rose-300 font-bold px-1.5 py-0.5 text-xs hover:bg-rose-950/40 rounded transition" title="Xóa luật này">&times;</button>
-            </div>
-          `;
-        }).join('');
+        renderExistingRulesListUI();
       } catch (e) {
         console.error('Error loading rules for drawer:', e);
       }
     }
 
+    function editExistingRule(ruleId) {
+      const r = existingCameraRules.find(x => x.id === ruleId);
+      if (!r) return;
+
+      currentEditingRuleId = r.id;
+
+      // Populate form fields
+      const nameInput = document.getElementById('onScreenRoiName');
+      if (nameInput) nameInput.value = r.name || '';
+
+      const typeSelect = document.getElementById('onScreenRuleType');
+      if (typeSelect) {
+        typeSelect.value = r.rule_type;
+        onOnScreenRuleTypeChange();
+      }
+
+      const dwellSlider = document.getElementById('onScreenRuleDwell');
+      const dwellInput = document.getElementById('onScreenDwellInput');
+      const dwellVal = r.dwell_threshold_sec != null ? parseFloat(r.dwell_threshold_sec) : 10.0;
+      if (dwellSlider) dwellSlider.value = dwellVal;
+      if (dwellInput) dwellInput.value = dwellVal.toFixed(1);
+
+      const dirSelect = document.getElementById('onScreenRuleDirection');
+      if (dirSelect && r.direction) dirSelect.value = r.direction;
+
+      // Parse geometry and load vertices into onScreenDrawnPoints
+      try {
+        const pts = JSON.parse(r.geometry_json);
+        onScreenDrawnPoints = pts.map(p => ({ x: p[0], y: p[1] }));
+        isPolygonClosed = (r.rule_type === 'lane_line') ? (pts.length >= 2) : (pts.length >= 3);
+      } catch (err) {
+        console.error('Error parsing rule geometry:', err);
+      }
+
+      // Update banner & button
+      const banner = document.getElementById('editingRuleBanner');
+      const bannerText = document.getElementById('editingRuleText');
+      if (banner) banner.classList.remove('hidden');
+      if (bannerText) bannerText.innerText = `✎ Đang sửa: ${r.name || 'ROI #' + r.id}`;
+
+      const saveBtn = document.getElementById('onScreenSaveBtn');
+      const saveBtnText = document.getElementById('onScreenSaveBtnText');
+      if (saveBtn) {
+        saveBtn.className = "w-full py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0";
+      }
+      if (saveBtnText) {
+        saveBtnText.innerText = `💾 Cập Nhật (${activeCameraForEditor})`;
+      }
+
+      renderExistingRulesListUI();
+      redrawOnScreenCanvas();
+      updateDrawStatusHint();
+    }
+
+    function cancelEditingRule() {
+      currentEditingRuleId = null;
+      onScreenDrawnPoints = [];
+      isPolygonClosed = false;
+      draggingVertexIdx = -1;
+      hoveredVertexIdx = -1;
+      currentHoverPoint = null;
+
+      const nameInput = document.getElementById('onScreenRoiName');
+      if (nameInput) nameInput.value = '';
+
+      const dwellSlider = document.getElementById('onScreenRuleDwell');
+      const dwellInput = document.getElementById('onScreenDwellInput');
+      if (dwellSlider) dwellSlider.value = 10.0;
+      if (dwellInput) dwellInput.value = '10.0';
+
+      const banner = document.getElementById('editingRuleBanner');
+      if (banner) banner.classList.add('hidden');
+
+      const saveBtn = document.getElementById('onScreenSaveBtn');
+      const saveBtnText = document.getElementById('onScreenSaveBtnText');
+      if (saveBtn) {
+        saveBtn.className = "w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0";
+      }
+      if (saveBtnText) {
+        saveBtnText.innerText = `💾 Lưu (${activeCameraForEditor})`;
+      }
+
+      renderExistingRulesListUI();
+      redrawOnScreenCanvas();
+      updateDrawStatusHint();
+    }
+
     async function deleteOnScreenRule(ruleId) {
       if (!confirm('Bạn có chắc muốn xóa luật này khỏi camera?')) return;
+      if (currentEditingRuleId === ruleId) {
+        cancelEditingRule();
+      }
       try {
         const res = await fetch(`/api/cameras/${activeCameraForEditor}/rules/${ruleId}`, { method: 'DELETE' });
         if (res.ok) {
@@ -2220,33 +2400,38 @@
       }
 
       const geom = onScreenDrawnPoints.map(p => [parseFloat(p.x.toFixed(4)), parseFloat(p.y.toFixed(4))]);
+      const dwellVal = parseFloat(document.getElementById('onScreenRuleDwell').value) || 10.0;
 
       const payload = {
         name: roiName,
         rule_type: ruleType,
         geometry_json: JSON.stringify(geom),
         direction: document.getElementById('onScreenRuleDirection').value || 'both',
-        dwell_threshold_sec: parseFloat(document.getElementById('onScreenRuleDwell').value) || 10.0,
+        dwell_threshold_sec: dwellVal,
         is_active: 1
       };
 
+      const isUpdating = Boolean(currentEditingRuleId);
+      const url = isUpdating
+        ? `/api/cameras/${activeCameraForEditor}/rules/${currentEditingRuleId}`
+        : `/api/cameras/${activeCameraForEditor}/rules`;
+      const method = isUpdating ? 'PUT' : 'POST';
+
       try {
-        const res = await fetch(`/api/cameras/${activeCameraForEditor}/rules`, {
-          method: 'POST',
+        const res = await fetch(url, {
+          method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
         if (res.ok) {
-          onScreenDrawnPoints = [];
-          isPolygonClosed = false;
-          currentHoverPoint = null;
-          if (roiNameInput) roiNameInput.value = '';
+          const wasEditing = currentEditingRuleId;
+          cancelEditingRule();
 
           const camName = getCameraDisplayName(activeCameraForEditor);
           const toast = document.getElementById('onScreenRuleToast');
           if (toast) {
-            toast.innerText = `✓ Đã lưu luật cho ${camName}!`;
+            toast.innerText = wasEditing ? `✓ Đã cập nhật ROI thành công!` : `✓ Đã lưu luật cho ${camName}!`;
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3500);
           }
