@@ -56,15 +56,26 @@ def create_camera(payload: CameraCreateRequest):
 
 @router.get("/list-videos")
 def list_available_videos() -> List[Dict[str, Any]]:
-    """Scan and return list of video files available in data/videos and data/test_videos."""
+    """Scan and return list of video files available in project root, data/videos, and data/test_videos."""
     video_extensions = {".mp4", ".avi", ".mkv", ".mov"}
-    search_dirs = [Path("data/videos"), Path("data/test_videos"), Path("data")]
+    search_dirs = [Path("."), Path("data/videos"), Path("data/test_videos"), Path("data")]
     results = []
     seen_paths = set()
 
     for d in search_dirs:
         if d.is_dir():
-            for root, _, files in os.walk(d):
+            for root, dirs, files in os.walk(d):
+                # Never traverse into virtualenvs, git, node_modules, logs or brain
+                dirs[:] = [
+                    sub for sub in dirs
+                    if not sub.startswith(".") and sub.lower() not in (
+                        "venv", "env", ".venv", "node_modules", "brain", "__pycache__", "logs", "docs", "tests"
+                    )
+                ]
+                # If checking root, only inspect root directory itself, don't recurse through all deep subdirs
+                if d == Path(".") and root != ".":
+                    continue
+
                 for f in files:
                     ext = Path(f).suffix.lower()
                     if ext in video_extensions:
