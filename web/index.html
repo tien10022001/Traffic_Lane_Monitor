@@ -39,6 +39,16 @@
     ::-webkit-scrollbar-thumb { background: #23304a; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
     .canvas-container { position: relative; display: inline-block; }
+    /* Hide number input spinners/arrows across Chrome, Safari, Edge, Firefox */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
   </style>
 </head>
 <body class="bg-darkbg text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans antialiased select-none">
@@ -269,7 +279,7 @@
               <div class="flex items-center bg-darkpanel border border-slate-700 rounded px-1.5 py-0.5 shadow-inner">
                 <input type="number" id="onScreenDwellInput" min="0.5" max="120.0" step="0.5" value="10.0"
                        oninput="syncDwellFromInput(this.value)"
-                       class="w-11 bg-transparent text-center font-bold text-amber-400 font-mono text-[11px] outline-none">
+                       class="w-10 bg-transparent text-center font-bold text-amber-400 font-mono text-[11px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                 <span class="text-slate-400 text-[10px] ml-0.5">s</span>
               </div>
               <button type="button" onclick="adjustDwell(1)" class="w-6 h-6 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-xs select-none transition shadow-sm" title="Tăng 1 giây">+</button>
