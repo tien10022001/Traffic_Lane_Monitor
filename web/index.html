@@ -902,7 +902,8 @@
 
     function selectCamera(camId) {
       currentActiveCamId = camId;
-      if (!primaryFocusCamId) primaryFocusCamId = camId;
+      primaryFocusCamId = camId;
+      activeCameraForEditor = camId;
       const cam = camerasData.find(c => c.id === camId);
       if (cam) {
         const camLabel = getCameraDisplayName(cam.id);
@@ -923,9 +924,7 @@
       if (currentLayoutMode !== 'single') {
         renderViewport();
       }
-      if (isOnScreenDrawActive) {
-        bindOnScreenDrawToCamera(camId);
-      }
+      bindOnScreenDrawToCamera(camId, false);
     }
 
     function openEditCameraModal(camId) {
@@ -1054,12 +1053,7 @@
     }
 
     function onCameraTileClick(camId) {
-      currentActiveCamId = camId;
-      if (currentLayoutMode === 'focus_2' || currentLayoutMode === 'focus_3') {
-        primaryFocusCamId = camId;
-      }
-      bindOnScreenDrawToCamera(camId);
-      renderViewport();
+      selectCamera(camId);
     }
 
     function createCameraTileHtml(cam, isFocus = false, labelPrefix = '') {
@@ -1174,12 +1168,12 @@
       }
       // 2. SPLIT 2 (50/50 Columns)
       else if (currentLayoutMode === 'split_2') {
-        const cam1 = focusCam;
-        const cam2 = otherCams[0] || focusCam;
+        const cam1 = activeCams[0];
+        const cam2 = activeCams[1] || activeCams[0];
         container.innerHTML = `
           <div class="w-full h-full grid grid-cols-2 gap-1.5 p-1 bg-black">
-            ${createCameraTileHtml(cam1, true, 'Cam 1')}
-            ${createCameraTileHtml(cam2, false, 'Cam 2')}
+            ${createCameraTileHtml(cam1, false)}
+            ${createCameraTileHtml(cam2, false)}
           </div>
         `;
       }
@@ -1752,8 +1746,11 @@
       return `CAM ${name}`.toUpperCase();
     }
 
-    async function bindOnScreenDrawToCamera(camId) {
+    async function bindOnScreenDrawToCamera(camId, syncTabs = true) {
       activeCameraForEditor = camId;
+      currentActiveCamId = camId;
+      primaryFocusCamId = camId;
+
       if (currentEditingRuleId) {
         cancelEditingRule();
       }
@@ -1762,10 +1759,6 @@
       draggingVertexIdx = -1;
       hoveredVertexIdx = -1;
       currentHoverPoint = null;
-
-      if (currentActiveCamId !== camId) {
-        selectCamera(camId);
-      }
 
       const badge = document.getElementById('onScreenCamBadge');
       if (badge) {
@@ -1794,17 +1787,16 @@
       syncCanvasDimensions();
       redrawOnScreenCanvas();
       updateDrawStatusHint();
+
+      if (syncTabs) {
+        renderCameraTabs();
+      }
     }
 
     function onDrawerCamSelectChange(camIdStr) {
       const camId = parseInt(camIdStr, 10);
       if (!isNaN(camId)) {
-        if (currentLayoutMode !== 'single') {
-          selectLayout('single', camId);
-        } else {
-          selectCamera(camId);
-          bindOnScreenDrawToCamera(camId);
-        }
+        selectCamera(camId);
       }
     }
 
