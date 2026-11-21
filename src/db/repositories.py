@@ -334,11 +334,17 @@ class ViolationRepository:
             clauses.append("review_status = ?")
             params.append(review_status)
         if date_from:
+            df = date_from.replace("T", " ").strip()
+            if len(df) == 16:
+                df += ":00"
             clauses.append("created_at >= ?")
-            params.append(date_from)
+            params.append(df)
         if date_to:
+            dt = date_to.replace("T", " ").strip()
+            if len(dt) == 16:
+                dt += ":59"
             clauses.append("created_at <= ?")
-            params.append(date_to)
+            params.append(dt)
 
         where_clause = f" WHERE {' AND '.join(clauses)}" if clauses else ""
 

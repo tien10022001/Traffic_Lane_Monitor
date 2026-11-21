@@ -102,8 +102,8 @@
       </div>
 
       <!-- Quick Action Buttons -->
-      <button onclick="openViolationsHistoryModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder font-medium text-xs flex items-center space-x-1 transition" title="Xem lịch sử và xuất dữ liệu Active Learning">
-        <span>Lịch Sử & Xuất ZIP</span>
+      <button onclick="openViolationsHistoryModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder font-medium text-xs flex items-center space-x-1 transition cursor-pointer" title="Xem lịch sử vi phạm">
+        <span>Lịch Sử</span>
       </button>
     </div>
   </header>
@@ -774,29 +774,31 @@
     </div>
   </div>
 
-  <!-- MODAL: VIOLATIONS HISTORY & ACTIVE LEARNING EXPORT TABLE -->
-  <div id="historyModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-6xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
-      <div class="flex justify-between items-center pb-3 border-b border-darkborder">
+  <!-- MODAL: VIOLATIONS HISTORY & EXPORT PDF TABLE -->
+  <div id="historyModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-6xl h-[86vh] min-h-[560px] p-4 sm:p-5 shadow-2xl flex flex-col">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center pb-3 border-b border-darkborder shrink-0">
         <div>
           <h3 class="font-bold text-base text-white flex items-center space-x-2">
-            <span>Quản Lý Lịch Sử Vi Phạm & Dữ Liệu Huấn Luyện (Active Learning)</span>
+            <span>Quản Lý Lịch Sử Vi Phạm</span>
           </h3>
-          <p class="text-xs text-slate-400">Kiểm tra toàn bộ hồ sơ vi phạm, lọc theo ngày/loại xe, và tải về file ZIP chuẩn định dạng YOLO để huấn luyện lại mô hình.</p>
+          <p class="text-xs text-slate-400">Tra cứu, đối soát toàn bộ hồ sơ vi phạm giao thông và trích xuất báo cáo biên bản.</p>
         </div>
         <div class="flex items-center space-x-2">
-          <a href="/api/violations/export-feedback/download?review_status=confirmed" download class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg font-medium flex items-center space-x-1.5 transition shadow">
-            <span>Xuất Feedback ZIP (YOLO)</span>
-          </a>
-          <button onclick="closeViolationsHistoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+          <button type="button" onclick="exportViolationsPDF()" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs rounded-lg font-semibold flex items-center space-x-1.5 transition shadow cursor-pointer" title="In hoặc lưu file PDF biên bản báo cáo vi phạm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Xuất PDF</span>
+          </button>
+          <button onclick="closeViolationsHistoryModal()" class="text-slate-400 hover:text-white text-xl cursor-pointer ml-1">&times;</button>
         </div>
       </div>
 
-      <!-- Filters Bar -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-darkbg/50 p-3 rounded-lg border border-darkborder/50 my-3 shrink-0">
+      <!-- Filters Bar (Bổ sung trường ngày giờ thời gian) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs bg-darkbg/50 p-2.5 sm:p-3 rounded-lg border border-darkborder/50 my-3 shrink-0">
         <div>
-          <label class="block text-slate-400 mb-1">Loại Vi Phạm</label>
-          <select id="filterType" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+          <label class="block text-slate-400 mb-1 text-[11px]">Loại Vi Phạm</label>
+          <select id="filterType" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
             <option value="">Tất cả</option>
             <option value="no_parking">Dừng đỗ trái phép</option>
             <option value="sidewalk_encroachment">Lấn chiếm vỉa hè</option>
@@ -804,34 +806,44 @@
           </select>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Loại Phương Tiện</label>
-          <select id="filterClass" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+          <label class="block text-slate-400 mb-1 text-[11px]">Loại Phương Tiện</label>
+          <select id="filterClass" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
             <option value="">Tất cả 8 nhóm</option>
-            <option value="car">Car (Ô tô con)</option>
-            <option value="motorcycle">Motorcycle (Xe máy)</option>
-            <option value="bicycle">Bicycle (Xe đạp)</option>
-            <option value="bus">Bus (Xe buýt)</option>
-            <option value="truck">Truck (Xe tải)</option>
-            <option value="tricycle">Tricycle (Xe ba gác)</option>
+            <option value="car">Ô tô (car)</option>
+            <option value="motorcycle">Xe máy (motorcycle)</option>
+            <option value="bicycle">Xe đạp (bicycle)</option>
+            <option value="bus">Xe buýt (bus)</option>
+            <option value="truck">Xe tải (truck)</option>
+            <option value="tricycle">Xe ba gác (tricycle)</option>
+            <option value="ambulance">Xe cứu thương</option>
+            <option value="fire_truck">Xe cứu hỏa</option>
           </select>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Trạng Thái Duyệt</label>
-          <select id="filterStatus" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+          <label class="block text-slate-400 mb-1 text-[11px]">Trạng Thái</label>
+          <select id="filterStatus" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
             <option value="">Tất cả</option>
             <option value="pending">Chờ duyệt</option>
-            <option value="confirmed">Đã duyệt (Confirmed)</option>
+            <option value="confirmed">Đã duyệt</option>
             <option value="false_positive">Báo sai</option>
           </select>
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Tìm Kiếm Biển Số</label>
-          <input type="text" id="searchPlate" placeholder="VD: 51K-732..." oninput="debouncedHistoryFilter()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+          <label class="block text-slate-400 mb-1 text-[11px]">Từ ngày giờ</label>
+          <input type="datetime-local" id="filterDateFrom" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-slate-200 text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 text-[11px]">Đến ngày giờ</label>
+          <input type="datetime-local" id="filterDateTo" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-slate-200 text-xs outline-none">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 text-[11px]">Tìm Kiếm Biển Số</label>
+          <input type="text" id="searchPlate" placeholder="VD: 92A-005..." oninput="debouncedHistoryFilter()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 text-xs outline-none">
         </div>
       </div>
 
-      <!-- Table Container -->
-      <div class="flex-1 min-h-0 overflow-y-auto border border-darkborder rounded-lg">
+      <!-- Table Container (Khung cố định, cuộn nội dung bên trong) -->
+      <div class="flex-1 min-h-0 overflow-y-auto border border-darkborder rounded-lg bg-darkbg/30">
         <table class="w-full text-left text-xs text-slate-300">
           <thead class="bg-darkpanel text-slate-400 uppercase text-[11px] border-b border-darkborder sticky top-0 z-10">
             <tr>
@@ -848,7 +860,7 @@
           </thead>
           <tbody id="historyTableBody" class="divide-y divide-darkborder">
             <tr>
-              <td colspan="9" class="py-6 text-center text-slate-500">Đang tải dữ liệu...</td>
+              <td colspan="9" class="py-12 text-center text-slate-500">Đang tải dữ liệu...</td>
             </tr>
           </tbody>
         </table>
@@ -858,8 +870,8 @@
       <div class="flex items-center justify-between text-xs text-slate-400 pt-3 shrink-0">
         <div>Hiển thị <span id="pageInfo">0 - 0 / 0</span> bản ghi</div>
         <div class="flex space-x-2">
-          <button id="prevPageBtn" onclick="changeHistoryPage(-1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40">Trang trước</button>
-          <button id="nextPageBtn" onclick="changeHistoryPage(1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40">Trang sau</button>
+          <button id="prevPageBtn" onclick="changeHistoryPage(-1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40 hover:bg-slate-800 transition">Trang trước</button>
+          <button id="nextPageBtn" onclick="changeHistoryPage(1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40 hover:bg-slate-800 transition">Trang sau</button>
         </div>
       </div>
     </div>
@@ -3344,7 +3356,9 @@
       img.src = `/api/violations/${activeViolationForModal}/image/${type}?t=${Date.now()}`;
     }
 
-    // 9. MODAL: FULL VIOLATIONS HISTORY & EXPORT ACTIVE LEARNING
+    // 9. MODAL: FULL VIOLATIONS HISTORY & EXPORT PDF
+    let currentHistoryItems = [];
+
     function openViolationsHistoryModal() {
       document.getElementById('historyModal').classList.remove('hidden');
       fetchHistoryViolations();
@@ -3364,17 +3378,22 @@
       const type = document.getElementById('filterType').value;
       const vclass = document.getElementById('filterClass').value;
       const status = document.getElementById('filterStatus').value;
+      let dateFrom = document.getElementById('filterDateFrom')?.value || '';
+      let dateTo = document.getElementById('filterDateTo')?.value || '';
 
       let url = `/api/violations?page=${historyPage}&page_size=20`;
       if (type) url += `&violation_type=${encodeURIComponent(type)}`;
       if (vclass) url += `&vehicle_class_name=${encodeURIComponent(vclass)}`;
       if (status) url += `&review_status=${encodeURIComponent(status)}`;
+      if (dateFrom) url += `&date_from=${encodeURIComponent(dateFrom)}`;
+      if (dateTo) url += `&date_to=${encodeURIComponent(dateTo)}`;
 
       try {
         const res = await fetch(url);
         const data = await res.json();
         const items = data.items || [];
         historyTotalPages = data.total_pages || 1;
+        currentHistoryItems = items;
 
         const start = (historyPage - 1) * 20 + 1;
         const end = Math.min(data.total, historyPage * 20);
@@ -3389,36 +3408,186 @@
         if (search) filtered = filtered.filter(v => (v.plate_number || '').toUpperCase().includes(search));
 
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-500">Không có dữ liệu phù hợp.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-slate-500">Không có dữ liệu phù hợp.</td></tr>`;
           return;
         }
 
         tbody.innerHTML = filtered.map(v => {
           const timeStr = new Date(v.created_at).toLocaleString('vi-VN');
+          const camDisplayName = getCameraDisplayName(v.camera_id);
+          let typeLabel = v.violation_type;
+          if (v.violation_type === 'no_parking') typeLabel = 'Dừng đỗ trái phép';
+          else if (v.violation_type === 'sidewalk_encroachment') typeLabel = 'Lấn chiếm vỉa hè';
+          else if (v.violation_type === 'wrong_lane' || v.violation_type === 'lane_roi') typeLabel = 'Đi sai làn';
+
           return `
             <tr class="hover:bg-slate-800/40 transition">
               <td class="py-2.5 px-3"><span class="font-bold text-white">#${v.id}</span><span class="block text-[10px] text-slate-400">${timeStr}</span></td>
-              <td class="py-2.5 px-3">${getCameraDisplayName(v.camera_id)}</td>
-              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-medium">${v.violation_type}</span></td>
+              <td class="py-2.5 px-3 text-slate-200">${camDisplayName}</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-medium">${typeLabel}</span></td>
               <td class="py-2.5 px-3"><span class="font-semibold text-white">${v.vehicle_class_name}</span></td>
-              <td class="py-2.5 px-3 text-amber-400 font-medium">${v.dwell_duration_sec > 0 ? v.dwell_duration_sec + 's' : '-'}</td>
+              <td class="py-2.5 px-3 text-amber-400 font-medium">${v.dwell_duration_sec > 0 ? parseFloat(v.dwell_duration_sec).toFixed(1) + 's' : '-'}</td>
               <td class="py-2.5 px-3"><span class="font-mono font-bold text-amber-300">${v.plate_number || 'N/A'}</span></td>
               <td class="py-2.5 px-3">
-                <img src="/api/violations/${v.id}/image/crop" onclick="openImageModal(${v.id}, 'crop')" class="w-10 h-7 object-cover rounded border border-darkborder cursor-pointer hover:scale-110 transition" title="Xem ảnh">
+                <img src="/api/violations/${v.id}/image/crop" onclick="openImageModal(${v.id}, 'crop')" class="w-10 h-7 object-cover rounded border border-darkborder cursor-pointer hover:scale-110 transition shadow" title="Xem ảnh">
               </td>
               <td class="py-2.5 px-3">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold ${v.review_status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300' : (v.review_status === 'false_positive' ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-700 text-slate-300')}">
-                  ${v.review_status}
+                  ${v.review_status === 'confirmed' ? 'ĐÃ DUYỆT' : (v.review_status === 'false_positive' ? 'BÁO SAI' : 'CHỜ DUYỆT')}
                 </span>
               </td>
               <td class="py-2.5 px-3 text-right">
-                <button onclick="handleQuickReview(${v.id}, 'confirmed'); fetchHistoryViolations();" class="px-2 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[11px] font-medium mr-1">Duyệt</button>
-                <button onclick="handleQuickReview(${v.id}, 'false_positive'); fetchHistoryViolations();" class="px-2 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded text-[11px] font-medium">Sai</button>
+                <button onclick="handleQuickReview(${v.id}, 'confirmed'); fetchHistoryViolations();" class="px-2 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[11px] font-medium mr-1 transition cursor-pointer">Duyệt</button>
+                <button onclick="handleQuickReview(${v.id}, 'false_positive'); fetchHistoryViolations();" class="px-2 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded text-[11px] font-medium transition cursor-pointer">Sai</button>
               </td>
             </tr>
           `;
         }).join('');
       } catch (e) { console.error(e); }
+    }
+
+    function exportViolationsPDF() {
+      const items = currentHistoryItems || [];
+      if (items.length === 0) {
+        alert('Không có dữ liệu vi phạm để xuất PDF.');
+        return;
+      }
+
+      const dateFromVal = document.getElementById('filterDateFrom')?.value || 'Tất cả';
+      const dateToVal = document.getElementById('filterDateTo')?.value || 'Hiện tại';
+      const nowStr = new Date().toLocaleString('vi-VN');
+
+      const rowsHtml = items.map((v, idx) => {
+        const timeStr = new Date(v.created_at).toLocaleString('vi-VN');
+        const camName = getCameraDisplayName(v.camera_id) || `Cam ${v.camera_id}`;
+        let typeName = v.violation_type;
+        if (v.violation_type === 'no_parking') typeName = 'Dừng đỗ trái phép';
+        else if (v.violation_type === 'sidewalk_encroachment') typeName = 'Lấn chiếm vỉa hè';
+        else if (v.violation_type === 'wrong_lane' || v.violation_type === 'lane_roi') typeName = 'Đi sai làn';
+
+        let statusText = 'Chờ duyệt';
+        if (v.review_status === 'confirmed') statusText = 'Đã duyệt';
+        else if (v.review_status === 'false_positive') statusText = 'Báo sai';
+
+        return `
+          <tr>
+            <td style="text-align: center; padding: 6px 4px; border: 1px solid #333;">${idx + 1}</td>
+            <td style="text-align: center; padding: 6px 4px; border: 1px solid #333; font-weight: bold;">#${v.id}</td>
+            <td style="padding: 6px 6px; border: 1px solid #333;">${camName}</td>
+            <td style="padding: 6px 6px; border: 1px solid #333; font-weight: 600;">${typeName}</td>
+            <td style="text-align: center; padding: 6px 4px; border: 1px solid #333;">${v.vehicle_class_name}</td>
+            <td style="text-align: center; padding: 6px 6px; border: 1px solid #333; font-size: 11px;">${timeStr}</td>
+            <td style="text-align: center; padding: 6px 6px; border: 1px solid #333; font-family: monospace; font-weight: bold; font-size: 12px;">${v.plate_number || 'N/A'}</td>
+            <td style="text-align: center; padding: 4px; border: 1px solid #333;">
+              <img src="/api/violations/${v.id}/image/crop" style="width: 70px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid #666;" onerror="this.style.display='none'">
+            </td>
+            <td style="text-align: center; padding: 6px 4px; border: 1px solid #333; font-weight: 500;">${statusText}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const printHtml = `
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <title>Báo cáo vi phạm giao thông - ${nowStr}</title>
+          <style>
+            @page { size: A4 landscape; margin: 12mm; }
+            body { font-family: 'Times New Roman', Times, serif; font-size: 12px; color: #111; margin: 0; padding: 15px; }
+            .header-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+            .header-table td { vertical-align: top; }
+            .title { text-align: center; font-size: 18px; font-weight: bold; text-transform: uppercase; margin: 15px 0 5px 0; }
+            .subtitle { text-align: center; font-size: 11px; font-style: italic; margin-bottom: 15px; }
+            .filter-info { margin-bottom: 10px; font-size: 11px; }
+            table.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+            table.data-table th { background-color: #f2f2f2; border: 1px solid #333; padding: 6px 6px; font-weight: bold; }
+            .footer-sign { width: 100%; margin-top: 35px; border-collapse: collapse; }
+            .footer-sign td { width: 50%; text-align: center; vertical-align: top; }
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          <table class="header-table">
+            <tr>
+              <td style="text-align: center; width: 45%;">
+                <strong>CÔNG AN TP HÀ NỘI</strong><br>
+                <strong>HỆ THỐNG GIÁM SÁT GIAO THÔNG</strong><br>
+                <span>Số: ...... /BC-GT</span>
+              </td>
+              <td style="text-align: center; width: 55%;">
+                <strong>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</strong><br>
+                <strong>Độc lập - Tự do - Hạnh phúc</strong><br>
+                <div style="border-bottom: 1px solid #333; width: 140px; margin: 4px auto;"></div>
+                <span style="font-size: 11px; font-style: italic;">Ngày ${new Date().getDate()} tháng ${new Date().getMonth() + 1} năm ${new Date().getFullYear()}</span>
+              </td>
+            </tr>
+          </table>
+
+          <div class="title">BÁO CÁO DANH SÁCH PHƯƠNG TIỆN VI PHẠM GIAO THÔNG</div>
+          <div class="subtitle">(Trích xuất tự động từ hệ thống Camera giám sát làn đường và đỗ xe)</div>
+
+          <div class="filter-info">
+            <strong>Khoảng thời gian:</strong> Từ <em>${dateFromVal}</em> đến <em>${dateToVal}</em> &nbsp;|&nbsp; 
+            <strong>Tổng số vụ việc:</strong> ${items.length} &nbsp;|&nbsp; 
+            <strong>Thời điểm trích xuất:</strong> ${nowStr}
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 30px;">STT</th>
+                <th style="width: 45px;">Mã</th>
+                <th>Camera / Vị trí</th>
+                <th>Hành vi vi phạm</th>
+                <th style="width: 65px;">Loại xe</th>
+                <th style="width: 125px;">Thời gian</th>
+                <th style="width: 90px;">Biển số</th>
+                <th style="width: 80px;">Hình ảnh</th>
+                <th style="width: 75px;">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <table class="footer-sign">
+            <tr>
+              <td>
+                <strong>NGƯỜI LẬP BÁO CÁO</strong><br>
+                <span style="font-size: 10px; font-style: italic;">(Ký, ghi rõ họ tên)</span>
+                <div style="height: 60px;"></div>
+              </td>
+              <td>
+                <strong>CHỈ HUY CA TRỰC GIÁM SÁT</strong><br>
+                <span style="font-size: 10px; font-style: italic;">(Ký, đóng dấu)</span>
+                <div style="height: 60px;"></div>
+              </td>
+            </tr>
+          </table>
+
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 400);
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.open();
+        printWin.document.write(printHtml);
+        printWin.document.close();
+      } else {
+        alert('Trình duyệt chặn mở cửa sổ mới. Vui lòng cho phép popup để xuất PDF.');
+      }
     }
 
     function changeHistoryPage(delta) {
