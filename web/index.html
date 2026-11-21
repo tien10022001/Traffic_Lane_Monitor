@@ -2002,9 +2002,8 @@
                        class="w-full px-2 py-0.5 rounded bg-[#0b1329] border border-blue-500/40 hover:border-amber-400 focus:border-emerald-400 focus:bg-[#060c1d] focus:outline-none font-mono font-extrabold tracking-widest text-[11px] ${v.plate_number ? 'text-white' : 'text-slate-400 italic placeholder-slate-500'} shadow-inner text-center cursor-text transition"
                        title="Click vào đây để nhập tay hoặc sửa biển số">
               </div>
-              <span class="px-2 py-0.5 rounded text-[9.5px] font-bold uppercase shadow shrink-0 ${
-                isConfirmed ? 'bg-emerald-600 text-white' : (isFalsePositive ? 'bg-rose-700 text-white' : 'bg-[#dc2626] text-white')
-              }">
+              <span class="px-2 py-0.5 rounded text-[9.5px] font-bold uppercase shadow shrink-0 ${isConfirmed ? 'bg-emerald-600 text-white' : (isFalsePositive ? 'bg-rose-700 text-white' : 'bg-[#dc2626] text-white')
+          }">
                 ${isConfirmed ? 'ĐÃ DUYỆT' : (isFalsePositive ? 'BÁO SAI' : 'ĐÃ GHI NHẬN')}
               </span>
             </div>
@@ -3866,8 +3865,6 @@
           </tr>
         `;
       }).join('');
-    }
-      } catch (e) { console.error(e); }
     }
 
     function exportViolationsPDF() {
