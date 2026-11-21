@@ -406,12 +406,12 @@
           </h2>
         </div>
         <div class="flex items-center space-x-1.5">
-          <span id="liveViolationCount" class="px-2.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-white font-mono font-bold text-xs shadow-inner">0</span>
-          <button onclick="refreshEventLog()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-[11px] font-medium transition flex items-center space-x-1" title="Làm mới danh sách sự kiện vi phạm">
-            <span>Làm mới</span>
+          <button type="button" id="pendingViolationsBtn" onclick="scrollToPendingViolation()" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 hover:bg-slate-800 text-slate-300 hover:text-amber-300 text-[11px] shadow-inner transition flex items-center space-x-1 cursor-pointer select-none group" title="Bấm để nhảy tới cảnh báo chưa xử lý">
+            <span>(Chưa xử lý: <span id="liveViolationCount" class="font-bold text-amber-400 font-mono">0</span>)</span>
           </button>
-          <button onclick="clearEventLogUI()" class="px-1.5 py-0.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-white border border-rose-800/40 rounded text-[11px] font-medium transition flex items-center space-x-1" title="Xóa màn hình log hiện tại">
-            <span>Xóa log</span>
+          <button type="button" onclick="refreshEventLog()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-[11px] font-medium transition flex items-center space-x-1" title="Làm mới (Xóa màn hình log hiện tại)">
+            <span id="refreshLogIcon" class="inline-block transition-transform duration-300">↻</span>
+            <span>Làm mới</span>
           </button>
         </div>
       </div>
@@ -1335,12 +1335,55 @@
     }
 
     // 4. REALTIME VIOLATION CARDS (MATCHING REFERENCE IMAGE)
+    let pendingScrollIndex = 0;
+
+    async function scrollToPendingViolation() {
+      const container = document.getElementById('liveViolationsFeed');
+      if (!container) return;
+
+      // Nếu danh sách trên màn hình đang trống (ví dụ vừa bấm Làm mới), tải lại dữ liệu mới nhất
+      if (!liveViolations || liveViolations.length === 0) {
+        await fetchLiveViolations();
+      }
+
+      const allCards = Array.from(container.querySelectorAll('[id^="vCard_"]'));
+      const unhandledCards = allCards.filter(card => {
+        const vId = parseInt(card.id.replace('vCard_', ''), 10);
+        const v = liveViolations.find(item => item.id === vId);
+        return v && v.review_status !== 'confirmed' && v.review_status !== 'false_positive';
+      });
+
+      if (unhandledCards.length === 0) {
+        return;
+      }
+
+      if (pendingScrollIndex >= unhandledCards.length) {
+        pendingScrollIndex = 0;
+      }
+
+      const target = unhandledCards[pendingScrollIndex];
+      pendingScrollIndex = (pendingScrollIndex + 1) % unhandledCards.length;
+
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Hiệu ứng viền phát sáng màu vàng nổi bật để người dùng nhận diện ngay
+      target.classList.remove('ring-4', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'transition-all', 'duration-300');
+      void target.offsetWidth;
+      target.classList.add('ring-4', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'transition-all', 'duration-300');
+      setTimeout(() => {
+        target.classList.remove('ring-4', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900');
+      }, 1800);
+    }
+
     async function fetchLiveViolations() {
       try {
         const res = await fetch('/api/violations?page=1&page_size=25');
         const data = await res.json();
         liveViolations = data.items || [];
-        document.getElementById('liveViolationCount').innerText = data.total || liveViolations.length;
+        const countBadge = document.getElementById('liveViolationCount');
+        if (countBadge) {
+          countBadge.innerText = (data.pending_total !== undefined) ? data.pending_total : (data.total || liveViolations.length);
+        }
         renderLiveViolations();
       } catch (e) {
         console.error('Error fetching violations:', e);
@@ -1350,25 +1393,21 @@
     async function refreshEventLog() {
       const icon = document.getElementById('refreshLogIcon');
       if (icon) icon.classList.add('rotate-180');
+
+      // Bấm làm mới = Xóa log hiện tại trên màn hình
+      liveViolations = [];
+      const countBadge = document.getElementById('liveViolationCount');
+      if (countBadge) countBadge.innerText = '0';
+      renderLiveViolations();
+
       try {
-        await fetchLiveViolations();
+        await fetch('/api/violations/reset-feed', { method: 'POST' });
+      } catch (e) {
+        console.error('Error resetting feed cache:', e);
       } finally {
         setTimeout(() => {
           if (icon) icon.classList.remove('rotate-180');
         }, 350);
-      }
-    }
-
-    async function clearEventLogUI() {
-      if (confirm('Làm mới bảng log vi phạm trên màn hình? (Dữ liệu lịch sử trong cơ sở dữ liệu vẫn được bảo lưu)')) {
-        liveViolations = [];
-        document.getElementById('liveViolationCount').innerText = '0';
-        renderLiveViolations();
-        try {
-          await fetch('/api/violations/reset-feed', { method: 'POST' });
-        } catch (e) {
-          console.error('Error resetting feed cache:', e);
-        }
       }
     }
 
@@ -1587,7 +1626,17 @@
           body: JSON.stringify({ review_status: status })
         });
         const v = liveViolations.find(item => item.id === violationId);
-        if (v) v.review_status = status;
+        if (v) {
+          const wasPending = (!v.review_status || v.review_status === 'pending');
+          v.review_status = status;
+          if (wasPending) {
+            const countBadge = document.getElementById('liveViolationCount');
+            if (countBadge) {
+              const cur = parseInt(countBadge.innerText, 10) || 0;
+              if (cur > 0) countBadge.innerText = cur - 1;
+            }
+          }
+        }
         renderLiveViolations();
       } catch (e) { console.error(e); }
     }

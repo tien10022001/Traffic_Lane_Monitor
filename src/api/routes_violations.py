@@ -42,9 +42,15 @@ def list_violations(
         date_from=date_from,
         date_to=date_to,
     )
+    if review_status == "pending":
+        pending_total = total
+    else:
+        _, pending_total = repo.get_all(review_status="pending", page_size=1)
+
     return {
         "items": items,
         "total": total,
+        "pending_total": pending_total,
         "page": page,
         "page_size": page_size,
         "total_pages": (total + page_size - 1) // page_size if total > 0 else 1,
