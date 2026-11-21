@@ -15,7 +15,7 @@ from src.core.config_loader import get_config
 from src.core.logger import logger
 from src.core.roi_renderer import ROIRenderer
 from src.db.repositories import CameraRepository, RuleRepository
-from src.rules.rule_engine import RuleEngine, ViolationEvent
+from src.rules.rule_engine import RuleEngine, ViolationEvent, is_vehicle_in_roi
 
 
 @dataclass
@@ -294,12 +294,18 @@ class CameraManager:
             ctx.smoother.prune(active_ids)
             ctx.best_shot.prune(active_ids)
 
-            # 4. Evaluate rules & violations
-            fps = ctx.reader.current_fps or 15.0
-            violations = ctx.rule_engine.evaluate(tracked, (frame_h, frame_w), fps=fps)
+            # Filter relevant vehicles: only vehicles inside active ROIs and matching selected target classes
+            relevant_tracked = [
+                v for v in tracked
+                if is_vehicle_in_roi(v, ctx.rule_engine.rules, (frame_h, frame_w))
+            ]
 
-            # 5. Render overlays on frame
-            annotated_frame = self._render_annotations(frame, tracked, ctx.rule_engine, fps, exempt_classes)
+            # 4. Evaluate rules & violations (only for relevant vehicles)
+            fps = ctx.reader.current_fps or 15.0
+            violations = ctx.rule_engine.evaluate(relevant_tracked, (frame_h, frame_w), fps=fps)
+
+            # 5. Render overlays on frame (only for relevant vehicles inside ROI with selected classes)
+            annotated_frame = self._render_annotations(frame, relevant_tracked, ctx.rule_engine, fps, exempt_classes)
 
             # Dispatch violations
             for event in violations:

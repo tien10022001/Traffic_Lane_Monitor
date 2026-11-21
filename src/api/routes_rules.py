@@ -63,7 +63,11 @@ def create_rule(camera_id: int, payload: RuleCreateRequest):
 def update_rule(camera_id: int, rule_id: int, payload: RuleUpdateRequest):
     db_path = get_config().paths.db_path
     repo = RuleRepository(db_path)
-    updated = repo.update(
+    existing = repo.get_by_id(rule_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Rule not found")
+
+    repo.update(
         rule_id=rule_id,
         name=payload.name,
         rule_type=payload.rule_type,
@@ -74,8 +78,6 @@ def update_rule(camera_id: int, rule_id: int, payload: RuleUpdateRequest):
         dwell_threshold_sec=payload.dwell_threshold_sec,
         is_active=payload.is_active,
     )
-    if not updated:
-        raise HTTPException(status_code=404, detail="Rule not found or no changes made")
 
     # Hot-reload in camera manager
     manager = CameraManager.get_instance(db_path)

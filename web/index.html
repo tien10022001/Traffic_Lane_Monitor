@@ -227,35 +227,37 @@
         </div>
 
         <!-- DOCKED COMPACT ROI & RULE PANEL (Side-by-side, always visible, sleek & minimal text) -->
-        <div id="onScreenRuleDrawer" class="w-60 shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2.5 text-xs flex flex-col space-y-2 overflow-y-auto shadow-xl">
-          <!-- Drawer Header -->
+        <div id="onScreenRuleDrawer" class="w-60 shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2 text-xs flex flex-col space-y-1.5 overflow-y-auto shadow-xl">
+          <!-- Drawer Header: ROI Title + Pen Toggle Button + Camera Badge -->
           <div class="flex items-center justify-between pb-1 border-b border-darkborder shrink-0">
             <div class="flex items-center space-x-1.5">
               <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
               <span class="font-bold text-white text-[11px] tracking-wide uppercase">ROI</span>
+              <!-- Pen Icon Button: Bấm vào để vẽ/sửa ROI, bấm lần nữa là thoát -->
+              <button type="button" id="roiDrawToggleBtn" onclick="toggleRoiDrawingMode()"
+                      class="w-5 h-5 rounded border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white transition shadow-sm flex items-center justify-center select-none cursor-pointer"
+                      title="Vẽ / Sửa ROI (Bấm để bật hoặc thoát)">
+                <svg id="roiDrawPenIcon" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              </button>
             </div>
-            <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase font-mono">CAM 1</span>
+            <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[8.5px] uppercase font-mono">CAM 1</span>
           </div>
 
-          <!-- Nút Bật/Tắt Chế Độ Vẽ ROI (Nằm ngay trên hàng Cam & Kiểu ROI, không có icon bút) -->
-          <button type="button" id="roiDrawToggleBtn" onclick="toggleRoiDrawingMode()"
-                  class="w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white shadow-sm shrink-0 select-none cursor-pointer"
-                  title="Click để bật/tắt chế độ vẽ và thiết lập ROI">
-            <span id="roiDrawToggleText">Vẽ vùng ROI</span>
-          </button>
-
-          <!-- Vùng chức năng (Mặc định xám màu & vô hiệu hóa, khi bấm logo vẽ mới kích hoạt) -->
-          <div id="roiControlsContainer" class="flex flex-col space-y-2 opacity-40 pointer-events-none filter grayscale select-none transition-all duration-200 shrink-0">
+          <!-- Vùng chức năng (Mặc định xám màu & vô hiệu hóa, khi bấm icon bút mới kích hoạt) -->
+          <div id="roiControlsContainer" class="flex flex-col space-y-1.5 opacity-40 pointer-events-none filter grayscale select-none transition-all duration-200 shrink-0">
             <!-- Camera & Hiển thị ROI hàng ngang gọn gàng -->
-            <div class="grid grid-cols-2 gap-1.5 shrink-0">
+            <div class="grid grid-cols-2 gap-1 shrink-0">
               <div>
-                <label class="block text-slate-400 text-[10px] mb-0.5">Cam</label>
-                <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded px-1.5 py-1 text-amber-300 font-semibold text-[11px] outline-none cursor-pointer">
+                <label class="block text-slate-400 text-[9px] mb-0.5">Cam</label>
+                <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded px-1 py-0.5 text-amber-300 font-semibold text-[10px] outline-none cursor-pointer">
                 </select>
               </div>
               <div>
-                <label class="block text-slate-400 text-[10px] mb-0.5">Kiểu ROI</label>
-                <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()" class="w-full py-1 px-1 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-slate-200 text-[10.5px] font-medium transition truncate flex items-center justify-center shadow-sm" title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
+                <label class="block text-slate-400 text-[9px] mb-0.5">Kiểu ROI</label>
+                <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()" class="w-full py-0.5 px-1 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-slate-200 text-[9.5px] font-medium transition truncate flex items-center justify-center shadow-sm" title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
                   <span id="drawerRoiModeText">Sọc chéo</span>
                 </button>
               </div>
@@ -263,9 +265,9 @@
 
             <!-- Rule Type Select (Luật) -->
             <div class="shrink-0">
-              <label class="block text-slate-400 text-[10px] mb-0.5">Luật *</label>
+              <label class="block text-slate-400 text-[9px] mb-0.5">Luật *</label>
               <select id="onScreenRuleType" onchange="onOnScreenRuleTypeChange()"
-                      class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none focus:border-indigo-500 cursor-pointer">
+                      class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none focus:border-indigo-500 cursor-pointer">
                 <option value="no_parking">Dừng đỗ trái phép</option>
                 <option value="lane_roi">Đi sai làn</option>
                 <option value="sidewalk_encroachment">Lấn chiếm vỉa hè</option>
@@ -276,29 +278,29 @@
             <!-- Compact ROI Region Name -->
             <div class="shrink-0">
               <input type="text" id="onScreenRoiName" placeholder="Tên ROI (VD: ROI 1)"
-                     onchange="if(currentEditingRuleId) saveEditedRuleChanges()"
-                     class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-white text-[11px] outline-none focus:border-indigo-500">
+                      onchange="if(currentEditingRuleId) saveEditedRuleChanges()"
+                      class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none focus:border-indigo-500">
             </div>
 
             <!-- Dwell Time (Ngưỡng giây) -->
-            <div id="onScreenDwellGroup" class="flex items-center justify-between text-[11px] shrink-0">
+            <div id="onScreenDwellGroup" class="flex items-center justify-between text-[10px] shrink-0">
               <span class="text-slate-400 font-medium">Thời gian:</span>
               <div class="flex items-center space-x-1">
-                <button type="button" onclick="adjustDwell(-1)" class="w-6 h-6 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-xs select-none transition shadow-sm" title="Giảm 1 giây">-</button>
-                <div class="flex items-center bg-darkpanel border border-slate-700 rounded px-1.5 py-0.5 shadow-inner">
+                <button type="button" onclick="adjustDwell(-1)" class="w-5 h-5 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-[10px] select-none transition shadow-sm" title="Giảm 1 giây">-</button>
+                <div class="flex items-center bg-darkpanel border border-slate-700 rounded px-1 py-0.2 shadow-inner">
                   <input type="number" id="onScreenDwellInput" min="0.5" max="120.0" step="0.5" value="10.0"
                          oninput="syncDwellFromInput(this.value)"
-                         class="w-10 bg-transparent text-center font-bold text-amber-400 font-mono text-[11px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                  <span class="text-slate-400 text-[10px] ml-0.5">s</span>
+                         class="w-8 bg-transparent text-center font-bold text-amber-400 font-mono text-[10px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                  <span class="text-slate-400 text-[9px] ml-0.5">s</span>
                 </div>
-                <button type="button" onclick="adjustDwell(1)" class="w-6 h-6 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-xs select-none transition shadow-sm" title="Tăng 1 giây">+</button>
+                <button type="button" onclick="adjustDwell(1)" class="w-5 h-5 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-[10px] select-none transition shadow-sm" title="Tăng 1 giây">+</button>
               </div>
             </div>
 
             <!-- Direction (for line crossing) -->
             <div id="onScreenDirectionGroup" class="hidden shrink-0">
-              <label class="block text-slate-400 text-[10px] mb-0.5">Chiều Cắt</label>
-              <select id="onScreenRuleDirection" onchange="if(currentEditingRuleId) saveEditedRuleChanges()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none cursor-pointer">
+              <label class="block text-slate-400 text-[9px] mb-0.5">Chiều Cắt</label>
+              <select id="onScreenRuleDirection" onchange="if(currentEditingRuleId) saveEditedRuleChanges()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none cursor-pointer">
                 <option value="both">Cả 2 chiều</option>
                 <option value="left_to_right">Trái sang Phải</option>
                 <option value="right_to_left">Phải sang Trái</option>
@@ -308,63 +310,63 @@
             <!-- Cảnh báo đối tượng (8 Class Checkboxes - Tự động sáng/kích hoạt khi vẽ hoặc sửa) -->
             <div class="shrink-0 pt-0.5">
               <div class="flex items-center justify-between mb-1">
-                <label class="block text-slate-400 text-[10px] font-medium">Cảnh báo đối tượng:</label>
-                <div class="flex space-x-1.5 text-[9px]">
+                <label class="block text-slate-400 text-[9.5px] font-medium">Cảnh báo đối tượng:</label>
+                <div class="flex space-x-1.5 text-[8.5px]">
                   <button type="button" onclick="selectAllRoiClasses(true)" class="text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer">Tất cả</button>
                   <span class="text-slate-600">|</span>
                   <button type="button" onclick="selectAllRoiClasses(false)" class="text-slate-400 hover:text-slate-300 font-medium transition cursor-pointer">Bỏ chọn</button>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_0" value="0" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+              <div class="grid grid-cols-2 gap-1 text-[9.5px]">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_0" value="0" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Ô tô</span>
                 </label>
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_1" value="1" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_1" value="1" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Xe máy</span>
                 </label>
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_2" value="2" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_2" value="2" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Xe đạp</span>
                 </label>
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_3" value="3" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_3" value="3" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Xe buýt</span>
                 </label>
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_4" value="4" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_4" value="4" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Xe tải</span>
                 </label>
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_5" value="5" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_5" value="5" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Ba gác</span>
                 </label>
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_6" value="6" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_6" value="6" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Cứu thương</span>
                 </label>
-                <label class="flex items-center space-x-1.5 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1.5 py-1 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_7" value="7" checked onchange="onRoiClassCheckboxChange()" class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
+                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
+                  <input type="checkbox" id="roiClassCheck_7" value="7" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
                   <span class="text-slate-200 truncate">Cứu hỏa</span>
                 </label>
               </div>
             </div>
           </div>
 
-          <!-- Nút Lưu & Hủy (Hiện khi vẽ hoặc sửa ROI, thay thế dòng 'Đang sửa ... Xong') -->
+          <!-- Nút Lưu & Hủy (Hiện khi vẽ hoặc sửa ROI) -->
           <div id="roiActionButtons" class="hidden grid grid-cols-2 gap-1.5 shrink-0 pt-0.5">
             <button type="button" id="roiSaveBtn" onclick="handleSaveOnScreenRule()"
-                    class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow flex items-center justify-center cursor-pointer select-none">
+                    class="py-1 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow flex items-center justify-center cursor-pointer select-none">
               Lưu
             </button>
             <button type="button" id="roiCancelBtn" onclick="cancelEditingRule()"
-                    class="py-1.5 px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white font-medium text-xs transition border border-slate-600 flex items-center justify-center cursor-pointer select-none">
+                    class="py-1 px-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white font-medium text-[11px] transition border border-slate-600 flex items-center justify-center cursor-pointer select-none">
               Hủy
             </button>
           </div>
 
-          <div id="onScreenRuleToast" class="text-[10px] text-emerald-400 hidden text-center font-medium bg-emerald-500/15 border border-emerald-500/30 rounded py-0.5 shrink-0">Đã lưu thành công!</div>
+          <div id="onScreenRuleToast" class="text-[9.5px] text-emerald-400 hidden text-center font-medium bg-emerald-500/15 border border-emerald-500/30 rounded py-0.5 shrink-0">Đã lưu thành công!</div>
 
           <!-- Existing Rules of this Camera -->
           <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
@@ -1738,7 +1740,6 @@
     function setRoiDrawingMode(active) {
       isRoiDrawingActive = Boolean(active);
       const btn = document.getElementById('roiDrawToggleBtn');
-      const btnText = document.getElementById('roiDrawToggleText');
       const container = document.getElementById('roiControlsContainer');
       const actionRow = document.getElementById('roiActionButtons');
       const canvas = document.getElementById('onScreenDrawCanvas');
@@ -1746,11 +1747,11 @@
       if (isRoiDrawingActive) {
         if (btn) {
           if (currentEditingRuleId) {
-            btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-amber-500 bg-amber-600 text-white shadow-md shadow-amber-950/50 ring-1 ring-amber-400 shrink-0 select-none cursor-pointer";
-            if (btnText) btnText.innerText = "Đang sửa ROI (Bấm để thoát)";
+            btn.className = "w-5 h-5 rounded border border-amber-500 bg-amber-600 text-white shadow ring-1 ring-amber-400 transition flex items-center justify-center select-none cursor-pointer";
+            btn.title = "Đang sửa ROI (Bấm để thoát)";
           } else {
-            btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-emerald-500 bg-emerald-600 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-400 shrink-0 select-none cursor-pointer";
-            if (btnText) btnText.innerText = "Đang vẽ ROI (Bấm để tắt)";
+            btn.className = "w-5 h-5 rounded border border-emerald-500 bg-emerald-600 text-white shadow ring-1 ring-emerald-400 transition flex items-center justify-center select-none cursor-pointer";
+            btn.title = "Đang vẽ ROI (Bấm để thoát)";
           }
         }
         if (container) {
@@ -1760,8 +1761,8 @@
         if (canvas) canvas.style.cursor = 'crosshair';
       } else {
         if (btn) {
-          btn.className = "w-full py-1.5 px-2 rounded-lg flex items-center justify-center font-bold text-[11px] transition border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white shadow-sm shrink-0 select-none cursor-pointer";
-          if (btnText) btnText.innerText = "Vẽ vùng ROI";
+          btn.className = "w-5 h-5 rounded border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white transition shadow-sm flex items-center justify-center select-none cursor-pointer";
+          btn.title = "Vẽ / Sửa ROI (Bấm để bật hoặc thoát)";
         }
         if (container) {
           container.classList.add('opacity-40', 'pointer-events-none', 'filter', 'grayscale', 'select-none');

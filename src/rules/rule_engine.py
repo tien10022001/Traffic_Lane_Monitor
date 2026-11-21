@@ -283,3 +283,46 @@ class RuleEngine:
                                 )
 
         return violations
+
+
+def is_vehicle_in_roi(
+    v: TrackedVehicle,
+    rules: List[RuleDefinition],
+    orig_shape: Tuple[int, int] = (720, 1280),
+) -> bool:
+    """
+    Check if a vehicle is inside at least one active ROI and belongs to its targeted classes.
+    If no active rules exist on the camera, returns True (normal monitoring).
+    """
+    active_rules = [r for r in rules if r.is_active]
+    if not active_rules:
+        return True
+
+    for r in active_rules:
+        # 1. Target Class Check:
+        if r.forbidden_classes is not None and len(r.forbidden_classes) > 0:
+            if v.class_id not in r.forbidden_classes:
+                continue
+        elif r.allowed_classes is not None and len(r.allowed_classes) > 0:
+            if v.class_id in r.allowed_classes:
+                continue
+
+        # 2. Geometry Check:
+        if r.rule_type in ("no_parking", "sidewalk_encroachment", "lane_roi"):
+            if is_vehicle_ground_in_polygon(
+                bbox_norm=(v.cx_norm, v.cy_norm, v.w_norm, v.h_norm),
+                polygon=r.geometry,
+                mode="bottom_center",
+            ):
+                return True
+        elif r.rule_type == "lane_line":
+            if len(r.geometry) >= 2:
+                vx, vy = v.cx_norm, v.cy_norm
+                lx1, ly1 = r.geometry[0]
+                lx2, ly2 = r.geometry[1]
+                min_x, max_x = min(lx1, lx2) - 0.08, max(lx1, lx2) + 0.08
+                min_y, max_y = min(ly1, ly2) - 0.08, max(ly1, ly2) + 0.08
+                if min_x <= vx <= max_x and min_y <= vy <= max_y:
+                    return True
+
+    return False

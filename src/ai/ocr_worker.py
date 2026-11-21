@@ -170,6 +170,32 @@ class AsyncOCRWorkerPool:
                 th.start()
             logger.info(f"Started {worker_count} OCR worker threads.")
 
+            # Auto-recovery: Re-queue pending OCR jobs from DB on startup
+            try:
+                from src.db.database import db_session
+                with db_session(self.db_path) as conn:
+                    rows = conn.execute(
+                        "SELECT id, crop_image_path, vehicle_class_name FROM violations WHERE ocr_status = 'pending' ORDER BY id ASC LIMIT 50"
+                    ).fetchall()
+                    for r in rows:
+                        vid = r["id"]
+                        crop_p = r["crop_image_path"]
+                        vclass = r["vehicle_class_name"] or "car"
+                        if crop_p and Path(crop_p).is_file():
+                            img = cv2.imread(crop_p)
+                            if img is not None:
+                                self.queue.put_nowait(
+                                    OCRJob(
+                                        violation_id=vid,
+                                        crop_img=img,
+                                        plate_save_path=str(Path(crop_p).with_name(f"{Path(crop_p).stem}_plate.jpg")),
+                                        vehicle_class_name=vclass,
+                                    )
+                                )
+                                logger.info(f"Re-queued pending OCR job for violation #{vid}")
+            except Exception as e:
+                logger.warning(f"Error during OCR pending recovery: {e}")
+
     def stop(self) -> None:
         with self.lock:
             self.running = False
