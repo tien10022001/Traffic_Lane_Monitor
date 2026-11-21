@@ -226,8 +226,18 @@
           <canvas id="onScreenDrawCanvas" class="absolute inset-0 w-full h-full cursor-crosshair z-30"></canvas>
         </div>
 
+        <!-- ROI Collapse / Expand Edge Toggle Handle ("lia vào cạnh mới thấy nút đó") -->
+        <div id="roiCollapseToggleWrapper" onclick="toggleRoiDrawerCollapse()"
+             class="group relative shrink-0 w-2.5 hover:w-4 flex items-center justify-center h-full -mx-1 z-20 cursor-pointer select-none transition-all"
+             title="Thu gọn / Mở rộng bảng ROI">
+          <button type="button" id="roiCollapseBtn"
+                  class="w-4 h-12 rounded-l-md bg-darkpanel/90 hover:bg-indigo-600 text-slate-400 hover:text-white border border-darkborder/80 border-r-0 shadow-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 select-none pointer-events-none">
+            <span id="roiCollapseIcon" class="text-[10px] font-mono font-bold leading-none">&gt;</span>
+          </button>
+        </div>
+
         <!-- DOCKED COMPACT ROI & RULE PANEL (Side-by-side, always visible, sleek & minimal text) -->
-        <div id="onScreenRuleDrawer" class="w-[275px] shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2 text-xs flex flex-col space-y-1.5 overflow-y-auto shadow-xl">
+        <div id="onScreenRuleDrawer" class="w-[275px] shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2 text-xs flex flex-col space-y-1.5 overflow-y-auto shadow-xl transition-all duration-300 ease-in-out">
           <!-- Drawer Header: ROI Title + Pen Toggle Button + Camera Badge -->
           <div class="flex items-center justify-between pb-1 border-b border-darkborder shrink-0">
             <div class="flex items-center space-x-1.5">
@@ -480,8 +490,18 @@
       </div>
     </section>
 
+    <!-- Events Sidebar Collapse / Expand Edge Toggle Handle ("lia vào cạnh mới thấy nút đó") -->
+    <div id="eventsCollapseToggleWrapper" onclick="toggleEventsSidebarCollapse()"
+         class="group relative shrink-0 w-3 hover:w-5 flex items-center justify-center h-full -mx-1.5 z-20 cursor-pointer select-none transition-all"
+         title="Thu gọn / Mở rộng bảng Sự kiện">
+      <button type="button" id="eventsCollapseBtn"
+              class="w-4 h-14 rounded-l-md bg-darkpanel/90 hover:bg-rose-600 text-slate-400 hover:text-white border border-darkborder/80 border-r-0 shadow-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 select-none pointer-events-none">
+        <span id="eventsCollapseIcon" class="text-[11px] font-mono font-bold leading-none">&gt;</span>
+      </button>
+    </div>
+
     <!-- RIGHT AREA: DANH SÁCH VI PHẠM (REAL-TIME) (Bảng Log Duy Nhất Chiếm Toàn Bộ Chiều Cao) -->
-    <aside class="w-[290px] sm:w-[305px] md:w-[320px] lg:w-[335px] xl:w-[350px] shrink-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden">
+    <aside id="eventsSidebar" class="w-[290px] sm:w-[305px] md:w-[320px] lg:w-[335px] xl:w-[350px] shrink-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden transition-all duration-300 ease-in-out">
       <!-- Header: Title & Counter -->
       <div class="flex items-center justify-between pb-2 mb-2 border-b border-darkborder shrink-0">
         <div class="flex items-center space-x-2">
@@ -1238,10 +1258,25 @@
             ${isPrimaryFocus ? '<span class="text-blue-300 font-semibold ml-1">[TIÊU ĐIỂM]</span>' : ''}
           </div>
 
-          <!-- Top-Right Maximize Button (Click to zoom) -->
-          <button onclick="event.stopPropagation(); zoomCameraToSingle(${cam.id})" class="absolute top-1.5 right-1.5 p-1 px-2 rounded-md bg-black/80 hover:bg-emerald-600 text-slate-300 hover:text-white border border-slate-700/80 transition opacity-0 group-hover:opacity-100 text-[10px] font-bold flex items-center space-x-1 shadow-lg z-10" title="Phóng to camera này lên toàn màn hình">
-            <span>Phóng to</span>
-          </button>
+          <!-- Top-Right Action Controls (Gear Setting + Maximize Icon) -->
+          <div class="absolute top-1.5 right-1.5 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition duration-150 z-10">
+            <button type="button" onclick="event.stopPropagation(); openEditCameraModal(${cam.id})"
+                    class="p-1 rounded bg-black/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition shadow-lg cursor-pointer"
+                    title="Cài đặt camera (sửa tên, nguồn, fps)">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+            <button type="button" onclick="event.stopPropagation(); zoomCameraToSingle(${cam.id})"
+                    class="p-1 rounded bg-black/80 hover:bg-emerald-600 text-slate-300 hover:text-white border border-slate-700/80 transition shadow-lg cursor-pointer"
+                    title="Phóng to camera này lên toàn màn hình">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="8" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+              </svg>
+            </button>
+          </div>
 
           <!-- Bottom-Right Hint on Hover -->
           <div class="absolute bottom-1 right-2 text-[9px] text-slate-400 bg-black/80 px-1.5 py-0.5 rounded border border-slate-800 pointer-events-none opacity-0 group-hover:opacity-100 transition z-10">
@@ -1299,6 +1334,18 @@
             <img id="mainLiveStream" src="/api/stream/${cam.id}" alt="${camLabel}" class="w-full h-full object-contain pointer-events-none"
                  onload="if(isOnScreenDrawActive){syncCanvasDimensions();redrawOnScreenCanvas();}"
                  onerror="this.onerror=null; this.src='/api/cameras/${cam.id}/snapshot'">
+
+            <!-- Top Right Settings Gear Button in Single View -->
+            <div class="absolute top-2 right-2 flex items-center space-x-1.5 z-10">
+              <button type="button" onclick="event.stopPropagation(); openEditCameraModal(${cam.id})"
+                      class="p-1.5 rounded-md bg-black/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition shadow-lg cursor-pointer"
+                      title="Cài đặt camera (sửa tên, nguồn, fps)">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </button>
+            </div>
 
             <!-- Bottom Left HUD -->
             <div class="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/80 backdrop-blur-sm border border-slate-700 text-[11px] text-slate-200 flex items-center space-x-2 pointer-events-none z-10">
@@ -1883,6 +1930,9 @@
       const canvas = document.getElementById('onScreenDrawCanvas');
 
       if (isRoiDrawingActive) {
+        if (isRoiDrawerCollapsed) {
+          toggleRoiDrawerCollapse();
+        }
         if (btn) {
           if (currentEditingRuleId) {
             btn.className = "w-5 h-5 rounded border border-amber-500 bg-amber-600 text-white shadow ring-1 ring-amber-400 transition flex items-center justify-center select-none cursor-pointer";
@@ -2547,6 +2597,62 @@
       currentHoverPoint = null;
       redrawOnScreenCanvas();
       updateDrawStatusHint();
+    }
+
+    let isRoiDrawerCollapsed = false;
+    function toggleRoiDrawerCollapse() {
+      const drawer = document.getElementById('onScreenRuleDrawer');
+      const icon = document.getElementById('roiCollapseIcon');
+      const btn = document.getElementById('roiCollapseBtn');
+      const wrapper = document.getElementById('roiCollapseToggleWrapper');
+      if (!drawer) return;
+
+      isRoiDrawerCollapsed = !isRoiDrawerCollapsed;
+      if (isRoiDrawerCollapsed) {
+        drawer.classList.add('!w-0', '!p-0', '!border-0', '!opacity-0', '!pointer-events-none', '!m-0', '!overflow-hidden');
+        if (icon) icon.innerHTML = '&lt;';
+        if (wrapper) wrapper.title = "Mở rộng bảng ROI";
+        if (btn) btn.classList.add('bg-indigo-600/90');
+      } else {
+        drawer.classList.remove('!w-0', '!p-0', '!border-0', '!opacity-0', '!pointer-events-none', '!m-0', '!overflow-hidden');
+        if (icon) icon.innerHTML = '&gt;';
+        if (wrapper) wrapper.title = "Thu gọn bảng ROI";
+        if (btn) btn.classList.remove('bg-indigo-600/90');
+      }
+      setTimeout(() => {
+        if (isOnScreenDrawActive) {
+          syncCanvasDimensions();
+          redrawOnScreenCanvas();
+        }
+      }, 320);
+    }
+
+    let isEventsSidebarCollapsed = false;
+    function toggleEventsSidebarCollapse() {
+      const aside = document.getElementById('eventsSidebar');
+      const icon = document.getElementById('eventsCollapseIcon');
+      const btn = document.getElementById('eventsCollapseBtn');
+      const wrapper = document.getElementById('eventsCollapseToggleWrapper');
+      if (!aside) return;
+
+      isEventsSidebarCollapsed = !isEventsSidebarCollapsed;
+      if (isEventsSidebarCollapsed) {
+        aside.classList.add('!w-0', '!p-0', '!border-0', '!opacity-0', '!pointer-events-none', '!m-0', '!overflow-hidden');
+        if (icon) icon.innerHTML = '&lt;';
+        if (wrapper) wrapper.title = "Mở rộng bảng Sự kiện";
+        if (btn) btn.classList.add('bg-rose-600/90');
+      } else {
+        aside.classList.remove('!w-0', '!p-0', '!border-0', '!opacity-0', '!pointer-events-none', '!m-0', '!overflow-hidden');
+        if (icon) icon.innerHTML = '&gt;';
+        if (wrapper) wrapper.title = "Thu gọn bảng Sự kiện";
+        if (btn) btn.classList.remove('bg-rose-600/90');
+      }
+      setTimeout(() => {
+        if (isOnScreenDrawActive) {
+          syncCanvasDimensions();
+          redrawOnScreenCanvas();
+        }
+      }, 320);
     }
 
     function toggleExistingRulesList() {
