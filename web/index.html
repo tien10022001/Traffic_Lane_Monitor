@@ -56,8 +56,8 @@
   <!-- 1. COMPACT TOP NAVBAR (Fixed height, no page scroll) -->
   <header class="h-12 bg-darkpanel border-b border-darkborder px-4 flex items-center justify-between shrink-0 shadow-md z-30">
     <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-base shadow">
-        🚦
+      <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xs shadow">
+        AI
       </div>
       <div>
         <h1 class="font-bold text-sm tracking-wide text-white leading-tight">CCTV Traffic Monitor</h1>
@@ -103,7 +103,7 @@
 
       <!-- Quick Action Buttons -->
       <button onclick="openViolationsHistoryModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder font-medium text-xs flex items-center space-x-1 transition" title="Xem lịch sử và xuất dữ liệu Active Learning">
-        <span>📋 Lịch Sử & Xuất ZIP</span>
+        <span>Lịch Sử & Xuất ZIP</span>
       </button>
     </div>
   </header>
@@ -197,7 +197,7 @@
               <!-- Bottom Bar: Toàn màn hình & Tự Động vừa màn hình -->
               <div class="grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-700/60">
                 <button type="button" onclick="selectLayout('single')" class="py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-600 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
-                  <span>⛶ 1 Cam (Toàn Màn Hình)</span>
+                  <span>1 Cam (Toàn Màn Hình)</span>
                 </button>
                 <button type="button" onclick="selectLayout('auto')" class="py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
                   <span>Tự Động Vừa Khít</span>
@@ -257,7 +257,7 @@
               <div>
                 <label class="block text-slate-400 text-[10px] mb-0.5">Kiểu ROI</label>
                 <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()" class="w-full py-1 px-1 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-slate-200 text-[10.5px] font-medium transition truncate flex items-center justify-center shadow-sm" title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
-                  <span id="drawerRoiModeText">▦ Sọc chéo</span>
+                  <span id="drawerRoiModeText">Sọc chéo</span>
                 </button>
               </div>
             </div>
@@ -267,10 +267,10 @@
               <label class="block text-slate-400 text-[10px] mb-0.5">Luật *</label>
               <select id="onScreenRuleType" onchange="onOnScreenRuleTypeChange()"
                       class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none focus:border-indigo-500 cursor-pointer">
-                <option value="no_parking">🚫 Dừng đỗ trái phép</option>
-                <option value="lane_roi">⚠️ Đi sai làn</option>
-                <option value="sidewalk_encroachment">🚶 Lấn chiếm vỉa hè</option>
-                <option value="lane_line">📏 Đè vạch cấm</option>
+                <option value="no_parking">Dừng đỗ trái phép</option>
+                <option value="lane_roi">Đi sai làn</option>
+                <option value="sidewalk_encroachment">Lấn chiếm vỉa hè</option>
+                <option value="lane_line">Đè vạch cấm</option>
               </select>
             </div>
 
@@ -300,9 +300,9 @@
             <div id="onScreenDirectionGroup" class="hidden shrink-0">
               <label class="block text-slate-400 text-[10px] mb-0.5">Chiều Cắt</label>
               <select id="onScreenRuleDirection" onchange="if(currentEditingRuleId) saveEditedRuleChanges()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none cursor-pointer">
-                <option value="both">↔ Cả 2 chiều</option>
-                <option value="left_to_right">→ Trái sang Phải</option>
-                <option value="right_to_left">← Phải sang Trái</option>
+                <option value="both">Cả 2 chiều</option>
+                <option value="left_to_right">Trái sang Phải</option>
+                <option value="right_to_left">Phải sang Trái</option>
               </select>
             </div>
           </div>
@@ -310,15 +310,15 @@
           <!-- Edit Mode Indicator (Shown only when editing an existing rule) -->
           <div id="editingRuleBanner" class="hidden flex items-center justify-between bg-amber-500/15 border border-amber-500/40 rounded px-2 py-1 text-[10px] text-amber-300 shrink-0">
             <span id="editingRuleText" class="truncate font-semibold">Đang sửa ROI</span>
-            <button type="button" onclick="cancelEditingRule()" class="text-slate-400 hover:text-white font-bold px-1 text-xs transition" title="Xong sửa">✓ Xong</button>
+            <button type="button" onclick="cancelEditingRule()" class="text-slate-400 hover:text-white font-bold px-1 text-xs transition" title="Xong sửa">Xong</button>
           </div>
 
-          <div id="onScreenRuleToast" class="text-[10px] text-emerald-400 hidden text-center font-medium bg-emerald-500/15 border border-emerald-500/30 rounded py-0.5 shrink-0">✓ Đã lưu thành công!</div>
+          <div id="onScreenRuleToast" class="text-[10px] text-emerald-400 hidden text-center font-medium bg-emerald-500/15 border border-emerald-500/30 rounded py-0.5 shrink-0">Đã lưu thành công!</div>
 
           <!-- Existing Rules of this Camera -->
           <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
             <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-0.5" onclick="toggleExistingRulesList()">
-              <span>📋 ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
+              <span>ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
               <span id="rulesToggleArrow">▲</span>
             </div>
             <div id="onScreenExistingRulesList" class="space-y-1.5 mt-1 flex-1 overflow-y-auto pr-0.5">
@@ -333,7 +333,7 @@
         <div class="flex items-center justify-between gap-2 mb-1.5">
           <div class="flex items-center space-x-2">
             <span class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Ngưỡng Class</span>
-            <span id="inlineThresholdToast" class="text-[10px] text-emerald-400 hidden font-medium">✓ Đã áp dụng</span>
+            <span id="inlineThresholdToast" class="text-[10px] text-emerald-400 hidden font-medium">Đã áp dụng</span>
           </div>
           <div class="flex items-center space-x-1.5 text-[10px]">
             <button type="button" onclick="presetMotorcycleBoost(); saveInlineClassThresholds();" class="px-2 py-0.5 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded transition">
@@ -366,11 +366,10 @@
         <div class="flex items-center space-x-1.5">
           <span id="liveViolationCount" class="px-2.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-white font-mono font-bold text-xs shadow-inner">0</span>
           <button onclick="refreshEventLog()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-[11px] font-medium transition flex items-center space-x-1" title="Làm mới danh sách sự kiện vi phạm">
-            <span id="refreshLogIcon" class="inline-block transition-transform duration-300">🔄</span>
             <span>Làm mới</span>
           </button>
           <button onclick="clearEventLogUI()" class="px-1.5 py-0.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-white border border-rose-800/40 rounded text-[11px] font-medium transition flex items-center space-x-1" title="Xóa màn hình log hiện tại">
-            <span>🗑️ Xóa log</span>
+            <span>Xóa log</span>
           </button>
         </div>
       </div>
@@ -379,7 +378,6 @@
       <div id="liveViolationsFeed" class="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1">
         <!-- Violation Card template rendered dynamically from camera streams -->
         <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2.5 h-64">
-          <span class="text-3xl block animate-pulse">🛡️</span>
           <span class="text-slate-300 font-semibold text-sm">Hệ thống đang giám sát trực tiếp</span>
           <span class="text-slate-400 text-xs max-w-xs">Chưa có vi phạm mới. Khi camera phát hiện phương tiện vi phạm, sự kiện và hình ảnh đối soát sẽ bắn sang đây theo thời gian thực.</span>
         </div>
@@ -421,7 +419,7 @@
             <input type="text" id="camUrlInput" required placeholder="rtsp://admin:pass@192.168.1.100:554/stream" class="flex-1 bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
             <input type="file" id="videoFileInput" accept=".mp4,.avi,.mkv,.mov" class="hidden" onchange="handleVideoFileSelected(event)">
             <button type="button" id="browseExplorerBtn" onclick="browseLocalFile()" class="hidden px-3.5 py-2 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/30 font-medium text-xs flex items-center space-x-1.5 shrink-0 transition" title="Chọn mở file video">
-              <span>🖥️ Mở file</span>
+              <span>Mở file</span>
             </button>
           </div>
           <p id="camUrlHint" class="text-[10px] text-slate-500 mt-1">Hệ thống tự động che mật khẩu rtsp://***:***@ khi hiển thị.</p>
@@ -442,7 +440,7 @@
       <div class="flex justify-between items-center pb-3 border-b border-darkborder">
         <div>
           <h3 class="font-semibold text-base flex items-center space-x-2">
-            <span>⚙️ Cài Đặt Ngưỡng & Phối Cảnh</span>
+            <span>Cài Đặt Ngưỡng & Phối Cảnh</span>
           </h3>
           <p class="text-xs text-slate-400">Tùy chỉnh độ nhạy cho từng loại xe. Xe máy nhỏ hoặc ở xa nên hạ ngưỡng xuống 0.20 - 0.30 để bắt nhạy hơn.</p>
         </div>
@@ -455,10 +453,10 @@
           <span class="text-slate-400 font-medium">Cấu hình nhanh:</span>
           <div class="flex space-x-2">
             <button type="button" onclick="presetMotorcycleBoost()" class="px-3 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/40 rounded font-medium transition">
-              🏍️ Tối ưu bắt nhạy xe máy (0.28)
+              Tối ưu bắt nhạy xe máy (0.28)
             </button>
             <button type="button" onclick="presetStandard()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-darkborder transition">
-              ↺ Mặc định chuẩn
+              Mặc định chuẩn
             </button>
           </div>
         </div>
@@ -500,7 +498,7 @@
         <div class="p-3 bg-darkbg/70 rounded-lg border border-darkborder space-y-3">
           <div class="flex items-center justify-between pb-1.5 border-b border-darkborder/60">
             <h4 class="font-semibold text-slate-200 flex items-center space-x-1.5 text-xs">
-              <span>🛡️ Khử Trùng Lặp Cảnh Báo & Quản Lý Phiên (Deduplication)</span>
+              <span>Khử Trùng Lặp Cảnh Báo & Quản Lý Phiên (Deduplication)</span>
             </h4>
             <label class="flex items-center space-x-1.5 cursor-pointer text-xs">
               <input type="checkbox" id="dedupEnabledCheck" checked class="rounded accent-emerald-500">
@@ -555,7 +553,7 @@
         <div class="bg-darkbg/60 p-3 rounded-xl border border-darkborder space-y-2.5">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <span class="text-amber-400 font-semibold text-xs">📐 Phối Cảnh & Tối Ưu Render ROI</span>
+              <span class="text-amber-400 font-semibold text-xs">Phối Cảnh & Tối Ưu Render ROI</span>
               <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">CCTV 3D Perspective</span>
             </div>
           </div>
@@ -612,11 +610,11 @@
       </div>
 
       <div class="pt-3 border-t border-darkborder flex items-center justify-between">
-        <span id="thresholdToast" class="text-xs text-emerald-400 hidden font-medium">✓ Đã áp dụng ngay lập tức!</span>
+        <span id="thresholdToast" class="text-xs text-emerald-400 hidden font-medium">Đã áp dụng ngay lập tức!</span>
         <div class="flex space-x-2 ml-auto">
           <button type="button" onclick="closeThresholdModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 text-xs">Đóng</button>
           <button type="button" onclick="saveAIThresholds()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium text-xs shadow transition flex items-center space-x-1.5">
-            <span>💾 Lưu & Áp Dụng Ngay</span>
+            <span>Lưu & Áp Dụng Ngay</span>
           </button>
         </div>
       </div>
@@ -655,13 +653,13 @@
       <div class="flex justify-between items-center pb-3 border-b border-darkborder">
         <div>
           <h3 class="font-bold text-base text-white flex items-center space-x-2">
-            <span>📋 Quản Lý Lịch Sử Vi Phạm & Dữ Liệu Huấn Luyện (Active Learning)</span>
+            <span>Quản Lý Lịch Sử Vi Phạm & Dữ Liệu Huấn Luyện (Active Learning)</span>
           </h3>
           <p class="text-xs text-slate-400">Kiểm tra toàn bộ hồ sơ vi phạm, lọc theo ngày/loại xe, và tải về file ZIP chuẩn định dạng YOLO để huấn luyện lại mô hình.</p>
         </div>
         <div class="flex items-center space-x-2">
           <a href="/api/violations/export-feedback/download?review_status=confirmed" download class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg font-medium flex items-center space-x-1.5 transition shadow">
-            <span>📦 Xuất Feedback ZIP (YOLO)</span>
+            <span>Xuất Feedback ZIP (YOLO)</span>
           </a>
           <button onclick="closeViolationsHistoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
         </div>
@@ -884,14 +882,9 @@
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
               <span onclick="onCameraNameClick(${c.id})" class="truncate max-w-[120px] font-semibold hover:text-emerald-300 transition" title="Bấm để đổi tên camera">${displayName}</span>
               
-              <!-- Gear Icon (⚙️) to Rename/Configure Camera -->
-              <button onclick="event.stopPropagation(); openEditCameraModal(${c.id})" class="p-0.5 hover:bg-slate-700 text-slate-400 hover:text-amber-300 rounded transition text-xs ml-0.5" title="Đổi tên / Chỉnh sửa ${displayName}">
-                ⚙️
-              </button>
-              
-              <!-- Close Icon (✕) to Delete Camera -->
-              <button onclick="event.stopPropagation(); deleteCameraById(${c.id}, '${safeName}')" class="w-4 h-4 flex items-center justify-center hover:bg-rose-900/60 text-slate-400 hover:text-rose-400 rounded-full transition text-[11px] font-bold" title="Xóa ${displayName}">
-                ✕
+              <!-- Close (&times;) to Delete Camera -->
+              <button onclick="event.stopPropagation(); deleteCameraById(${c.id}, '${safeName}')" class="w-4 h-4 flex items-center justify-center hover:bg-rose-900/60 text-slate-400 hover:text-rose-400 rounded-full transition text-xs font-bold ml-1" title="Xóa ${displayName}">
+                &times;
               </button>
             </div>
           `;
@@ -900,14 +893,9 @@
             <div class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-t-lg bg-darkbg/70 hover:bg-slate-800/60 border-t-2 border-transparent hover:border-slate-700 border-x border-darkborder text-slate-400 hover:text-slate-200 text-xs shrink-0 cursor-pointer transition select-none group" onclick="selectCamera(${c.id})">
               <span class="truncate max-w-[110px]" title="${displayName}">${displayName}</span>
               
-              <!-- Gear Icon (⚙️) -->
-              <button onclick="event.stopPropagation(); openEditCameraModal(${c.id})" class="p-0.5 hover:bg-slate-700 text-slate-500 hover:text-amber-300 rounded transition text-xs opacity-60 group-hover:opacity-100" title="Đổi tên / Chỉnh sửa ${displayName}">
-                ⚙️
-              </button>
-              
-              <!-- Close Icon (✕) -->
-              <button onclick="event.stopPropagation(); deleteCameraById(${c.id}, '${safeName}')" class="w-4 h-4 flex items-center justify-center hover:bg-rose-900/60 text-slate-500 hover:text-rose-400 rounded-full transition text-[11px] font-bold opacity-60 group-hover:opacity-100" title="Xóa ${displayName}">
-                ✕
+              <!-- Close (&times;) -->
+              <button onclick="event.stopPropagation(); deleteCameraById(${c.id}, '${safeName}')" class="w-4 h-4 flex items-center justify-center hover:bg-rose-900/60 text-slate-500 hover:text-rose-400 rounded-full transition text-xs font-bold opacity-60 group-hover:opacity-100 ml-1" title="Xóa ${displayName}">
+                &times;
               </button>
             </div>
           `;
@@ -1119,7 +1107,7 @@
 
           <!-- Top-Right Maximize Button (Click to zoom) -->
           <button onclick="event.stopPropagation(); zoomCameraToSingle(${cam.id})" class="absolute top-1.5 right-1.5 p-1 px-2 rounded-md bg-black/80 hover:bg-emerald-600 text-slate-300 hover:text-white border border-slate-700/80 transition opacity-0 group-hover:opacity-100 text-[10px] font-bold flex items-center space-x-1 shadow-lg z-10" title="Phóng to camera này lên toàn màn hình">
-            <span>⛶ Phóng to</span>
+            <span>Phóng to</span>
           </button>
 
           <!-- Bottom-Right Hint on Hover -->
@@ -1138,7 +1126,6 @@
       if (activeCams.length === 0) {
         container.innerHTML = `
           <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2">
-            <span class="text-3xl">📹</span>
             <span class="text-slate-300 font-semibold">Chưa có camera nào hoạt động</span>
             <span class="text-slate-500 text-[11px]">Bấm vào dấu "+" bên dưới thanh camera để thêm nguồn stream RTSP hoặc video file.</span>
           </div>
@@ -1361,7 +1348,7 @@
       renderLiveViolations();
 
       // Append to System Log
-      appendSystemLog(`🚨 [Mới] ${violation.violation_type.toUpperCase()}: ${violation.vehicle_class_name} (${getCameraLabelWithPrefix(violation.camera_id)})`, 'text-rose-400');
+      appendSystemLog(`[Mới] ${violation.violation_type.toUpperCase()}: ${violation.vehicle_class_name} (${getCameraLabelWithPrefix(violation.camera_id)})`, 'text-rose-400');
     }
 
     function onViolationUpdatedReceived(data) {
@@ -1375,7 +1362,7 @@
       } else {
         fetchLiveViolations();
       }
-      appendSystemLog(`🔄 [DEDUP] Cập nhật vi phạm #${data.violation_id}: Đang đỗ ${parseFloat(data.dwell_duration_sec).toFixed(1)}s (Lặp lại: x${data.repeat_count})`, 'text-blue-400');
+      appendSystemLog(`[DEDUP] Cập nhật vi phạm #${data.violation_id}: Đang đỗ ${parseFloat(data.dwell_duration_sec).toFixed(1)}s (Lặp lại: x${data.repeat_count})`, 'text-blue-400');
     }
 
     function onOcrCompletedReceived(data) {
@@ -1387,7 +1374,7 @@
         v.plate_image_path = data.plate_image_path;
         renderLiveViolations();
       }
-      appendSystemLog(`🔍 OCR #${data.violation_id}: Biển số [${data.plate_number || 'N/A'}] (Conf: ${(data.ocr_conf * 100).toFixed(0)}%)`, 'text-amber-300');
+      appendSystemLog(`[OCR] #${data.violation_id}: Biển số [${data.plate_number || 'N/A'}] (Conf: ${(data.ocr_conf * 100).toFixed(0)}%)`, 'text-amber-300');
     }
 
     function appendSystemLog(msg, colorClass = 'text-slate-300') {
@@ -1401,7 +1388,6 @@
       if (liveViolations.length === 0) {
         container.innerHTML = `
           <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2.5 h-64">
-            <span class="text-3xl block animate-pulse">🛡️</span>
             <span class="text-slate-300 font-semibold text-sm">Hệ thống đang giám sát trực tiếp</span>
             <span class="text-slate-400 text-xs max-w-xs">Chưa có vi phạm mới. Khi camera phát hiện phương tiện vi phạm, sự kiện và hình ảnh đối soát sẽ bắn sang đây theo thời gian thực.</span>
           </div>
@@ -1452,15 +1438,15 @@
         let laneLocation = 'Khu vực cấm dừng đỗ';
 
         if (v.violation_type === 'no_parking') {
-          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>⚠️</span><span>DỪNG ĐỖ TRÁI PHÉP</span></span>';
+          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>DỪNG ĐỖ TRÁI PHÉP</span></span>';
           violationBehavior = `Dừng đỗ xe trái quy định trong khu vực cấm (${durationSec}s)`;
           laneLocation = 'Khu vực cấm dừng đỗ';
         } else if (v.violation_type === 'sidewalk_encroachment') {
-          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-amber-600 text-white font-bold text-xs uppercase shadow"><span>⚠️</span><span>LẤN CHIẾM VỈA HÈ</span></span>';
+          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-amber-600 text-white font-bold text-xs uppercase shadow"><span>LẤN CHIẾM VỈA HÈ</span></span>';
           violationBehavior = `Phương tiện lấn chiếm vỉa hè người đi bộ (${durationSec}s)`;
           laneLocation = 'Vỉa hè người đi bộ';
         } else {
-          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>⚠️</span><span>SAI LÀN</span></span>';
+          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>SAI LÀN</span></span>';
           violationBehavior = 'Đi sai làn đường quy định hoặc đè vạch cấm';
           laneLocation = 'Làn đường quy định';
         }
@@ -1500,7 +1486,7 @@
             <!-- Live Dwell Duration Counter (Layer 4 UI Deduplication) -->
             ${v.dwell_duration_sec > 0 ? `
               <div class="flex items-center justify-between p-1.5 rounded bg-darkbg/80 border border-darkborder text-[11px]">
-                <span class="text-slate-400">⏱️ Thời gian đỗ tích lũy:</span>
+                <span class="text-slate-400">Thời gian đỗ tích lũy:</span>
                 <span class="font-mono font-bold text-emerald-400">${durationSec}s ${repeatCount > 1 ? `<span class="text-slate-500 text-[10px] font-normal">(x${repeatCount})</span>` : ''}</span>
               </div>
             ` : ''}
@@ -1530,7 +1516,7 @@
               <img src="/api/violations/${v.id}/image/crop" alt="Vehicle Crop" class="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                    onerror="this.src='/api/violations/${v.id}/image/annotated'">
               <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-[11px] text-white font-medium">
-                🔍 Bấm để phóng to & đối soát
+                Bấm để phóng to & đối soát
               </div>
             </div>
 
@@ -1591,7 +1577,7 @@
       if (isVideo) {
         if (urlLabel) urlLabel.innerText = 'Đường dẫn File Video (.mp4) *';
         if (urlInput) urlInput.placeholder = 'Chọn file video MP4 từ nút Mở file hoặc nhập đường dẫn';
-        if (urlHint) urlHint.innerText = 'Bấm nút "🖥️ Mở file" để duyệt và chọn video trên máy tính.';
+        if (urlHint) urlHint.innerText = 'Bấm nút "Mở file" để duyệt và chọn video trên máy tính.';
         if (browseBtn) browseBtn.classList.remove('hidden');
       } else {
         if (urlLabel) urlLabel.innerText = 'Nguồn Stream (RTSP URL hoặc file MP4) *';
@@ -1809,10 +1795,10 @@
         selectEl.value = camId;
       }
 
-      // Update save button target camera label (e.g. 💾 Lưu (1))
+      // Update save button target camera label (e.g. Lưu (1))
       const saveBtn = document.getElementById('onScreenSaveBtnText');
       if (saveBtn) {
-        saveBtn.innerText = `💾 Lưu (${getCameraDisplayName(camId)})`;
+        saveBtn.innerText = `Lưu (${getCameraDisplayName(camId)})`;
       }
 
       initOnScreenCanvas();
@@ -1939,7 +1925,7 @@
       }
 
       if (isPolygonClosed) {
-        el.innerHTML = `<span class="text-emerald-400 font-bold">✓ Đã đóng (${n} điểm)</span> • Bấm Lưu`;
+        el.innerHTML = `<span class="text-emerald-400 font-bold">Đã đóng (${n} điểm)</span> • Bấm Lưu`;
       } else if (ruleType === 'lane_line') {
         el.innerHTML = `Điểm: <span class="text-white font-bold">${n}/2</span> (Chuột phải: lùi)`;
       } else if (n >= 3) {
@@ -2444,7 +2430,7 @@
 
       const toast = document.getElementById('onScreenRuleToast');
       if (toast) {
-        toast.innerText = isActive ? `✓ Đã bật cảnh báo ROI #${ruleId}` : `ℹ Đã tắt cảnh báo ROI #${ruleId}`;
+        toast.innerText = isActive ? `Đã bật cảnh báo ROI #${ruleId}` : `Đã tắt cảnh báo ROI #${ruleId}`;
         toast.classList.remove('hidden');
         setTimeout(() => toast.classList.add('hidden'), 2000);
       }
@@ -2515,7 +2501,7 @@
         saveBtn.className = "w-full py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0";
       }
       if (saveBtnText) {
-        saveBtnText.innerText = `💾 Cập Nhật (${activeCameraForEditor})`;
+        saveBtnText.innerText = `Cập Nhật (${getCameraDisplayName(activeCameraForEditor)})`;
       }
 
       renderExistingRulesListUI();
@@ -2548,7 +2534,7 @@
         saveBtn.className = "w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0";
       }
       if (saveBtnText) {
-        saveBtnText.innerText = `💾 Lưu (${activeCameraForEditor})`;
+        saveBtnText.innerText = `Lưu (${getCameraDisplayName(activeCameraForEditor)})`;
       }
 
       renderExistingRulesListUI();
@@ -2586,7 +2572,7 @@
         if (res.ok) {
           const toast = document.getElementById('onScreenRuleToast');
           if (toast) {
-            toast.innerText = `✓ Đã tự động lưu thay đổi!`;
+            toast.innerText = `Đã tự động lưu thay đổi!`;
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 2200);
           }
@@ -2666,7 +2652,7 @@
           const camName = getCameraLabelWithPrefix(activeCameraForEditor);
           const toast = document.getElementById('onScreenRuleToast');
           if (toast) {
-            toast.innerText = wasEditing ? `✓ Đã cập nhật ROI thành công!` : `✓ Đã lưu luật cho ${camName}!`;
+            toast.innerText = wasEditing ? `Đã cập nhật ROI thành công!` : `Đã lưu luật cho ${camName}!`;
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3500);
           }
@@ -2691,14 +2677,14 @@
     // 7. INLINE CLASS THRESHOLDS & ADVANCED SETTINGS
     let currentAIConfig = null;
     const CLASS_METADATA = {
-      0: { short: 'Ô tô', icon: '🚗', name: 'Ô tô con (car)' },
-      1: { short: 'Xe máy', icon: '🏍️', name: 'Xe máy (motorcycle)', highlight: true },
-      2: { short: 'Xe đạp', icon: '🚲', name: 'Xe đạp (bicycle)' },
-      3: { short: 'Xe buýt', icon: '🚌', name: 'Xe buýt (bus)' },
-      4: { short: 'Xe tải', icon: '🚚', name: 'Xe tải (truck)' },
-      5: { short: 'Ba gác', icon: '🛺', name: 'Xe ba gác (tricycle)' },
-      6: { short: 'Cứu thương', icon: '🚑', name: 'Xe cứu thương (ambulance)' },
-      7: { short: 'Cứu hỏa', icon: '🚒', name: 'Xe cứu hỏa (fire_truck)' }
+      0: { short: 'Ô tô', name: 'Ô tô con (car)' },
+      1: { short: 'Xe máy', name: 'Xe máy (motorcycle)', highlight: true },
+      2: { short: 'Xe đạp', name: 'Xe đạp (bicycle)' },
+      3: { short: 'Xe buýt', name: 'Xe buýt (bus)' },
+      4: { short: 'Xe tải', name: 'Xe tải (truck)' },
+      5: { short: 'Ba gác', name: 'Xe ba gác (tricycle)' },
+      6: { short: 'Cứu thương', name: 'Xe cứu thương (ambulance)' },
+      7: { short: 'Cứu hỏa', name: 'Xe cứu hỏa (fire_truck)' }
     };
 
     async function loadInlineThresholds() {
@@ -2780,10 +2766,10 @@
 
     // ROI Quick Display Modes (Striped default, compact)
     const ROI_MODES = [
-      { key: 'striped', label: '▦ Sọc chéo' },
-      { key: 'full', label: '👁️ Đầy đủ' },
-      { key: 'border_only', label: '🔲 Chỉ viền' },
-      { key: 'hidden', label: '🚫 Ẩn' }
+      { key: 'striped', label: 'Sọc chéo' },
+      { key: 'full', label: 'Đầy đủ' },
+      { key: 'border_only', label: 'Chỉ viền' },
+      { key: 'hidden', label: 'Ẩn' }
     ];
     let currentRoiModeIndex = 0;
 
@@ -2897,7 +2883,7 @@
       let html = '';
 
       for (let cid = 0; cid <= 7; cid++) {
-        const meta = CLASS_METADATA[cid] || { icon: '🚘', name: `Lớp ${cid}` };
+        const meta = CLASS_METADATA[cid] || { name: `Lớp ${cid}` };
         const val = perClass[cid] ?? currentAIConfig.default_conf ?? 0.40;
         const isHighlight = meta.highlight;
 
@@ -2905,7 +2891,6 @@
           <div class="p-2.5 rounded-lg border ${isHighlight ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20' : 'bg-darkbg/50 border-darkborder/50'}">
             <div class="flex justify-between items-center mb-1">
               <span class="font-medium text-white flex items-center space-x-1.5">
-                <span>${meta.icon}</span>
                 <span>${meta.name}</span>
               </span>
               <span id="classVal_${cid}" class="px-2 py-0.5 rounded ${isHighlight ? 'bg-amber-500/20 text-amber-300 font-bold' : 'bg-slate-700 text-slate-300'} font-mono">${parseFloat(val).toFixed(2)}</span>
