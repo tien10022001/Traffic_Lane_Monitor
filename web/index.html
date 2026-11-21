@@ -227,7 +227,7 @@
         </div>
 
         <!-- DOCKED COMPACT ROI & RULE PANEL (Side-by-side, always visible, sleek & minimal text) -->
-        <div id="onScreenRuleDrawer" class="w-60 shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2 text-xs flex flex-col space-y-1.5 overflow-y-auto shadow-xl">
+        <div id="onScreenRuleDrawer" class="w-[275px] shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2 text-xs flex flex-col space-y-1.5 overflow-y-auto shadow-xl">
           <!-- Drawer Header: ROI Title + Pen Toggle Button + Camera Badge -->
           <div class="flex items-center justify-between pb-1 border-b border-darkborder shrink-0">
             <div class="flex items-center space-x-1.5">
@@ -307,49 +307,147 @@
               </select>
             </div>
 
-            <!-- Cảnh báo đối tượng (8 Class Checkboxes - Tự động sáng/kích hoạt khi vẽ hoặc sửa) -->
+            <!-- Cảnh báo đối tượng & Ngưỡng Class tích hợp (gọn gàng, tăng giảm/gõ số trực tiếp) -->
             <div class="shrink-0 pt-0.5">
               <div class="flex items-center justify-between mb-1">
-                <label class="block text-slate-400 text-[9.5px] font-medium">Cảnh báo đối tượng:</label>
+                <div class="flex items-center space-x-1.5">
+                  <label class="block text-slate-400 text-[9.5px] font-medium">Cảnh báo đối tượng:</label>
+                  <span id="inlineThresholdToast" class="text-[8.5px] text-emerald-400 hidden font-medium">Đã lưu</span>
+                </div>
                 <div class="flex space-x-1.5 text-[8.5px]">
                   <button type="button" onclick="selectAllRoiClasses(true)" class="text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer">Tất cả</button>
                   <span class="text-slate-600">|</span>
                   <button type="button" onclick="selectAllRoiClasses(false)" class="text-slate-400 hover:text-slate-300 font-medium transition cursor-pointer">Bỏ chọn</button>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-1 text-[9.5px]">
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_0" value="0" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Ô tô</span>
-                </label>
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_1" value="1" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Xe máy</span>
-                </label>
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_2" value="2" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Xe đạp</span>
-                </label>
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_3" value="3" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Xe buýt</span>
-                </label>
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_4" value="4" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Xe tải</span>
-                </label>
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_5" value="5" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Ba gác</span>
-                </label>
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_6" value="6" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Cứu thương</span>
-                </label>
-                <label class="flex items-center space-x-1 bg-darkpanel/80 hover:bg-slate-800 border border-slate-700/80 rounded px-1 py-0.5 cursor-pointer transition select-none">
-                  <input type="checkbox" id="roiClassCheck_7" value="7" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer">
-                  <span class="text-slate-200 truncate">Cứu hỏa</span>
-                </label>
+              <div id="roiClassCheckboxesContainer" class="grid grid-cols-2 gap-1 text-[9.5px]">
+                <!-- Ô tô -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_0" value="0" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-slate-200 truncate font-medium text-[9px]">Ô tô</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(0, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_0" min="0.05" max="0.95" step="0.01" value="0.45"
+                           onchange="onClassThresholdInputChange(0, this.value)"
+                           oninput="onClassThresholdInputTyping(0, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(0, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Tăng 0.01">+</button>
+                  </div>
+                </div>
+
+                <!-- Xe máy (Amber Highlight) -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-amber-500/40 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_1" value="1" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-amber-200 truncate font-medium text-[9px]">Xe máy</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(1, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_1" min="0.05" max="0.95" step="0.01" value="0.25"
+                           onchange="onClassThresholdInputChange(1, this.value)"
+                           oninput="onClassThresholdInputTyping(1, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-amber-500/40 focus:border-amber-400 rounded py-0 text-amber-300 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(1, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                  </div>
+                </div>
+
+                <!-- Xe đạp -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_2" value="2" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-slate-200 truncate font-medium text-[9px]">Xe đạp</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(2, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_2" min="0.05" max="0.95" step="0.01" value="0.30"
+                           onchange="onClassThresholdInputChange(2, this.value)"
+                           oninput="onClassThresholdInputTyping(2, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(2, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                  </div>
+                </div>
+
+                <!-- Xe buýt -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_3" value="3" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-slate-200 truncate font-medium text-[9px]">Xe buýt</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(3, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_3" min="0.05" max="0.95" step="0.01" value="0.45"
+                           onchange="onClassThresholdInputChange(3, this.value)"
+                           oninput="onClassThresholdInputTyping(3, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(3, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                  </div>
+                </div>
+
+                <!-- Xe tải -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_4" value="4" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-slate-200 truncate font-medium text-[9px]">Xe tải</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(4, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_4" min="0.05" max="0.95" step="0.01" value="0.42"
+                           onchange="onClassThresholdInputChange(4, this.value)"
+                           oninput="onClassThresholdInputTyping(4, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(4, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                  </div>
+                </div>
+
+                <!-- Ba gác -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_5" value="5" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-slate-200 truncate font-medium text-[9px]">Ba gác</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(5, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_5" min="0.05" max="0.95" step="0.01" value="0.42"
+                           onchange="onClassThresholdInputChange(5, this.value)"
+                           oninput="onClassThresholdInputTyping(5, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(5, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                  </div>
+                </div>
+
+                <!-- Cứu thương -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_6" value="6" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-slate-200 truncate font-medium text-[9px]">Cứu thương</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(6, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_6" min="0.05" max="0.95" step="0.01" value="0.50"
+                           onchange="onClassThresholdInputChange(6, this.value)"
+                           oninput="onClassThresholdInputTyping(6, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(6, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                  </div>
+                </div>
+
+                <!-- Cứu hỏa -->
+                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                  <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
+                    <input type="checkbox" id="roiClassCheck_7" value="7" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <span class="text-slate-200 truncate font-medium text-[9px]">Cứu hỏa</span>
+                  </label>
+                  <div class="flex items-center space-x-0.5 shrink-0">
+                    <button type="button" onclick="adjustClassThreshold(7, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <input type="number" id="inlineClassInput_7" min="0.05" max="0.95" step="0.01" value="0.50"
+                           onchange="onClassThresholdInputChange(7, this.value)"
+                           oninput="onClassThresholdInputTyping(7, this.value)"
+                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(7, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -378,19 +476,6 @@
               <p class="text-slate-500 text-[10px] py-1 text-center">Chưa có ROI nào.</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- COMPACT INLINE CLASS THRESHOLDS BAR (Minimal, no modal needed) -->
-      <div id="inlineThresholdsBox" class="shrink-0 mt-2 bg-darkbg/80 border border-darkborder rounded-lg px-2.5 py-1.5">
-        <div class="flex items-center justify-between gap-2 mb-1">
-          <div class="flex items-center space-x-2">
-            <span class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Ngưỡng Class</span>
-            <span id="inlineThresholdToast" class="text-[10px] text-emerald-400 hidden font-medium">Đã lưu tự động</span>
-          </div>
-        </div>
-        <div id="inlineClassSliders" class="grid grid-cols-4 xl:grid-cols-8 gap-1.5">
-          <!-- Rendered compactly by JS -->
         </div>
       </div>
     </section>
@@ -2874,31 +2959,13 @@
     }
 
     function renderInlineClassThresholds() {
-      const container = document.getElementById('inlineClassSliders');
-      if (!container || !currentAIConfig) return;
+      if (!currentAIConfig) return;
       const perClass = currentAIConfig.per_class_conf || {};
-      let html = '';
       for (let cid = 0; cid <= 7; cid++) {
-        const meta = CLASS_METADATA[cid] || { short: `Lớp ${cid}`, icon: '' };
         const val = parseFloat(perClass[cid] ?? currentAIConfig.default_conf ?? 0.40);
-        const isHighlight = meta.highlight;
-        html += `
-          <div class="px-1.5 py-1 rounded border ${isHighlight ? 'bg-amber-500/10 border-amber-500/35' : 'bg-darkpanel/80 border-darkborder/70'} flex flex-col justify-between space-y-1">
-            <div class="flex items-center justify-between text-[10px]">
-              <span class="text-slate-300 font-medium truncate">${meta.short}</span>
-            </div>
-            <div class="flex items-center justify-between space-x-1">
-              <button type="button" onclick="adjustClassThreshold(${cid}, -0.01)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Giảm 0.01">-</button>
-              <input type="number" id="inlineClassInput_${cid}" min="0.05" max="0.95" step="0.01" value="${val.toFixed(2)}"
-                     onchange="onClassThresholdInputChange(${cid}, this.value)"
-                     oninput="onClassThresholdInputTyping(${cid}, this.value)"
-                     class="w-10 bg-darkbg border border-slate-700 focus:border-indigo-500 rounded text-center font-bold ${isHighlight ? 'text-amber-300' : 'text-emerald-400'} font-mono text-[10px] py-0.5 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-              <button type="button" onclick="adjustClassThreshold(${cid}, 0.01)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Tăng 0.01">+</button>
-            </div>
-          </div>
-        `;
+        const inp = document.getElementById(`inlineClassInput_${cid}`);
+        if (inp) inp.value = val.toFixed(2);
       }
-      container.innerHTML = html;
     }
 
     function adjustClassThreshold(cid, delta) {
