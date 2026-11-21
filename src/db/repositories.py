@@ -400,6 +400,46 @@ class ViolationRepository:
             )
             return cur.rowcount > 0
 
+    def update_violation_fields(
+        self,
+        violation_id: int,
+        plate_number: Optional[str] = None,
+        violation_type: Optional[str] = None,
+        vehicle_class_name: Optional[str] = None,
+        review_status: Optional[str] = None,
+    ) -> bool:
+        """Allow manual editing and synchronization of violation attributes."""
+        updates = []
+        params = []
+        if plate_number is not None:
+            clean_plate = plate_number.strip().upper()
+            updates.append("plate_number = ?")
+            params.append(clean_plate)
+            updates.append("corrected_plate = ?")
+            params.append(clean_plate)
+            updates.append("ocr_status = 'manual_input'")
+        if violation_type is not None:
+            updates.append("violation_type = ?")
+            params.append(violation_type.strip())
+        if vehicle_class_name is not None:
+            clean_cls = vehicle_class_name.strip()
+            updates.append("vehicle_class_name = ?")
+            params.append(clean_cls)
+            updates.append("corrected_class_name = ?")
+            params.append(clean_cls)
+        if review_status is not None:
+            updates.append("review_status = ?")
+            params.append(review_status.strip())
+
+        if not updates:
+            return False
+
+        params.append(violation_id)
+        sql = f"UPDATE violations SET {', '.join(updates)} WHERE id = ?"
+        with db_session(self.db_path) as conn:
+            cur = conn.execute(sql, tuple(params))
+            return cur.rowcount > 0
+
     def get_export_data(self, review_status: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get violations for active learning feedback export."""
         query = "SELECT * FROM violations"

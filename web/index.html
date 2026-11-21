@@ -1560,17 +1560,94 @@
     }
 
     function onViolationUpdatedReceived(data) {
-      // Smart Deduplication: Update duration & repeat counter in-place
-      let v = liveViolations.find(item => item.id === data.violation_id);
-      if (v) {
-        v.dwell_duration_sec = data.dwell_duration_sec;
-        v.repeat_count = data.repeat_count;
-        v.session_status = data.session_status || 'ACTIVE';
-        renderLiveViolations();
+      const vid = data.violation ? (data.violation.id || data.violation_id) : data.violation_id;
+      let v = liveViolations.find(item => item.id === vid);
+      if (data.violation) {
+        if (v) {
+          Object.assign(v, data.violation);
+          renderLiveViolations();
+        } else {
+          fetchLiveViolations();
+        }
+        if (typeof currentHistoryItems !== 'undefined' && currentHistoryItems) {
+          let hv = currentHistoryItems.find(item => item.id === vid);
+          if (hv) {
+            Object.assign(hv, data.violation);
+            if (typeof renderHistoryTable === 'function') renderHistoryTable(currentHistoryItems);
+          }
+        }
       } else {
-        fetchLiveViolations();
+        if (v) {
+          v.dwell_duration_sec = data.dwell_duration_sec;
+          v.repeat_count = data.repeat_count;
+          v.session_status = data.session_status || 'ACTIVE';
+          renderLiveViolations();
+        } else {
+          fetchLiveViolations();
+        }
       }
-      appendSystemLog(`[DEDUP] Cập nhật vi phạm #${data.violation_id}: Đang đỗ ${parseFloat(data.dwell_duration_sec).toFixed(1)}s (Lặp lại: x${data.repeat_count})`, 'text-blue-400');
+      appendSystemLog(`[DEDUP] Cập nhật vi phạm #${vid}: Đang đỗ ${parseFloat(data.dwell_duration_sec || 0).toFixed(1)}s (Lặp lại: x${data.repeat_count || 1})`, 'text-blue-400');
+    }
+
+    async function saveViolationPlate(violationId, newPlate) {
+      const cleanPlate = (newPlate || '').trim().toUpperCase();
+      try {
+        const res = await fetch(`/api/violations/${violationId}/edit`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plate_number: cleanPlate })
+        });
+        if (res.ok) {
+          const result = await res.json();
+          const liveItem = liveViolations.find(v => v.id === violationId);
+          if (liveItem) {
+            liveItem.plate_number = cleanPlate;
+            liveItem.corrected_plate = cleanPlate;
+            renderLiveViolations();
+          }
+          if (typeof currentHistoryItems !== 'undefined' && currentHistoryItems) {
+            const histItem = currentHistoryItems.find(v => v.id === violationId);
+            if (histItem) {
+              histItem.plate_number = cleanPlate;
+              histItem.corrected_plate = cleanPlate;
+              if (typeof renderHistoryTable === 'function') renderHistoryTable(currentHistoryItems);
+            }
+          }
+          appendSystemLog(`Đã cập nhật biển số vi phạm #${violationId}: ${cleanPlate}`, 'text-emerald-400');
+        }
+      } catch (e) {
+        console.error('Error saving violation plate:', e);
+      }
+    }
+
+    async function saveViolationField(violationId, fieldName, fieldValue) {
+      try {
+        const payload = { [fieldName]: fieldValue };
+        const res = await fetch(`/api/violations/${violationId}/edit`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const result = await res.json();
+          const updated = result.violation || {};
+          const liveItem = liveViolations.find(v => v.id === violationId);
+          if (liveItem) {
+            Object.assign(liveItem, updated);
+            renderLiveViolations();
+          }
+          if (typeof currentHistoryItems !== 'undefined' && currentHistoryItems) {
+            const histItem = currentHistoryItems.find(v => v.id === violationId);
+            if (histItem) {
+              Object.assign(histItem, updated);
+              if (typeof renderHistoryTable === 'function') renderHistoryTable(currentHistoryItems);
+            }
+          }
+          appendSystemLog(`Đã cập nhật trường ${fieldName} của vi phạm #${violationId}`, 'text-emerald-400');
+        }
+      } catch (e) {
+        console.error(`Error saving violation field ${fieldName}:`, e);
+      }
     }
 
     function onOcrCompletedReceived(data) {
@@ -1645,14 +1722,14 @@
         let violationBehavior = '';
 
         if (v.violation_type === 'no_parking') {
-          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>DỪNG ĐỖ TRÁI PHÉP</span></span>';
-          violationBehavior = `Dừng đỗ xe trái quy định trong khu vực cấm (${durationSec}s)`;
+          typeBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px] uppercase shadow"><span>DỪNG ĐỖ TRÁI PHÉP</span></span>';
+          violationBehavior = `Dừng đỗ trái phép (${durationSec}s)`;
         } else if (v.violation_type === 'sidewalk_encroachment') {
-          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-amber-600 text-white font-bold text-xs uppercase shadow"><span>LẤN CHIẾM VỈA HÈ</span></span>';
-          violationBehavior = `Phương tiện lấn chiếm vỉa hè người đi bộ (${durationSec}s)`;
+          typeBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-600 text-white font-bold text-[10px] uppercase shadow"><span>LẤN CHIẾM VỈA HÈ</span></span>';
+          violationBehavior = `Lấn chiếm vỉa hè (${durationSec}s)`;
         } else {
-          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>SAI LÀN</span></span>';
-          violationBehavior = 'Đi sai làn đường quy định hoặc đè vạch cấm';
+          typeBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px] uppercase shadow"><span>SAI LÀN</span></span>';
+          violationBehavior = 'Đi sai làn / đè vạch';
         }
 
         // Format location based on camera detected and user-configured camera name/region
@@ -1672,23 +1749,21 @@
         const isConfirmed = v.review_status === 'confirmed';
         const isFalsePositive = v.review_status === 'false_positive';
 
-        const plateText = v.plate_number ? v.plate_number : 'ĐANG NHẬN DIỆN...';
-        const plateColor = v.plate_number ? 'text-white' : 'text-slate-400 italic';
-        const vehicleClassDisplay = VN_CLASS_NAMES[v.vehicle_class_name] || v.vehicle_class_name.toUpperCase();
+        const vehicleClassDisplay = VN_CLASS_NAMES[v.vehicle_class_name] || (v.vehicle_class_name || '').toUpperCase();
         const confPct = ((v.detect_conf || 0.85) * 100).toFixed(1);
 
         const cardId = `vCard_${v.id}`;
 
         return `
-          <div id="${cardId}" class="rounded-xl border ${repeatCount > 1 ? 'border-amber-500/70' : 'border-rose-600/70'} bg-[#13111c] p-2.5 shadow-xl space-y-2 text-xs transition hover:border-rose-500">
+          <div id="${cardId}" class="rounded-xl border ${repeatCount > 1 ? 'border-amber-500/70' : 'border-rose-600/70'} bg-[#13111c] p-2 shadow-xl space-y-1.5 text-xs transition hover:border-rose-500">
             <!-- Header Row: Event title & Time + Repeat Badge -->
-            <div class="flex items-center justify-between text-[11px]">
+            <div class="flex items-center justify-between text-[10px]">
               <div class="flex items-center space-x-1.5 flex-wrap gap-1">
                 <span class="font-bold text-white tracking-wide uppercase">SỰ KIỆN #${v.id}</span>
-                ${repeatCount > 1 ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold text-[10px] animate-pulse">Lặp lại: x${repeatCount}</span>` : ''}
-                ${v.session_status === 'ACTIVE' ? `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-medium">Đang đỗ</span>` : ''}
+                ${repeatCount > 1 ? `<span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold text-[9px] animate-pulse">Lặp lại: x${repeatCount}</span>` : ''}
+                ${v.session_status === 'ACTIVE' ? `<span class="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[9px] font-medium">Đang đỗ</span>` : ''}
               </div>
-              <span class="text-slate-400 font-mono text-[10px]">${timeStr} | ${dateStr}</span>
+              <span class="text-slate-400 font-mono text-[9px]">${timeStr} | ${dateStr}</span>
             </div>
 
             <!-- Violation Badge & Type -->
@@ -1696,25 +1771,26 @@
               ${typeBadge}
             </div>
 
-            <!-- Behavior Description -->
-            <div class="text-[11px] text-slate-300">
-              <span class="text-slate-400">Hành vi:</span> <span class="font-medium text-slate-100">${violationBehavior}</span>
+            <!-- Compact Behavior & Vehicle Class in one row -->
+            <div class="flex items-center justify-between text-[9.5px] text-slate-300">
+              <div class="truncate mr-1"><span class="text-slate-400">Hành vi:</span> <span class="font-medium text-slate-100">${violationBehavior}</span></div>
+              <div class="shrink-0"><span class="text-slate-400">Xe:</span> <span class="font-semibold text-white">${vehicleClassDisplay}</span></div>
             </div>
 
-            <!-- Vehicle Class -->
-            <div class="text-[11px] text-slate-300">
-              <span class="text-slate-400">Loại xe:</span> <span class="font-semibold text-white">${vehicleClassDisplay}</span>
-            </div>
-
-            <!-- License Plate Row -->
-            <div class="flex items-center justify-between pt-0.5">
-              <div class="flex items-center space-x-2">
-                <span class="text-slate-400 text-[11px] font-semibold">BIỂN SỐ:</span>
-                <span class="px-3 py-1 rounded bg-[#0b1329] border border-blue-500/40 font-mono font-extrabold tracking-widest text-sm ${plateColor} shadow-inner">
-                  ${plateText}
-                </span>
+            <!-- License Plate Row (Click directly into input to edit or type manually) -->
+            <div class="flex items-center justify-between pt-0.5 gap-1.5">
+              <div class="flex items-center space-x-1.5 flex-1 min-w-0">
+                <span class="text-slate-400 text-[10px] font-semibold shrink-0">BIỂN SỐ:</span>
+                <input type="text"
+                       id="livePlateInput_${v.id}"
+                       value="${v.plate_number || ''}"
+                       placeholder="${v.plate_number ? '' : 'ĐANG NHẬN DIỆN...'}"
+                       onchange="saveViolationPlate(${v.id}, this.value)"
+                       onkeydown="if(event.key==='Enter')this.blur()"
+                       class="w-full px-2 py-0.5 rounded bg-[#0b1329] border border-blue-500/40 hover:border-amber-400 focus:border-emerald-400 focus:bg-[#060c1d] focus:outline-none font-mono font-extrabold tracking-widest text-[11px] ${v.plate_number ? 'text-white' : 'text-slate-400 italic placeholder-slate-500'} shadow-inner text-center cursor-text transition"
+                       title="Click vào đây để nhập tay hoặc sửa biển số">
               </div>
-              <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow ${
+              <span class="px-2 py-0.5 rounded text-[9.5px] font-bold uppercase shadow shrink-0 ${
                 isConfirmed ? 'bg-emerald-600 text-white' : (isFalsePositive ? 'bg-rose-700 text-white' : 'bg-[#dc2626] text-white')
               }">
                 ${isConfirmed ? 'ĐÃ DUYỆT' : (isFalsePositive ? 'BÁO SAI' : 'ĐÃ GHI NHẬN')}
@@ -1722,26 +1798,26 @@
             </div>
 
             <!-- Best-Shot Vehicle Crop Image (Clickable for zoom) -->
-            <div class="relative rounded-lg overflow-hidden border border-slate-700/80 aspect-[16/9] bg-black/60 group cursor-pointer" onclick="openImageModal(${v.id}, 'crop')">
+            <div class="relative rounded-lg overflow-hidden border border-slate-700/80 aspect-[16/9] max-h-36 bg-black/60 group cursor-pointer" onclick="openImageModal(${v.id}, 'crop')">
               <img src="/api/violations/${v.id}/image/crop" alt="Vehicle Crop" class="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                    onerror="this.src='/api/violations/${v.id}/image/annotated'">
-              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-[11px] text-white font-medium">
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-[10px] text-white font-medium">
                 Bấm để phóng to & đối soát
               </div>
             </div>
 
             <!-- Footer Meta & Actions -->
-            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800 gap-1.5">
-              <div class="truncate text-[9.5px]" title="Độ tin cậy: ${confPct}% | Vị trí: ${cameraLocation}">
+            <div class="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-slate-800 gap-1">
+              <div class="truncate text-[9px]" title="Độ tin cậy: ${confPct}% | Vị trí: ${cameraLocation}">
                 <span>Độ tin cậy: <b class="text-emerald-400">${confPct}%</b></span>
                 <span class="text-slate-600 mx-0.5">|</span>
                 <span>Vị trí: <b class="text-slate-200">${cameraLocation}</b></span>
               </div>
               <div class="flex space-x-1 shrink-0">
-                <button onclick="handleQuickReview(${v.id}, 'confirmed')" class="px-2 py-0.5 rounded bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white font-medium transition text-[9.5px]" title="Xác nhận vi phạm đúng">
+                <button onclick="handleQuickReview(${v.id}, 'confirmed')" class="px-2 py-0.5 rounded bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white font-medium transition text-[9px] cursor-pointer" title="Xác nhận vi phạm đúng">
                   Duyệt
                 </button>
-                <button onclick="handleQuickReview(${v.id}, 'false_positive')" class="px-2 py-0.5 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-medium transition text-[9.5px]" title="Báo nhận diện sai (Khóa 30 phút)">
+                <button onclick="handleQuickReview(${v.id}, 'false_positive')" class="px-2 py-0.5 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-medium transition text-[9px] cursor-pointer" title="Báo nhận diện sai (Khóa 30 phút)">
                   Báo sai
                 </button>
               </div>
@@ -3504,48 +3580,81 @@
         document.getElementById('prevPageBtn').disabled = historyPage <= 1;
         document.getElementById('nextPageBtn').disabled = historyPage >= historyTotalPages;
 
-        const tbody = document.getElementById('historyTableBody');
-        const search = document.getElementById('searchPlate').value.trim().toUpperCase();
+        renderHistoryTable(items);
+      } catch (e) { console.error(e); }
+    }
 
-        let filtered = items;
-        if (search) filtered = filtered.filter(v => (v.plate_number || '').toUpperCase().includes(search));
+    function renderHistoryTable(items) {
+      const tbody = document.getElementById('historyTableBody');
+      if (!tbody) return;
+      const search = (document.getElementById('searchPlate')?.value || '').trim().toUpperCase();
 
-        if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-slate-500">Không có dữ liệu phù hợp.</td></tr>`;
-          return;
-        }
+      let filtered = items || [];
+      if (search) filtered = filtered.filter(v => (v.plate_number || '').toUpperCase().includes(search));
 
-        tbody.innerHTML = filtered.map(v => {
-          const timeStr = new Date(v.created_at).toLocaleString('vi-VN');
-          const camDisplayName = getCameraDisplayName(v.camera_id);
-          let typeLabel = v.violation_type;
-          if (v.violation_type === 'no_parking') typeLabel = 'Dừng đỗ trái phép';
-          else if (v.violation_type === 'sidewalk_encroachment') typeLabel = 'Lấn chiếm vỉa hè';
-          else if (v.violation_type === 'wrong_lane' || v.violation_type === 'lane_roi') typeLabel = 'Đi sai làn';
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-slate-500">Không có dữ liệu phù hợp.</td></tr>`;
+        return;
+      }
 
-          return `
-            <tr class="hover:bg-slate-800/40 transition">
-              <td class="py-2.5 px-3"><span class="font-bold text-white">#${v.id}</span><span class="block text-[10px] text-slate-400">${timeStr}</span></td>
-              <td class="py-2.5 px-3 text-slate-200">${camDisplayName}</td>
-              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-medium">${typeLabel}</span></td>
-              <td class="py-2.5 px-3"><span class="font-semibold text-white">${v.vehicle_class_name}</span></td>
-              <td class="py-2.5 px-3 text-amber-400 font-medium">${v.dwell_duration_sec > 0 ? parseFloat(v.dwell_duration_sec).toFixed(1) + 's' : '-'}</td>
-              <td class="py-2.5 px-3"><span class="font-mono font-bold text-amber-300">${v.plate_number || 'N/A'}</span></td>
-              <td class="py-2.5 px-3">
-                <img src="/api/violations/${v.id}/image/crop" onclick="openImageModal(${v.id}, 'crop')" class="w-10 h-7 object-cover rounded border border-darkborder cursor-pointer hover:scale-110 transition shadow" title="Xem ảnh">
-              </td>
-              <td class="py-2.5 px-3">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${v.review_status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300' : (v.review_status === 'false_positive' ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-700 text-slate-300')}">
-                  ${v.review_status === 'confirmed' ? 'ĐÃ DUYỆT' : (v.review_status === 'false_positive' ? 'BÁO SAI' : 'CHỜ DUYỆT')}
-                </span>
-              </td>
-              <td class="py-2.5 px-3 text-right">
-                <button onclick="handleQuickReview(${v.id}, 'confirmed'); fetchHistoryViolations();" class="px-2 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[11px] font-medium mr-1 transition cursor-pointer">Duyệt</button>
-                <button onclick="handleQuickReview(${v.id}, 'false_positive'); fetchHistoryViolations();" class="px-2 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded text-[11px] font-medium transition cursor-pointer">Sai</button>
-              </td>
-            </tr>
-          `;
-        }).join('');
+      tbody.innerHTML = filtered.map(v => {
+        const timeStr = new Date(v.created_at).toLocaleString('vi-VN');
+        const camDisplayName = getCameraDisplayName(v.camera_id);
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-2 px-2.5">
+              <span class="font-bold text-white text-[11px]">#${v.id}</span>
+              <span class="block text-[9px] text-slate-400 font-mono">${timeStr}</span>
+            </td>
+            <td class="py-2 px-2.5 text-slate-200 text-[11px]">${camDisplayName}</td>
+            <td class="py-2 px-2.5">
+              <select onchange="saveViolationField(${v.id}, 'violation_type', this.value)" class="bg-rose-500/15 border border-rose-500/30 hover:border-rose-400 text-rose-300 text-[10px] rounded px-1.5 py-0.5 cursor-pointer font-medium focus:outline-none" title="Click để sửa loại vi phạm">
+                <option value="wrong_lane" ${v.violation_type === 'wrong_lane' || v.violation_type === 'lane_roi' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Đi sai làn</option>
+                <option value="no_parking" ${v.violation_type === 'no_parking' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Dừng đỗ trái phép</option>
+                <option value="sidewalk_encroachment" ${v.violation_type === 'sidewalk_encroachment' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Lấn chiếm vỉa hè</option>
+              </select>
+            </td>
+            <td class="py-2 px-2.5">
+              <select onchange="saveViolationField(${v.id}, 'vehicle_class_name', this.value)" class="bg-slate-800 border border-slate-700 hover:border-blue-400 text-white text-[10px] rounded px-1.5 py-0.5 cursor-pointer font-medium focus:outline-none" title="Click để sửa loại xe">
+                <option value="car" ${v.vehicle_class_name === 'car' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Ô tô con</option>
+                <option value="motorcycle" ${v.vehicle_class_name === 'motorcycle' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Xe máy</option>
+                <option value="truck" ${v.vehicle_class_name === 'truck' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Xe tải</option>
+                <option value="bus" ${v.vehicle_class_name === 'bus' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Xe buýt</option>
+                <option value="bicycle" ${v.vehicle_class_name === 'bicycle' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Xe đạp</option>
+                <option value="tricycle" ${v.vehicle_class_name === 'tricycle' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Ba gác</option>
+                <option value="ambulance" ${v.vehicle_class_name === 'ambulance' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Cứu thương</option>
+                <option value="fire_truck" ${v.vehicle_class_name === 'fire_truck' ? 'selected' : ''} class="bg-darkpanel text-slate-200">Cứu hỏa</option>
+              </select>
+            </td>
+            <td class="py-2 px-2.5 text-amber-400 font-medium text-[11px]">${v.dwell_duration_sec > 0 ? parseFloat(v.dwell_duration_sec).toFixed(1) + 's' : '-'}</td>
+            <td class="py-2 px-2.5">
+              <input type="text"
+                     value="${v.plate_number || ''}"
+                     placeholder="Nhập biển..."
+                     onchange="saveViolationPlate(${v.id}, this.value)"
+                     onkeydown="if(event.key==='Enter')this.blur()"
+                     class="w-24 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-400 focus:border-emerald-400 focus:bg-black font-mono font-bold text-[11px] text-amber-300 text-center transition"
+                     title="Click để sửa biển số">
+            </td>
+            <td class="py-2 px-2.5">
+              <img src="/api/violations/${v.id}/image/crop" onclick="openImageModal(${v.id}, 'crop')" class="w-10 h-7 object-cover rounded border border-darkborder cursor-pointer hover:scale-110 transition shadow" title="Xem ảnh">
+            </td>
+            <td class="py-2 px-2.5">
+              <select onchange="saveViolationField(${v.id}, 'review_status', this.value)" class="${v.review_status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : (v.review_status === 'false_positive' ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' : 'bg-slate-700/60 text-slate-300 border-slate-600')} border text-[10px] rounded px-1.5 py-0.5 font-bold cursor-pointer focus:outline-none" title="Click để đổi trạng thái">
+                <option value="pending" ${v.review_status === 'pending' ? 'selected' : ''} class="bg-darkpanel text-slate-300">CHỜ DUYỆT</option>
+                <option value="confirmed" ${v.review_status === 'confirmed' ? 'selected' : ''} class="bg-darkpanel text-emerald-400">ĐÃ DUYỆT</option>
+                <option value="false_positive" ${v.review_status === 'false_positive' ? 'selected' : ''} class="bg-darkpanel text-rose-400">BÁO SAI</option>
+              </select>
+            </td>
+            <td class="py-2 px-2.5 text-right whitespace-nowrap">
+              <button onclick="handleQuickReview(${v.id}, 'confirmed'); fetchHistoryViolations();" class="px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[10px] font-medium mr-1 transition cursor-pointer">Duyệt</button>
+              <button onclick="handleQuickReview(${v.id}, 'false_positive'); fetchHistoryViolations();" class="px-2 py-0.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded text-[10px] font-medium transition cursor-pointer">Sai</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
       } catch (e) { console.error(e); }
     }
 

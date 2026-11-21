@@ -191,10 +191,10 @@ class ByteTracker:
         # Remove dead tracks older than track_buffer
         self.trackers = [t for t in self.trackers if t.time_since_update <= self.track_buffer]
 
-        # Return active tracks visible in current frame
+        # Return active tracks visible in current frame (allows Kalman predicted tracks on skipped inference frames)
         active_tracked: List[TrackedVehicle] = []
         for t in self.trackers:
-            if t.time_since_update < 1:  # Updated in current frame
+            if t.time_since_update <= 2 and (t.hits >= 2 or t.hit_streak >= 1):
                 box = t.get_state()
                 bx1, by1, bx2, by2 = box
                 bw = max(1.0, bx2 - bx1)

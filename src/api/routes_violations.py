@@ -19,6 +19,13 @@ class ViolationReviewRequest(BaseModel):
     corrected_plate: Optional[str] = None
 
 
+class ViolationEditRequest(BaseModel):
+    plate_number: Optional[str] = None
+    violation_type: Optional[str] = None
+    vehicle_class_name: Optional[str] = None
+    review_status: Optional[str] = None
+
+
 @router.get("")
 def list_violations(
     page: int = Query(1, ge=1),
@@ -88,6 +95,48 @@ def review_violation(violation_id: int, payload: ViolationReviewRequest):
         pass
 
     return {"message": "Violation review updated successfully"}
+
+
+@router.patch("/{violation_id}")
+@router.patch("/{violation_id}/edit")
+def edit_violation(violation_id: int, payload: ViolationEditRequest):
+    db_path = get_config().paths.db_path
+    repo = ViolationRepository(db_path)
+    updated = repo.update_violation_fields(
+        violation_id=violation_id,
+        plate_number=payload.plate_number,
+        violation_type=payload.violation_type,
+        vehicle_class_name=payload.vehicle_class_name,
+        review_status=payload.review_status,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Violation not found or no changes made")
+
+    item = repo.get_by_id(violation_id)
+
+    # Sync with deduplication manager if review_status changed
+    if payload.review_status:
+        try:
+            from src.core.deduplication import DeduplicationManager
+            DeduplicationManager.get_instance(db_path).mark_review_status(violation_id, payload.review_status)
+        except Exception:
+            pass
+
+    # Broadcast update to all live tabs/clients
+    try:
+        from src.api.routes_stream import broadcast_event_update
+        import asyncio
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(broadcast_event_update({
+                "type": "violation_updated",
+                "violation": item,
+                "violation_id": violation_id,
+            }))
+    except Exception:
+        pass
+
+    return {"message": "Violation updated successfully", "violation": item}
 
 
 @router.get("/{violation_id}/image/{img_type}")

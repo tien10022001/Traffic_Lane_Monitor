@@ -30,6 +30,7 @@ class CameraContext:
     active_tracks_count: int = 0
     latest_annotated_jpeg: Optional[bytes] = None
     latest_raw_frame: Optional[np.ndarray] = None
+    frame_index: int = 0
     lock: threading.Lock = None  # Initialized in post_init or __init__
 
     def __post_init__(self):
@@ -263,17 +264,26 @@ class CameraManager:
         exempt_classes = get_config().ai.exempt_classes
         class_map = get_config().ai.classes
 
+        # CPU optimization: on CPU devices (e.g. Ubuntu 8GB RAM), run YOLO inference every 2 frames
+        # and let Kalman tracker predict vehicle positions on intermediate frames to halve CPU usage.
+        is_cpu = getattr(self.detector, "device_type", "cpu") == "cpu"
+        infer_stride = 2 if is_cpu else 1
+
         while self.running and ctx.reader.running:
             try:
                 frame = ctx.reader.frame_queue.get(timeout=0.1)
             except queue.Empty:
                 continue
 
+            ctx.frame_index += 1
             raw_frame_copy = frame.copy()
             frame_h, frame_w = frame.shape[:2]
 
-            # 1. AI Object Detection (Shared ONNX)
-            detections = self.detector.detect(frame)
+            # 1. AI Object Detection (Run every infer_stride frames; on skipped frames use Kalman prediction)
+            if ctx.frame_index % infer_stride == 0:
+                detections = self.detector.detect(frame)
+            else:
+                detections = []
 
             # 2. Tracking update
             tracked = ctx.tracker.update(detections, (frame_h, frame_w), class_map)
@@ -324,7 +334,16 @@ class CameraManager:
                         logger.error(f"Error executing violation callback: {e}")
 
             # Compress annotated frame to JPEG for MJPEG stream cache
-            ret, buf = cv2.imencode(".jpg", annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
+            # CPU & Low-Hardware optimization: Downscale live stream frame to width 960 to cut JPEG encode time by ~75%
+            # while keeping raw_frame_copy at 100% full original resolution for OCR and violations.
+            if frame_w > 960:
+                stream_w = 960
+                stream_h = int(960 * frame_h / frame_w)
+                stream_frame = cv2.resize(annotated_frame, (stream_w, stream_h), interpolation=cv2.INTER_LINEAR)
+            else:
+                stream_frame = annotated_frame
+
+            ret, buf = cv2.imencode(".jpg", stream_frame, [cv2.IMWRITE_JPEG_QUALITY, 68])
             if ret:
                 jpeg_bytes = buf.tobytes()
                 with ctx.lock:

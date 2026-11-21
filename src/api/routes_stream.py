@@ -99,27 +99,30 @@ async def mjpeg_stream(camera_id: int):
     manager = CameraManager.get_instance(db_path)
 
     async def frame_generator():
-        target_delay = 1.0 / 20.0  # Cap at 20 FPS for stream transmission
+        target_delay = 1.0 / 18.0  # Smooth 18 FPS transmission
+        last_sent_bytes = None
         while True:
             t0 = asyncio.get_event_loop().time()
             jpeg_bytes = manager.get_latest_annotated_jpeg(camera_id)
 
-            if jpeg_bytes is not None:
+            if jpeg_bytes is not None and jpeg_bytes is not last_sent_bytes:
+                last_sent_bytes = jpeg_bytes
                 yield (
                     b"--frame\r\n"
                     b"Content-Type: image/jpeg\r\n\r\n" + jpeg_bytes + b"\r\n"
                 )
-            else:
+            elif jpeg_bytes is None:
                 # Fallback snapshot or wait
                 snap = manager.get_snapshot_jpeg(camera_id)
-                if snap is not None:
+                if snap is not None and snap is not last_sent_bytes:
+                    last_sent_bytes = snap
                     yield (
                         b"--frame\r\n"
                         b"Content-Type: image/jpeg\r\n\r\n" + snap + b"\r\n"
                     )
 
             elapsed = asyncio.get_event_loop().time() - t0
-            sleep_time = max(0.02, target_delay - elapsed)
+            sleep_time = max(0.025, target_delay - elapsed)
             await asyncio.sleep(sleep_time)
 
     return StreamingResponse(
