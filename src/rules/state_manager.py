@@ -20,6 +20,8 @@ class TrackState:
     # Violation state
     has_triggered_violation: bool = False
     last_violation_time: float = 0.0
+    last_violation_type: Optional[str] = None
+    current_rule_type: Optional[str] = None
     # Consecutive frame counts for wrong_lane
     consecutive_wrong_lane_frames: int = 0
 
@@ -101,6 +103,7 @@ class StateManager:
         track_id: int,
         is_inside_roi: bool,
         is_stationary: bool = True,
+        rule_type: str = "no_parking",
     ) -> float:
         """
         Updates ROI dwell time using time.monotonic() and grace period.
@@ -114,6 +117,7 @@ class StateManager:
         grace_period = self.config.grace_period_sec
 
         if is_inside_roi and is_stationary:
+            state.current_rule_type = rule_type
             if state.in_roi_since is None:
                 state.in_roi_since = now
             # Accumulate time
@@ -129,6 +133,7 @@ class StateManager:
                     state.accumulated_dwell_sec = 0.0
                     state.in_roi_since = None
                     state.last_in_roi_monotonic = None
+                    state.current_rule_type = None
 
         return state.accumulated_dwell_sec
 
@@ -148,11 +153,12 @@ class StateManager:
 
         return False
 
-    def mark_violation_triggered(self, track_id: int) -> None:
+    def mark_violation_triggered(self, track_id: int, violation_type: str = "no_parking") -> None:
         state = self.active_states.get(track_id)
         if state:
             state.has_triggered_violation = True
             state.last_violation_time = time.monotonic()
+            state.last_violation_type = violation_type
 
     def prune_inactive_tracks(self, active_track_ids: set) -> None:
         """Save disappeared tracks to occlusion buffer and remove from active states."""

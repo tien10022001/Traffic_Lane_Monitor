@@ -385,18 +385,38 @@ class CameraManager:
             # Check if this vehicle is currently violating or recently triggered a violation
             st = rule_engine.state_manager.active_states.get(v.track_id)
             is_violating = False
-            violation_title = "SAI LAN"
+            violation_title = "DUNG DO"
             dwell = 0.0
 
             if st:
                 dwell = st.accumulated_dwell_sec
+                # Identify rule / violation type from state
+                vtype = getattr(st, "last_violation_type", None) or getattr(st, "current_rule_type", None)
+                if not vtype:
+                    if st.consecutive_wrong_lane_frames >= 2:
+                        vtype = "wrong_lane"
+                    elif dwell > 0:
+                        vtype = "no_parking"
+
+                # Check if violating
                 if st.has_triggered_violation or (st.last_violation_time > 0 and (now - st.last_violation_time < 8.0)):
                     is_violating = True
                 elif st.consecutive_wrong_lane_frames >= 2:
                     is_violating = True
                 elif dwell >= 10.0:
                     is_violating = True
+
+                # Determine HUD banner title matching the actual violated rule
+                if vtype == "no_parking":
                     violation_title = "DUNG DO"
+                elif vtype == "sidewalk_encroachment":
+                    violation_title = "LAN VIA HE"
+                elif vtype in ("wrong_lane", "lane_roi"):
+                    violation_title = "SAI LAN"
+                elif vtype == "lane_line":
+                    violation_title = "DE VACH"
+                else:
+                    violation_title = "DUNG DO" if dwell > 0 else "SAI LAN"
 
             if is_exempt:
                 box_color = (0, 255, 0)

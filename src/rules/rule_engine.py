@@ -192,12 +192,12 @@ class RuleEngine:
                         H=h_matrix,
                     )
                     dwell_sec = self.state_manager.update_roi_presence(
-                        vehicle.track_id, is_inside, is_stationary
+                        vehicle.track_id, is_inside, is_stationary, rule_type=rule.rule_type
                     )
 
                     if dwell_sec >= rule.dwell_threshold_sec:
                         if self.state_manager.can_trigger_violation(vehicle.track_id):
-                            self.state_manager.mark_violation_triggered(vehicle.track_id)
+                            self.state_manager.mark_violation_triggered(vehicle.track_id, violation_type=rule.rule_type)
                             violations.append(
                                 ViolationEvent(
                                     camera_id=self.camera_id,
@@ -227,7 +227,7 @@ class RuleEngine:
                         state.consecutive_wrong_lane_frames += 1
                         if state.consecutive_wrong_lane_frames >= wrong_lane_min_frames:
                             if self.state_manager.can_trigger_violation(vehicle.track_id):
-                                self.state_manager.mark_violation_triggered(vehicle.track_id)
+                                self.state_manager.mark_violation_triggered(vehicle.track_id, violation_type="wrong_lane")
                                 violations.append(
                                     ViolationEvent(
                                         camera_id=self.camera_id,
@@ -257,7 +257,7 @@ class RuleEngine:
 
                         if check_line_crossing(p_prev_norm, p_curr_norm, line_start, line_end, rule.direction):
                             if self.state_manager.can_trigger_violation(vehicle.track_id):
-                                self.state_manager.mark_violation_triggered(vehicle.track_id)
+                                self.state_manager.mark_violation_triggered(vehicle.track_id, violation_type="wrong_lane")
                                 violations.append(
                                     ViolationEvent(
                                         camera_id=self.camera_id,
