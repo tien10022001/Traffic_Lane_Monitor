@@ -329,21 +329,10 @@
 
       <!-- COMPACT INLINE CLASS THRESHOLDS BAR (Minimal, no modal needed) -->
       <div id="inlineThresholdsBox" class="shrink-0 mt-2 bg-darkbg/80 border border-darkborder rounded-lg px-2.5 py-1.5">
-        <div class="flex items-center justify-between gap-2 mb-1.5">
+        <div class="flex items-center justify-between gap-2 mb-1">
           <div class="flex items-center space-x-2">
             <span class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Ngưỡng Class</span>
-            <span id="inlineThresholdToast" class="text-[10px] text-emerald-400 hidden font-medium">Đã áp dụng</span>
-          </div>
-          <div class="flex items-center space-x-1.5 text-[10px]">
-            <button type="button" onclick="presetMotorcycleBoost(); saveInlineClassThresholds();" class="px-2 py-0.5 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded transition">
-              Xe máy 0.28
-            </button>
-            <button type="button" onclick="presetStandard(); saveInlineClassThresholds();" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-darkborder rounded transition">
-              Mặc định
-            </button>
-            <button type="button" onclick="saveInlineClassThresholds()" class="px-2.5 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded transition shadow">
-              Lưu
-            </button>
+            <span id="inlineThresholdToast" class="text-[10px] text-emerald-400 hidden font-medium">Đã lưu tự động</span>
           </div>
         </div>
         <div id="inlineClassSliders" class="grid grid-cols-4 xl:grid-cols-8 gap-1.5">
@@ -2740,6 +2729,15 @@
       }
     }
 
+    let inlineClassSaveTimeout = null;
+
+    function queueAutoSaveClassThresholds() {
+      if (inlineClassSaveTimeout) clearTimeout(inlineClassSaveTimeout);
+      inlineClassSaveTimeout = setTimeout(() => {
+        saveInlineClassThresholds();
+      }, 350);
+    }
+
     function renderInlineClassThresholds() {
       const container = document.getElementById('inlineClassSliders');
       if (!container || !currentAIConfig) return;
@@ -2750,28 +2748,79 @@
         const val = parseFloat(perClass[cid] ?? currentAIConfig.default_conf ?? 0.40);
         const isHighlight = meta.highlight;
         html += `
-          <div class="px-2 py-1 rounded border ${isHighlight ? 'bg-amber-500/10 border-amber-500/35' : 'bg-darkpanel/80 border-darkborder/70'} flex flex-col justify-between">
-            <div class="flex items-center justify-between text-[10px] mb-0.5">
+          <div class="px-1.5 py-1 rounded border ${isHighlight ? 'bg-amber-500/10 border-amber-500/35' : 'bg-darkpanel/80 border-darkborder/70'} flex flex-col justify-between space-y-1">
+            <div class="flex items-center justify-between text-[10px]">
               <span class="text-slate-300 font-medium truncate">${meta.short}</span>
-              <span id="inlineClassVal_${cid}" class="font-mono font-bold ${isHighlight ? 'text-amber-300' : 'text-emerald-400'}">${val.toFixed(2)}</span>
             </div>
-            <input type="range" id="inlineClassSlider_${cid}" min="0.10" max="0.80" step="0.01" value="${val}"
-                   oninput="syncClassThresholdInput(${cid}, this.value)"
-                   class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer ${isHighlight ? 'accent-amber-500' : 'accent-emerald-500'}">
+            <div class="flex items-center justify-between space-x-1">
+              <button type="button" onclick="adjustClassThreshold(${cid}, -0.01)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Giảm 0.01">-</button>
+              <input type="number" id="inlineClassInput_${cid}" min="0.05" max="0.95" step="0.01" value="${val.toFixed(2)}"
+                     onchange="onClassThresholdInputChange(${cid}, this.value)"
+                     oninput="onClassThresholdInputTyping(${cid}, this.value)"
+                     class="w-10 bg-darkbg border border-slate-700 focus:border-indigo-500 rounded text-center font-bold ${isHighlight ? 'text-amber-300' : 'text-emerald-400'} font-mono text-[10px] py-0.5 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+              <button type="button" onclick="adjustClassThreshold(${cid}, 0.01)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Tăng 0.01">+</button>
+            </div>
           </div>
         `;
       }
       container.innerHTML = html;
     }
 
-    function syncClassThresholdInput(cid, value) {
-      const numStr = parseFloat(value).toFixed(2);
-      const inlineVal = document.getElementById(`inlineClassVal_${cid}`);
-      const inlineSlider = document.getElementById(`inlineClassSlider_${cid}`);
+    function adjustClassThreshold(cid, delta) {
+      const inp = document.getElementById(`inlineClassInput_${cid}`);
+      if (!inp) return;
+      let cur = parseFloat(inp.value) || 0.40;
+      cur = Math.max(0.05, Math.min(0.95, parseFloat((cur + delta).toFixed(2))));
+      inp.value = cur.toFixed(2);
+
+      if (!currentAIConfig) currentAIConfig = {};
+      if (!currentAIConfig.per_class_conf) currentAIConfig.per_class_conf = {};
+      currentAIConfig.per_class_conf[cid] = cur;
+
       const modalVal = document.getElementById(`classVal_${cid}`);
       const modalSlider = document.getElementById(`classSlider_${cid}`);
-      if (inlineVal) inlineVal.innerText = numStr;
-      if (inlineSlider && inlineSlider.value !== String(value)) inlineSlider.value = value;
+      if (modalVal) modalVal.innerText = cur.toFixed(2);
+      if (modalSlider) modalSlider.value = cur;
+
+      queueAutoSaveClassThresholds();
+    }
+
+    function onClassThresholdInputChange(cid, value) {
+      let val = parseFloat(value);
+      if (isNaN(val)) val = 0.40;
+      val = Math.max(0.05, Math.min(0.95, parseFloat(val.toFixed(2))));
+      const inp = document.getElementById(`inlineClassInput_${cid}`);
+      if (inp) inp.value = val.toFixed(2);
+
+      if (!currentAIConfig) currentAIConfig = {};
+      if (!currentAIConfig.per_class_conf) currentAIConfig.per_class_conf = {};
+      currentAIConfig.per_class_conf[cid] = val;
+
+      const modalVal = document.getElementById(`classVal_${cid}`);
+      const modalSlider = document.getElementById(`classSlider_${cid}`);
+      if (modalVal) modalVal.innerText = val.toFixed(2);
+      if (modalSlider) modalSlider.value = val;
+
+      queueAutoSaveClassThresholds();
+    }
+
+    function onClassThresholdInputTyping(cid, value) {
+      let val = parseFloat(value);
+      if (!isNaN(val)) {
+        val = Math.max(0.05, Math.min(0.95, val));
+        if (!currentAIConfig) currentAIConfig = {};
+        if (!currentAIConfig.per_class_conf) currentAIConfig.per_class_conf = {};
+        currentAIConfig.per_class_conf[cid] = val;
+        queueAutoSaveClassThresholds();
+      }
+    }
+
+    function syncClassThresholdInput(cid, value) {
+      const numStr = parseFloat(value).toFixed(2);
+      const inlineInput = document.getElementById(`inlineClassInput_${cid}`);
+      const modalVal = document.getElementById(`classVal_${cid}`);
+      const modalSlider = document.getElementById(`classSlider_${cid}`);
+      if (inlineInput) inlineInput.value = numStr;
       if (modalVal) modalVal.innerText = numStr;
       if (modalSlider && modalSlider.value !== String(value)) modalSlider.value = value;
     }
@@ -2779,8 +2828,12 @@
     async function saveInlineClassThresholds() {
       const perClass = {};
       for (let cid = 0; cid <= 7; cid++) {
-        const slider = document.getElementById(`inlineClassSlider_${cid}`);
-        if (slider) perClass[cid] = parseFloat(slider.value);
+        const inp = document.getElementById(`inlineClassInput_${cid}`);
+        if (inp) {
+          perClass[cid] = parseFloat(inp.value) || 0.40;
+        } else if (currentAIConfig?.per_class_conf?.[cid] != null) {
+          perClass[cid] = currentAIConfig.per_class_conf[cid];
+        }
       }
       const payload = {
         default_conf: currentAIConfig?.default_conf ?? 0.43,
@@ -2797,8 +2850,9 @@
           currentAIConfig = await res.json();
           const toast = document.getElementById('inlineThresholdToast');
           if (toast) {
+            toast.innerText = 'Đã lưu tự động';
             toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 2500);
+            setTimeout(() => toast.classList.add('hidden'), 1800);
           }
         }
       } catch (e) {
