@@ -147,9 +147,14 @@ class RuleEngine:
         violations: List[ViolationEvent] = []
 
         for vehicle in tracked_vehicles:
-            # Check vehicle exemption (ambulance, fire_truck)
+            # Check vehicle exemption (ambulance, fire_truck) unless explicitly targeted
             if vehicle.class_id in exempt_classes:
-                continue
+                is_explicitly_targeted = any(
+                    rule.forbidden_classes and vehicle.class_id in rule.forbidden_classes
+                    for rule in self.rules
+                )
+                if not is_explicitly_targeted:
+                    continue
 
             # Update track state in state manager
             state = self.state_manager.update_track(
@@ -170,12 +175,14 @@ class RuleEngine:
             is_stationary = speed_px_per_sec <= stationary_speed_px_per_sec
 
             for rule in self.rules:
-                # Class permission check
-                if rule.forbidden_classes and vehicle.class_id in rule.forbidden_classes:
-                    is_violating_class = True
-                elif rule.allowed_classes is not None and vehicle.class_id not in rule.allowed_classes:
-                    is_violating_class = True
-                elif rule.rule_type in ("no_parking", "sidewalk_encroachment"):
+                # Class permission & target check:
+                # If target classes (forbidden_classes) is specified, only those classes are monitored in this ROI.
+                if rule.forbidden_classes is not None and len(rule.forbidden_classes) > 0:
+                    is_violating_class = (vehicle.class_id in rule.forbidden_classes)
+                elif rule.allowed_classes is not None and len(rule.allowed_classes) > 0:
+                    is_violating_class = (vehicle.class_id not in rule.allowed_classes)
+                elif rule.rule_type in ("no_parking", "sidewalk_encroachment", "lane_roi", "lane_line"):
+                    # Default: all non-exempt classes are monitored
                     is_violating_class = True
                 else:
                     is_violating_class = False
