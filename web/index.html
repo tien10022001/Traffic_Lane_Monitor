@@ -268,6 +268,7 @@
           <!-- Compact ROI Region Name -->
           <div class="shrink-0">
             <input type="text" id="onScreenRoiName" placeholder="Tên ROI (VD: ROI 1)"
+                   onchange="if(currentEditingRuleId) saveEditedRuleChanges()"
                    class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-white text-[11px] outline-none focus:border-indigo-500">
           </div>
 
@@ -289,42 +290,20 @@
           <!-- Direction (for line crossing) -->
           <div id="onScreenDirectionGroup" class="hidden shrink-0">
             <label class="block text-slate-400 text-[10px] mb-0.5">Chiều Cắt</label>
-            <select id="onScreenRuleDirection" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none cursor-pointer">
+            <select id="onScreenRuleDirection" onchange="if(currentEditingRuleId) saveEditedRuleChanges()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-white text-[11px] outline-none cursor-pointer">
               <option value="both">↔ Cả 2 chiều</option>
               <option value="left_to_right">→ Trái sang Phải</option>
               <option value="right_to_left">← Phải sang Trái</option>
             </select>
           </div>
 
-          <!-- Drawing Status & Quick Guide (Ngắn gọn, ít chữ) -->
-          <div id="onScreenDrawStatus" class="text-[9.5px] text-slate-300 bg-darkpanel/80 border border-darkborder rounded p-1.5 leading-tight shrink-0">
-            Điểm: <span class="text-white font-bold">0</span> (≥ 3 điểm. Chuột phải: lùi)
-          </div>
-
-          <!-- Drawing Action Buttons (Nhỏ gọn) -->
-          <div class="grid grid-cols-3 gap-1 shrink-0">
-            <button type="button" onclick="finishOnScreenPolygon()" class="py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/40 font-semibold text-[10.5px] transition text-center shadow" title="Đóng vùng đa giác">
-              ✓ Đóng
-            </button>
-            <button type="button" onclick="undoLastOnScreenPoint()" class="py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded border border-blue-500/40 font-semibold text-[10.5px] transition text-center shadow" title="Xóa điểm vừa click (hoặc click chuột phải)">
-              ↩ Lùi
-            </button>
-            <button type="button" onclick="clearOnScreenDrawing()" class="py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 hover:text-white rounded border border-rose-500/30 font-semibold text-[10.5px] transition text-center shadow" title="Xóa toàn bộ điểm đang vẽ">
-              ✕ Xóa
-            </button>
-          </div>
-
           <!-- Edit Mode Indicator (Shown only when editing an existing rule) -->
           <div id="editingRuleBanner" class="hidden flex items-center justify-between bg-amber-500/15 border border-amber-500/40 rounded px-2 py-1 text-[10px] text-amber-300 shrink-0">
-            <span id="editingRuleText" class="truncate font-semibold">✎ Đang sửa ROI #1</span>
-            <button type="button" onclick="cancelEditingRule()" class="text-slate-400 hover:text-white font-bold px-1 text-xs transition" title="Hủy chế độ sửa">✕ Hủy</button>
+            <span id="editingRuleText" class="truncate font-semibold">✎ Đang sửa ROI</span>
+            <button type="button" onclick="cancelEditingRule()" class="text-slate-400 hover:text-white font-bold px-1 text-xs transition" title="Xong sửa">✓ Xong</button>
           </div>
 
-          <!-- Save Button -->
-          <button type="button" id="onScreenSaveBtn" onclick="handleSaveOnScreenRule()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition shadow-lg flex items-center justify-center space-x-1 text-xs shrink-0">
-            <span id="onScreenSaveBtnText">💾 Lưu (1)</span>
-          </button>
-          <span id="onScreenRuleToast" class="text-[10px] text-emerald-400 hidden text-center font-medium shrink-0">✓ Đã lưu thành công!</span>
+          <div id="onScreenRuleToast" class="text-[10px] text-emerald-400 hidden text-center font-medium bg-emerald-500/15 border border-emerald-500/30 rounded py-0.5 shrink-0">✓ Đã lưu thành công!</div>
 
           <!-- Existing Rules of this Camera -->
           <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
@@ -1790,19 +1769,26 @@
       }
     }
 
+    let saveDwellTimer = null;
     function adjustDwell(delta) {
       const inp = document.getElementById('onScreenDwellInput');
       if (!inp) return;
       let cur = parseFloat(inp.value) || 10.0;
       cur = Math.max(0.5, Math.min(120.0, parseFloat((cur + delta).toFixed(1))));
       inp.value = cur.toFixed(1);
-      if (currentEditingRuleId) redrawOnScreenCanvas();
+      if (currentEditingRuleId) {
+        redrawOnScreenCanvas();
+        clearTimeout(saveDwellTimer);
+        saveDwellTimer = setTimeout(() => saveEditedRuleChanges(), 300);
+      }
     }
 
     function syncDwellFromInput(val) {
       const num = parseFloat(val);
       if (!isNaN(num) && currentEditingRuleId) {
         redrawOnScreenCanvas();
+        clearTimeout(saveDwellTimer);
+        saveDwellTimer = setTimeout(() => saveEditedRuleChanges(), 500);
       }
     }
 
@@ -1938,10 +1924,7 @@
           // Snap-to-close if clicking vertex 0 when polygon has >= 3 points and is not closed
           const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
           if (nearIdx === 0 && !isPolygonClosed && ruleType !== 'lane_line' && onScreenDrawnPoints.length >= 3) {
-            isPolygonClosed = true;
-            currentHoverPoint = null;
-            redrawOnScreenCanvas();
-            updateDrawStatusHint();
+            finishOnScreenPolygon(true);
             return;
           }
 
@@ -1958,11 +1941,11 @@
           if (pt) {
             onScreenDrawnPoints.push(pt);
             if (ruleType === 'lane_line' && onScreenDrawnPoints.length >= 2) {
-              isPolygonClosed = true;
-              currentHoverPoint = null;
+              finishOnScreenPolygon(true);
+            } else {
+              redrawOnScreenCanvas();
+              updateDrawStatusHint();
             }
-            redrawOnScreenCanvas();
-            updateDrawStatusHint();
           }
         });
 
@@ -1999,6 +1982,19 @@
             draggingVertexIdx = -1;
             const c = document.getElementById('onScreenDrawCanvas');
             if (c) c.style.cursor = 'crosshair';
+            if (currentEditingRuleId) {
+              saveEditedRuleChanges();
+            }
+          }
+        });
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && isOnScreenDrawActive) {
+            if (currentEditingRuleId) {
+              cancelEditingRule();
+            } else if (onScreenDrawnPoints.length > 0) {
+              clearOnScreenDrawing();
+            }
           }
         });
 
@@ -2203,6 +2199,9 @@
       currentHoverPoint = null;
       redrawOnScreenCanvas();
       updateDrawStatusHint();
+      if (!currentEditingRuleId) {
+        handleSaveOnScreenRule();
+      }
     }
 
     function undoLastOnScreenPoint() {
@@ -2366,6 +2365,48 @@
       renderExistingRulesListUI();
       redrawOnScreenCanvas();
       updateDrawStatusHint();
+    }
+
+    async function saveEditedRuleChanges() {
+      if (!currentEditingRuleId) return;
+      const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
+      const roiNameInput = document.getElementById('onScreenRoiName');
+      let roiName = (roiNameInput ? roiNameInput.value : '').trim();
+      if (!roiName) {
+        const label = RULE_TYPE_LABELS[ruleType] || ruleType;
+        roiName = `${label} #${currentEditingRuleId}`;
+      }
+      const geom = onScreenDrawnPoints.map(p => [parseFloat(p.x.toFixed(4)), parseFloat(p.y.toFixed(4))]);
+      const dwellVal = parseFloat(document.getElementById('onScreenDwellInput')?.value) || 10.0;
+
+      const payload = {
+        name: roiName,
+        rule_type: ruleType,
+        geometry_json: JSON.stringify(geom),
+        direction: document.getElementById('onScreenRuleDirection')?.value || 'both',
+        dwell_threshold_sec: dwellVal,
+        is_active: 1
+      };
+
+      try {
+        const res = await fetch(`/api/cameras/${activeCameraForEditor}/rules/${currentEditingRuleId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const toast = document.getElementById('onScreenRuleToast');
+          if (toast) {
+            toast.innerText = `✓ Đã tự động lưu thay đổi!`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2200);
+          }
+          await loadExistingRulesForDrawer(activeCameraForEditor);
+          redrawOnScreenCanvas();
+        }
+      } catch (e) {
+        console.error('Error auto-updating rule:', e);
+      }
     }
 
     async function deleteOnScreenRule(ruleId) {
