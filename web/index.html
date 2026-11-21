@@ -317,16 +317,9 @@
 
           <!-- Existing Rules of this Camera -->
           <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
-            <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold shrink-0 pb-0.5">
-              <div class="flex items-center space-x-1 cursor-pointer hover:text-white" onclick="toggleExistingRulesList()">
-                <span>ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
-                <span id="rulesToggleArrow">▲</span>
-              </div>
-              <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
-                <button type="button" id="existingRulesRoiModeBtn" onclick="cycleRoiDisplayMode()" class="px-1.5 py-0.5 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-amber-300 text-[9.5px] font-medium transition shadow-sm" title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
-                  <span id="existingRulesRoiModeText">Sọc chéo</span>
-                </button>
-              </div>
+            <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-0.5" onclick="toggleExistingRulesList()">
+              <span>ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
+              <span id="rulesToggleArrow">▲</span>
             </div>
             <div id="onScreenExistingRulesList" class="space-y-1.5 mt-1 flex-1 overflow-y-auto pr-0.5">
               <p class="text-slate-500 text-[10px] py-1 text-center">Chưa có ROI nào.</p>
@@ -2420,7 +2413,7 @@
               </div>
             </div>
 
-            <!-- Hàng 3: [Trường 3: Thời gian theo dõi (Tăng/Giảm)] & [Trường 4: Bật/Tắt cảnh báo] -->
+            <!-- Hàng 3: [Trường 3: Thời gian theo dõi (Tăng/Giảm)] & [Trường 4: Cảnh báo Bật/Tắt] -->
             <div class="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[9.5px]" onclick="event.stopPropagation()">
               <!-- Thời gian theo dõi -->
               <div class="flex items-center space-x-1">
@@ -2430,8 +2423,9 @@
                 <button type="button" onclick="adjustRuleDwellDirect(${r.id}, 1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Tăng 1 giây">+</button>
               </div>
 
-              <!-- Bật / Tắt (Tích vào sẽ cảnh báo, bỏ tích thì vẫn giữ vùng trên video nhưng không cảnh báo) -->
+              <!-- Cảnh báo Bật / Tắt (Tích vào sẽ cảnh báo, bỏ tích thì vẫn giữ vùng trên video nhưng không cảnh báo) -->
               <label class="flex items-center space-x-1 cursor-pointer select-none" title="Tích để bật cảnh báo, bỏ tích để tắt cảnh báo (vẫn giữ vùng trên video)">
+                <span class="text-slate-400 text-[9px]">Cảnh báo:</span>
                 <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleRuleActiveDirect(${r.id}, this.checked)" class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
                 <span class="text-[9px] font-semibold ${isActive ? 'text-emerald-400' : 'text-slate-500'}">${isActive ? 'Bật' : 'Tắt'}</span>
               </label>
@@ -2829,8 +2823,6 @@
 
       const drawerText = document.getElementById('drawerRoiModeText');
       if (drawerText) drawerText.innerText = targetLabel;
-      const exText = document.getElementById('existingRulesRoiModeText');
-      if (exText) exText.innerText = targetLabel;
       const btnText = document.getElementById('roiDisplayModeText');
       if (btnText) btnText.innerText = targetLabel;
 
@@ -2882,8 +2874,6 @@
             const target = ROI_MODES[idx];
             const drawerText = document.getElementById('drawerRoiModeText');
             if (drawerText) drawerText.innerText = target.label;
-            const exText = document.getElementById('existingRulesRoiModeText');
-            if (exText) exText.innerText = target.label;
             const btnText = document.getElementById('roiDisplayModeText');
             if (btnText) btnText.innerText = target.label;
           }
