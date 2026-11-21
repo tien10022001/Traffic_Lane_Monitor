@@ -217,7 +217,7 @@
             <img id="mainLiveStream" src="" alt="Camera Live Stream" class="w-full h-full object-contain pointer-events-none"
                  onerror="this.onerror=null; this.src='/api/cameras/1/snapshot'">
             <div class="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/80 backdrop-blur-sm border border-slate-700 text-[11px] text-slate-200 flex items-center space-x-2 pointer-events-none">
-              <span id="hudCamInfo">Cam #1 • Đang chạy</span>
+              <span id="hudCamInfo">Cam 1 • Đang chạy</span>
               <span class="text-slate-500">|</span>
               <span id="hudFpsText" class="text-emerald-400 font-bold">15.0 FPS</span>
             </div>
@@ -235,7 +235,7 @@
               <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
               <span class="font-bold text-white text-[11px] tracking-wide uppercase">ROI</span>
             </div>
-            <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase font-mono">CAM #1</span>
+            <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase font-mono">CAM 1</span>
           </div>
 
           <!-- Nút Bật/Tắt Chế Độ Vẽ ROI (Nằm ngay trên hàng Cam & Kiểu ROI, không có icon bút) -->
@@ -875,7 +875,7 @@
 
       container.innerHTML = camerasData.map(c => {
         const isActive = c.id === currentActiveCamId;
-        const displayName = c.name ? c.name : `Cam #${c.id}`;
+        const displayName = getCameraDisplayName(c.id);
         const safeName = displayName.replace(/'/g, "\\'");
 
         if (isActive) {
@@ -929,7 +929,7 @@
       if (!primaryFocusCamId) primaryFocusCamId = camId;
       const cam = camerasData.find(c => c.id === camId);
       if (cam) {
-        const camLabel = cam.name || `Cam #${cam.id}`;
+        const camLabel = getCameraDisplayName(cam.id);
         const hud = document.getElementById('hudCamInfo');
         if (hud) hud.innerText = `${camLabel} • ${cam.source_type.toUpperCase()}`;
         const mainStream = document.getElementById('mainLiveStream');
@@ -960,7 +960,7 @@
       document.getElementById('camUrlInput').value = cam.source_url || '';
       document.getElementById('camTypeInput').value = cam.source_type || 'rtsp';
       document.getElementById('camFpsInput').value = cam.fps_limit || 15;
-      document.getElementById('cameraModalTitle').innerText = `Chỉnh Sửa Camera #${cam.id}`;
+      document.getElementById('cameraModalTitle').innerText = `Chỉnh Sửa ${getCameraLabelWithPrefix(cam.id)}`;
       onCameraTypeChange();
       document.getElementById('cameraModal').classList.remove('hidden');
       setTimeout(() => {
@@ -1112,7 +1112,7 @@
           <!-- Top-Left Camera Label & Status -->
           <div class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[10px] text-white font-medium border border-slate-700 flex items-center space-x-1.5 pointer-events-none z-10">
             <span class="w-1.5 h-1.5 rounded-full ${cam.is_active ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
-            <span class="truncate max-w-[130px]">${labelPrefix ? labelPrefix + ': ' : ''}${cam.name || 'Cam #' + cam.id}</span>
+            <span class="truncate max-w-[130px]">${labelPrefix ? labelPrefix + ': ' : ''}${getCameraDisplayName(cam.id)}</span>
             ${isBeingDrawn ? '<span class="text-amber-300 font-bold ml-1">[ĐANG VẼ]</span>' : ''}
             ${isPrimaryFocus ? '<span class="text-blue-300 font-semibold ml-1">[TIÊU ĐIỂM]</span>' : ''}
           </div>
@@ -1170,7 +1170,7 @@
       // 1. SINGLE FULL VIEW (1x1)
       if (currentLayoutMode === 'single') {
         const cam = activeCams.find(c => c.id === currentActiveCamId) || focusCam;
-        const camLabel = cam.name || `Cam #${cam.id}`;
+        const camLabel = getCameraDisplayName(cam.id);
         const hudText = `${camLabel} • ${cam.source_type.toUpperCase()}`;
         const hasRestoreBtn = previousMultiLayout && previousMultiLayout !== 'single';
 
@@ -1361,7 +1361,7 @@
       renderLiveViolations();
 
       // Append to System Log
-      appendSystemLog(`🚨 [Mới] ${violation.violation_type.toUpperCase()}: ${violation.vehicle_class_name} (Cam #${violation.camera_id})`, 'text-rose-400');
+      appendSystemLog(`🚨 [Mới] ${violation.violation_type.toUpperCase()}: ${violation.vehicle_class_name} (${getCameraLabelWithPrefix(violation.camera_id)})`, 'text-rose-400');
     }
 
     function onViolationUpdatedReceived(data) {
@@ -1759,8 +1759,23 @@
     }
 
     function getCameraDisplayName(camId) {
+      if (camId == null) return '1';
       const c = camerasData.find(x => x.id === camId);
-      return c ? (c.name || `Cam #${c.id}`) : `Cam #${camId}`;
+      if (!c) return `${camId}`;
+      return c.name ? c.name : `${c.id}`;
+    }
+
+    function getCameraLabelWithPrefix(camId) {
+      const name = getCameraDisplayName(camId);
+      return /^cam/i.test(name) ? name : `Cam ${name}`;
+    }
+
+    function getCameraBadgeName(camId) {
+      const name = getCameraDisplayName(camId);
+      if (/^cam(\s*#?|\b)/i.test(name)) {
+        return name.toUpperCase();
+      }
+      return `CAM ${name}`.toUpperCase();
     }
 
     async function bindOnScreenDrawToCamera(camId) {
@@ -1780,7 +1795,7 @@
 
       const badge = document.getElementById('onScreenCamBadge');
       if (badge) {
-        badge.innerText = `CAM #${camId}`;
+        badge.innerText = getCameraBadgeName(camId);
       }
 
       // Sync drawer camera dropdown with exact camera names
@@ -1788,7 +1803,7 @@
       if (selectEl) {
         selectEl.innerHTML = camerasData.map(c => `
           <option value="${c.id}" ${c.id === camId ? 'selected' : ''}>
-            ${c.name || 'Cam #' + c.id}
+            ${getCameraDisplayName(c.id)}
           </option>
         `).join('');
         selectEl.value = camId;
@@ -1797,7 +1812,7 @@
       // Update save button target camera label (e.g. 💾 Lưu (1))
       const saveBtn = document.getElementById('onScreenSaveBtnText');
       if (saveBtn) {
-        saveBtn.innerText = `💾 Lưu (${camId})`;
+        saveBtn.innerText = `💾 Lưu (${getCameraDisplayName(camId)})`;
       }
 
       initOnScreenCanvas();
@@ -2343,7 +2358,7 @@
         const isEditing = currentEditingRuleId === r.id;
         const isActive = Boolean(r.is_active != null ? r.is_active : 1);
         const dwellVal = r.dwell_threshold_sec != null ? parseFloat(r.dwell_threshold_sec) : 10.0;
-        const camLabel = `Cam #${r.camera_id || activeCameraForEditor}`;
+        const camLabel = getCameraBadgeName(r.camera_id || activeCameraForEditor);
 
         return `
           <div class="group p-1.5 rounded-lg bg-darkpanel border ${isEditing ? 'border-amber-400 ring-1 ring-amber-400/50 bg-amber-500/10' : (isActive ? 'border-slate-700/80 hover:border-slate-500' : 'border-slate-800 bg-slate-900/60 opacity-75')} text-[10px] transition cursor-pointer select-none space-y-1"
@@ -2648,7 +2663,7 @@
           const wasEditing = currentEditingRuleId;
           cancelEditingRule();
 
-          const camName = getCameraDisplayName(activeCameraForEditor);
+          const camName = getCameraLabelWithPrefix(activeCameraForEditor);
           const toast = document.getElementById('onScreenRuleToast');
           if (toast) {
             toast.innerText = wasEditing ? `✓ Đã cập nhật ROI thành công!` : `✓ Đã lưu luật cho ${camName}!`;
@@ -3006,7 +3021,7 @@
       activeViolationForModal = violationId;
       const v = liveViolations.find(item => item.id === violationId);
       document.getElementById('imageModalTitle').innerText = `Bằng Chứng Vi Phạm #${violationId}`;
-      document.getElementById('imageModalSubtitle').innerText = v ? `Camera #${v.camera_id} • ${v.vehicle_class_name.toUpperCase()} • Biển: ${v.plate_number || 'N/A'}` : '';
+      document.getElementById('imageModalSubtitle').innerText = v ? `${getCameraLabelWithPrefix(v.camera_id)} • ${v.vehicle_class_name.toUpperCase()} • Biển: ${v.plate_number || 'N/A'}` : '';
       document.getElementById('imageModal').classList.remove('hidden');
       switchImageTab(tabName);
     }
