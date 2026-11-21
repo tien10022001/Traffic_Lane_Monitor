@@ -71,6 +71,22 @@
       -moz-appearance: textfield;
       appearance: textfield;
     }
+
+    /* Camera Alert Gentle Flashing Border Animation */
+    @keyframes camAlertPulse {
+      0%, 100% {
+        border-color: rgba(244, 63, 94, 0.4);
+        box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+      }
+      50% {
+        border-color: rgba(244, 63, 94, 1);
+        box-shadow: 0 0 16px 4px rgba(244, 63, 94, 0.75);
+      }
+    }
+    .cam-alert-flashing {
+      animation: camAlertPulse 0.55s ease-in-out 4 !important;
+      border-color: #f43f5e !important;
+    }
   </style>
 </head>
 
@@ -1246,7 +1262,7 @@
 
         if (isActive) {
           return `
-            <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-t-lg bg-slate-800 border-t-2 border-emerald-400 border-x border-slate-700/80 text-white font-medium text-xs shadow-md shrink-0 cursor-pointer select-none transition" title="Camera đang chọn. Bấm vào tên để đổi tên">
+            <div id="camTab_${c.id}" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-t-lg bg-slate-800 border-t-2 border-emerald-400 border-x border-slate-700/80 text-white font-medium text-xs shadow-md shrink-0 cursor-pointer select-none transition" title="Camera đang chọn. Bấm vào tên để đổi tên">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
               <span onclick="onCameraNameClick(${c.id})" class="truncate max-w-[120px] font-semibold hover:text-emerald-300 transition" title="Bấm để đổi tên camera">${displayName}</span>
               
@@ -1258,7 +1274,7 @@
           `;
         } else {
           return `
-            <div class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-t-lg bg-darkbg/70 hover:bg-slate-800/60 border-t-2 border-transparent hover:border-slate-700 border-x border-darkborder text-slate-400 hover:text-slate-200 text-xs shrink-0 cursor-pointer transition select-none group" onclick="selectCamera(${c.id})">
+            <div id="camTab_${c.id}" class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-t-lg bg-darkbg/70 hover:bg-slate-800/60 border-t-2 border-transparent hover:border-slate-700 border-x border-darkborder text-slate-400 hover:text-slate-200 text-xs shrink-0 cursor-pointer transition select-none group" onclick="selectCamera(${c.id})">
               <span class="truncate max-w-[110px]" title="${displayName}">${displayName}</span>
               
               <!-- Close (&times;) -->
@@ -1452,7 +1468,7 @@
       }
 
       return `
-        <div class="relative bg-darkbg rounded-lg overflow-hidden cursor-pointer border ${borderClass} group select-none flex items-center justify-center h-full w-full min-h-0"
+        <div id="camTile_${cam.id}" class="relative bg-darkbg rounded-lg overflow-hidden cursor-pointer border ${borderClass} group select-none flex items-center justify-center h-full w-full min-h-0 transition-all duration-200"
              onclick="onCameraTileClick(${cam.id})"
              ondblclick="zoomCameraToSingle(${cam.id})"
              title="Click để chọn • Click đúp để phóng to toàn màn hình">
@@ -1463,7 +1479,6 @@
           <div class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[10px] text-white font-medium border border-slate-700 flex items-center space-x-1.5 pointer-events-none z-10">
             <span class="w-1.5 h-1.5 rounded-full ${cam.is_active ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
             <span class="truncate max-w-[130px]">${labelPrefix ? labelPrefix + ': ' : ''}${getCameraDisplayName(cam.id)}</span>
-            ${isBeingDrawn ? '<span class="text-amber-300 font-bold ml-1">[ĐANG VẼ]</span>' : ''}
             ${isPrimaryFocus ? '<span class="text-blue-300 font-semibold ml-1">[TIÊU ĐIỂM]</span>' : ''}
           </div>
 
@@ -1756,6 +1771,45 @@
       }
     }
 
+    function triggerCameraAlertBorder(camId) {
+      if (!camId) return;
+
+      // 1. If in multi-grid view, flash the specific camera tile
+      const tile = document.getElementById(`camTile_${camId}`);
+      if (tile) {
+        tile.classList.remove('cam-alert-flashing');
+        void tile.offsetWidth; // Reflow to restart animation
+        tile.classList.add('cam-alert-flashing');
+        setTimeout(() => {
+          if (tile) tile.classList.remove('cam-alert-flashing');
+        }, 2500);
+      }
+
+      // 2. Also flash the main viewport container if viewing this camera in single view
+      if (currentLayoutMode === 'single' && (currentActiveCamId === camId || !currentActiveCamId)) {
+        const viewport = document.getElementById('cameraViewportContainer');
+        if (viewport) {
+          viewport.classList.remove('cam-alert-flashing');
+          void viewport.offsetWidth;
+          viewport.classList.add('cam-alert-flashing');
+          setTimeout(() => {
+            if (viewport) viewport.classList.remove('cam-alert-flashing');
+          }, 2500);
+        }
+      }
+
+      // 3. Also flash the camera tab on top
+      const tab = document.getElementById(`camTab_${camId}`);
+      if (tab) {
+        tab.classList.remove('ring-2', 'ring-rose-500', 'animate-pulse');
+        void tab.offsetWidth;
+        tab.classList.add('ring-2', 'ring-rose-500', 'animate-pulse');
+        setTimeout(() => {
+          if (tab) tab.classList.remove('ring-2', 'ring-rose-500', 'animate-pulse');
+        }, 2500);
+      }
+    }
+
     function onNewViolationReceived(violation) {
       // Prepend to live violations list
       liveViolations.unshift(violation);
@@ -1766,6 +1820,9 @@
       countBadge.innerText = count + 1;
 
       renderLiveViolations();
+
+      // Trigger gentle camera border pulse on new alert
+      triggerCameraAlertBorder(violation.camera_id);
 
       // Append to System Log
       appendSystemLog(`[Mới] ${violation.violation_type.toUpperCase()}: ${violation.vehicle_class_name} (${getCameraLabelWithPrefix(violation.camera_id)})`, 'text-rose-400');
