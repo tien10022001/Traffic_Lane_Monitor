@@ -60,7 +60,7 @@ deduplication:
   exit_grace_sec: 45.0
   update_existing_duration: true
 perspective_and_rendering:
-  roi_display_mode: border_only
+  roi_display_mode: striped
   roi_alpha: 0.2
   use_static_mask_cache: true
   dual_contrast_border: true

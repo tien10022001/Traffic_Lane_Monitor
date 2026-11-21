@@ -196,11 +196,6 @@
             </div>
           </div>
 
-          <!-- Quick 1-Click ROI Display Mode Cycle (Full / Border Only / Striped / Hidden) -->
-          <button id="roiDisplayModeBtn" onclick="cycleRoiDisplayMode()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-xs font-medium transition flex items-center space-x-1" title="Chuyển nhanh hiển thị ROI: Đầy đủ / Chỉ viền / Sọc chéo / Ẩn">
-            <span id="roiDisplayModeText">👁️ ROI: Đầy đủ</span>
-          </button>
-
           <button id="roiDrawBtn" onclick="toggleOnScreenDrawMode()" class="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded text-xs font-medium transition flex items-center space-x-1" title="Bật/Tắt chế độ vẽ trực tiếp trên màn hình camera">
             <span id="roiDrawBtnIcon">✏️</span>
             <span id="roiDrawBtnText">Vẽ Luật / ROI</span>
@@ -228,32 +223,44 @@
         </div>
 
         <!-- DOCKED ROI & RULE PANEL (Side-by-side, never floats over video) -->
-        <div id="onScreenRuleDrawer" class="hidden w-64 shrink-0 h-full bg-darkbg/90 border border-indigo-500/50 rounded-lg p-2.5 text-xs flex flex-col space-y-2 overflow-y-auto">
+        <div id="onScreenRuleDrawer" class="hidden w-72 shrink-0 h-full bg-darkbg/95 border border-indigo-500/50 rounded-xl p-3 text-xs flex flex-col space-y-2.5 overflow-y-auto shadow-2xl">
           <!-- Drawer Header -->
           <div class="flex items-center justify-between pb-1.5 border-b border-darkborder shrink-0">
-            <div class="flex items-center space-x-1.5">
-              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              <span class="font-bold text-white text-[11px] tracking-wide">VẼ VÙNG ROI</span>
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+              <span class="font-bold text-white text-xs tracking-wider uppercase">VẼ VÙNG ROI</span>
             </div>
-            <button onclick="closeOnScreenDraw()" class="text-slate-400 hover:text-white text-base font-bold px-1 leading-none" title="Đóng chế độ vẽ">&times;</button>
+            <button onclick="closeOnScreenDraw()" class="text-slate-400 hover:text-white text-lg font-bold px-1.5 leading-none transition" title="Đóng chế độ vẽ">&times;</button>
           </div>
 
           <!-- Active Target Camera Selector -->
           <div class="space-y-1">
             <div class="flex items-center justify-between text-[11px]">
               <span class="text-slate-400 font-medium">Camera:</span>
-              <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px]">ĐANG CHỌN</span>
+              <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] uppercase tracking-wide">ĐANG CHỌN</span>
             </div>
-            <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded px-2 py-1 text-amber-300 font-semibold text-xs outline-none focus:border-amber-400 cursor-pointer">
+            <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-semibold text-xs outline-none focus:border-amber-400 cursor-pointer">
               <!-- Dynamically populated from camerasData -->
             </select>
+          </div>
+
+          <!-- Kiểu hiển thị ROI trên Video (Chuyển từ thanh trên vào bảng này) -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-400 font-medium">Kiểu hiển thị ROI:</span>
+              <button type="button" onclick="cycleRoiDisplayMode()" class="text-indigo-400 hover:text-indigo-300 text-[10px] font-semibold" title="Click để chuyển đổi nhanh">↺ Đổi</button>
+            </div>
+            <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()" class="w-full py-1.5 px-2.5 bg-darkpanel hover:bg-slate-700/80 border border-slate-700 hover:border-indigo-500/60 rounded-lg text-slate-200 text-xs font-medium transition flex items-center justify-between shadow-sm" title="Click để chuyển đổi kiểu hiển thị ROI: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
+              <span id="drawerRoiModeText">▦ ROI: Sọc chéo</span>
+              <span class="text-[10px] text-slate-400 font-mono">Thay đổi ▾</span>
+            </button>
           </div>
 
           <!-- Rule Type Select (Only Luật) -->
           <div>
             <label class="block text-slate-400 mb-1 text-[11px] font-medium">Luật *</label>
             <select id="onScreenRuleType" onchange="onOnScreenRuleTypeChange()"
-                    class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1.5 text-white text-xs outline-none focus:border-indigo-500">
+                    class="w-full bg-darkpanel border border-darkborder rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-indigo-500 cursor-pointer">
               <option value="no_parking">🚫 Dừng đỗ trái phép (no_parking)</option>
               <option value="lane_roi">⚠️ Đi sai làn vùng cấm (lane_roi)</option>
               <option value="sidewalk_encroachment">🚶 Lấn chiếm vỉa hè (sidewalk)</option>
@@ -265,14 +272,14 @@
           <div>
             <label class="block text-slate-400 mb-1 text-[11px] font-medium">Tên vùng ROI <span class="text-slate-500 font-normal">(tùy chọn)</span></label>
             <input type="text" id="onScreenRoiName" placeholder="VD: ROI 1"
-                   class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-white text-xs outline-none focus:border-indigo-500">
+                   class="w-full bg-darkpanel border border-darkborder rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-indigo-500">
           </div>
 
           <!-- Dwell Time (for parking / sidewalk / lane_roi) -->
           <div id="onScreenDwellGroup">
             <div class="flex justify-between items-center mb-1 text-[11px]">
               <label class="text-slate-400 font-medium">Ngưỡng Giây</label>
-              <span id="onScreenDwellVal" class="font-bold text-amber-400 font-mono">10.0s</span>
+              <span id="onScreenDwellVal" class="font-bold text-amber-400 font-mono text-xs">10.0s</span>
             </div>
             <input type="range" id="onScreenRuleDwell" min="1.0" max="60.0" step="0.5" value="10.0"
                    oninput="document.getElementById('onScreenDwellVal').innerText = parseFloat(this.value).toFixed(1) + 's'"
@@ -282,45 +289,45 @@
           <!-- Direction (for line crossing) -->
           <div id="onScreenDirectionGroup" class="hidden">
             <label class="block text-slate-400 mb-1 text-[11px] font-medium">Chiều Cắt Vạch</label>
-            <select id="onScreenRuleDirection" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-white text-xs outline-none">
+            <select id="onScreenRuleDirection" class="w-full bg-darkpanel border border-darkborder rounded-lg px-2.5 py-1.5 text-white text-xs outline-none cursor-pointer">
               <option value="both">Cả 2 chiều (both)</option>
               <option value="left_to_right">Trái sang Phải (left_to_right)</option>
               <option value="right_to_left">Phải sang Trái (right_to_left)</option>
             </select>
           </div>
 
-          <!-- Drawing Status & Quick Guide -->
-          <div id="onScreenDrawStatus" class="text-[10px] text-slate-400 bg-darkpanel/70 border border-darkborder/70 rounded px-2 py-1 leading-relaxed">
-            Click trái: thêm điểm • Click điểm 1 / Double-click: đóng • Chuột phải: lùi • Kéo đỉnh: chỉnh
+          <!-- Drawing Status & Quick Guide (Matching screenshot) -->
+          <div id="onScreenDrawStatus" class="text-[10px] text-slate-300 bg-darkpanel/80 border border-darkborder rounded-lg p-2 leading-relaxed">
+            Điểm: <span class="text-white font-bold">0</span> • Click trái thêm điểm (tối thiểu 3 điểm). Chuột phải: lùi.
           </div>
 
-          <!-- Drawing Action Buttons -->
-          <div class="grid grid-cols-3 gap-1">
-            <button type="button" onclick="finishOnScreenPolygon()" class="px-1.5 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/40 font-medium text-[11px] transition text-center" title="Đóng vùng đa giác">
+          <!-- Drawing Action Buttons (Matching screenshot) -->
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" onclick="finishOnScreenPolygon()" class="py-1.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg border border-emerald-500/40 font-semibold text-xs transition text-center shadow" title="Đóng vùng đa giác">
               ✓ Đóng
             </button>
-            <button type="button" onclick="undoLastOnScreenPoint()" class="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[11px] transition text-center" title="Xóa điểm vừa click">
+            <button type="button" onclick="undoLastOnScreenPoint()" class="py-1.5 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg border border-blue-500/40 font-semibold text-xs transition text-center shadow" title="Xóa điểm vừa click (hoặc click chuột phải trên màn hình)">
               ↩ Lùi
             </button>
-            <button type="button" onclick="clearOnScreenDrawing()" class="px-1.5 py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 rounded border border-rose-500/30 text-[11px] transition text-center" title="Xóa toàn bộ điểm đang vẽ">
+            <button type="button" onclick="clearOnScreenDrawing()" class="py-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 hover:text-white rounded-lg border border-rose-500/30 font-semibold text-xs transition text-center shadow" title="Xóa toàn bộ điểm đang vẽ">
               ✕ Vẽ lại
             </button>
           </div>
 
-          <!-- Save Button -->
-          <button type="button" onclick="handleSaveOnScreenRule()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition shadow flex items-center justify-center space-x-1 text-xs">
-            <span>💾 Lưu Luật</span>
+          <!-- Save Button (Matching screenshot: [💾 Lưu Luật (1)]) -->
+          <button type="button" onclick="handleSaveOnScreenRule()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition shadow-lg flex items-center justify-center space-x-1.5 text-xs">
+            <span id="onScreenSaveBtnText">💾 Lưu Luật (1)</span>
           </button>
           <span id="onScreenRuleToast" class="text-[11px] text-emerald-400 hidden text-center font-medium">✓ Đã lưu & áp dụng ngay!</span>
 
           <!-- Existing Rules of this Camera -->
-          <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
-            <div class="flex justify-between items-center text-[11px] text-slate-400 font-medium cursor-pointer hover:text-slate-200 shrink-0" onclick="toggleExistingRulesList()">
+          <div class="border-t border-darkborder pt-2 flex-1 min-h-0 flex flex-col">
+            <div class="flex justify-between items-center text-xs text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-1" onclick="toggleExistingRulesList()">
               <span>📋 Luật hiện có (<span id="onScreenRuleCount">0</span>)</span>
               <span id="rulesToggleArrow">▲</span>
             </div>
-            <div id="onScreenExistingRulesList" class="space-y-1 mt-1.5 flex-1 overflow-y-auto pr-0.5">
-              <p class="text-slate-500 text-[10px]">Chưa có luật nào.</p>
+            <div id="onScreenExistingRulesList" class="space-y-1.5 mt-1 flex-1 overflow-y-auto pr-1">
+              <p class="text-slate-500 text-[10px] py-1">Chưa có luật nào.</p>
             </div>
           </div>
         </div>
@@ -775,6 +782,7 @@
       loadCameras();
       fetchLiveViolations();
       loadInlineThresholds();
+      syncCurrentRoiDisplayMode();
     });
 
     // 1. WEBSOCKETS (Metrics & Events)
@@ -1770,11 +1778,10 @@
         selectEl.value = camId;
       }
 
-      // Update save button target camera label
-      const camName = getCameraDisplayName(camId);
-      const saveBtn = document.querySelector('#onScreenRuleDrawer button[onclick="handleSaveOnScreenRule()"] span');
+      // Update save button target camera label (e.g. 💾 Lưu Luật (1))
+      const saveBtn = document.getElementById('onScreenSaveBtnText') || document.querySelector('#onScreenRuleDrawer button[onclick="handleSaveOnScreenRule()"] span');
       if (saveBtn) {
-        saveBtn.innerText = `💾 Lưu Luật (${camName})`;
+        saveBtn.innerText = `💾 Lưu Luật (${camId})`;
       }
 
       await loadExistingRulesForDrawer(camId);
@@ -2393,11 +2400,11 @@
       }
     }
 
-    // ROI Quick Display Modes
+    // ROI Quick Display Modes (Striped default)
     const ROI_MODES = [
+      { key: 'striped', label: '▦ ROI: Sọc chéo' },
       { key: 'full', label: '👁️ ROI: Đầy đủ' },
       { key: 'border_only', label: '🔲 ROI: Chỉ viền' },
-      { key: 'striped', label: '▦ ROI: Sọc chéo' },
       { key: 'hidden', label: '🚫 ROI: Ẩn' }
     ];
     let currentRoiModeIndex = 0;
@@ -2405,6 +2412,8 @@
     async function cycleRoiDisplayMode() {
       currentRoiModeIndex = (currentRoiModeIndex + 1) % ROI_MODES.length;
       const target = ROI_MODES[currentRoiModeIndex];
+      const drawerText = document.getElementById('drawerRoiModeText');
+      if (drawerText) drawerText.innerText = target.label;
       const btnText = document.getElementById('roiDisplayModeText');
       if (btnText) btnText.innerText = target.label;
 
@@ -2419,6 +2428,27 @@
         });
       } catch (err) {
         console.error('Error cycling ROI display mode:', err);
+      }
+    }
+
+    async function syncCurrentRoiDisplayMode() {
+      try {
+        const res = await fetch('/api/config/perspective');
+        if (res.ok) {
+          const cfg = await res.json();
+          const modeKey = cfg.roi_display_mode || 'striped';
+          const idx = ROI_MODES.findIndex(m => m.key === modeKey);
+          if (idx >= 0) {
+            currentRoiModeIndex = idx;
+            const target = ROI_MODES[idx];
+            const drawerText = document.getElementById('drawerRoiModeText');
+            if (drawerText) drawerText.innerText = target.label;
+            const btnText = document.getElementById('roiDisplayModeText');
+            if (btnText) btnText.innerText = target.label;
+          }
+        }
+      } catch (e) {
+        console.error('Error syncing ROI display mode:', e);
       }
     }
 
