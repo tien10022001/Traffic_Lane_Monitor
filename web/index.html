@@ -65,40 +65,24 @@
       </div>
     </div>
 
-    <!-- Active Hardware & Telemetry Bar -->
-    <div class="flex items-center space-x-2.5 text-xs">
-      <!-- Hardware Badges -->
-      <div id="deviceBadge" class="px-2 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-400 font-medium flex items-center space-x-1.5 text-[11px]">
-        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
-        <span id="providerText">ORT: DirectML (GPU)</span>
-      </div>
-
-      <div class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-medium text-[11px] hidden sm:flex items-center space-x-1">
+    <!-- Active Hardware & Telemetry Bar: Only CPU, RAM, GPU & Nhiệt độ -->
+    <div class="flex items-center space-x-2 text-xs">
+      <!-- CPU & RAM -->
+      <div class="px-2.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-medium text-[11px] flex items-center space-x-1">
         <span>CPU:</span>
-        <span id="cpuHostVal" class="font-bold">0%</span>
+        <span id="cpuHostVal" class="font-bold text-purple-200">0%</span>
         <span class="text-slate-500">|</span>
         <span>RAM:</span>
-        <span id="ramHostVal" class="font-bold">0%</span>
+        <span id="ramHostVal" class="font-bold text-purple-200">0%</span>
       </div>
 
-      <div class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-medium text-[11px] hidden md:flex items-center space-x-1">
+      <!-- GPU & Nhiệt độ -->
+      <div class="px-2.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-medium text-[11px] flex items-center space-x-1">
         <span>GPU:</span>
-        <span id="gpuLoadVal" class="font-bold">0%</span>
-        <span class="text-slate-500">(<span id="gpuTempText">0°C</span>)</span>
-      </div>
-
-      <div class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-medium text-[11px] flex items-center space-x-1">
-        <span>FPS:</span>
-        <span id="totalFpsVal" class="font-bold">0.0</span>
-      </div>
-
-      <div class="px-2 py-0.5 rounded bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 font-medium text-[11px] hidden lg:flex items-center space-x-1">
-        <span>OCR Queue:</span>
-        <span id="ocrQueueVal" class="font-bold">0</span>
-      </div>
-
-      <div id="wsStatusBadge" class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400">
-        WS: <span id="wsStatusText" class="text-yellow-400 font-bold">●</span>
+        <span id="gpuLoadVal" class="font-bold text-amber-200">0%</span>
+        <span class="text-slate-500">|</span>
+        <span>Nhiệt độ:</span>
+        <span id="gpuTempText" class="font-bold text-amber-200">0°C</span>
       </div>
 
       <!-- Quick Action Buttons -->
@@ -949,8 +933,11 @@
       // Metrics WS
       metricsWs = new WebSocket(`${baseWsUrl}/ws/metrics`);
       metricsWs.onopen = () => {
-        document.getElementById('wsStatusText').innerText = '●';
-        document.getElementById('wsStatusText').className = 'text-emerald-400 font-bold';
+        const wsEl = document.getElementById('wsStatusText');
+        if (wsEl) {
+          wsEl.innerText = '●';
+          wsEl.className = 'text-emerald-400 font-bold';
+        }
       };
       metricsWs.onmessage = (event) => {
         try {
@@ -959,8 +946,11 @@
         } catch (e) { console.error('Error parsing metrics WS:', e); }
       };
       metricsWs.onclose = () => {
-        document.getElementById('wsStatusText').innerText = '○';
-        document.getElementById('wsStatusText').className = 'text-amber-400 font-bold';
+        const wsEl = document.getElementById('wsStatusText');
+        if (wsEl) {
+          wsEl.innerText = '○';
+          wsEl.className = 'text-amber-400 font-bold';
+        }
         setTimeout(initWebSockets, 3000);
       };
 
@@ -984,19 +974,23 @@
     function updateDashboardMetrics(s) {
       if (!s) return;
       const hostCpu = s.host?.cpu_percent ?? 0;
-      document.getElementById('cpuHostVal').innerText = `${hostCpu.toFixed(1)}%`;
+      const cpuEl = document.getElementById('cpuHostVal');
+      if (cpuEl) cpuEl.innerText = `${hostCpu.toFixed(1)}%`;
 
       const ramPct = s.host?.ram_percent ?? 0;
-      document.getElementById('ramHostVal').innerText = `${ramPct.toFixed(0)}%`;
+      const ramEl = document.getElementById('ramHostVal');
+      if (ramEl) ramEl.innerText = `${ramPct.toFixed(0)}%`;
 
       const gpu = s.gpu || {};
-      document.getElementById('gpuLoadVal').innerText = `${(gpu.util_percent ?? 0).toFixed(0)}%`;
-      document.getElementById('gpuTempText').innerText = `${gpu.temp_c ?? 0}°C`;
+      const gpuLoadEl = document.getElementById('gpuLoadVal');
+      if (gpuLoadEl) gpuLoadEl.innerText = `${(gpu.util_percent ?? 0).toFixed(0)}%`;
+      const gpuTempEl = document.getElementById('gpuTempText');
+      if (gpuTempEl) gpuTempEl.innerText = `${gpu.temp_c ?? 0}°C`;
 
       const provider = gpu.provider || 'CPUExecutionProvider';
       const isDirectML = provider.includes('Dml') || (gpu.available && !provider.includes('CPU'));
       const provEl = document.getElementById('providerText');
-      if (provEl) {
+      if (provEl && provEl.parentElement) {
         provEl.innerText = isDirectML ? 'ORT: DirectML (GPU)' : `ORT: CPU (Safe Mode)`;
         provEl.parentElement.className = isDirectML 
           ? 'px-2 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-400 font-medium text-[11px] flex items-center space-x-1.5'
@@ -1005,9 +999,12 @@
 
       const pipeline = s.pipeline || {};
       const totalFps = (pipeline.total_fps ?? 0).toFixed(1);
-      document.getElementById('totalFpsVal').innerText = totalFps;
-      document.getElementById('hudFpsText').innerText = `${totalFps} FPS`;
-      document.getElementById('ocrQueueVal').innerText = `${pipeline.ocr_queue_size ?? 0}/${pipeline.ocr_queue_maxsize ?? 100}`;
+      const totalFpsEl = document.getElementById('totalFpsVal');
+      if (totalFpsEl) totalFpsEl.innerText = totalFps;
+      const hudFpsEl = document.getElementById('hudFpsText');
+      if (hudFpsEl) hudFpsEl.innerText = `${totalFps} FPS`;
+      const ocrQueueEl = document.getElementById('ocrQueueVal');
+      if (ocrQueueEl) ocrQueueEl.innerText = `${pipeline.ocr_queue_size ?? 0}/${pipeline.ocr_queue_maxsize ?? 100}`;
     }
 
     // 3. CAMERAS & STREAMING VIEW
