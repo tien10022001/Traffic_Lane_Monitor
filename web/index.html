@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" class="dark">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,37 +27,62 @@
   </script>
   <style>
     /* Absolute zero-scroll guarantee on 100vh window */
-    html, body {
+    html,
+    body {
       height: 100vh;
       max-height: 100vh;
       overflow: hidden !important;
       margin: 0;
       padding: 0;
     }
+
     /* Custom scrollbars for inner scrollable panels */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #0a0f1d; }
-    ::-webkit-scrollbar-thumb { background: #23304a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
-    .canvas-container { position: relative; display: inline-block; }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0a0f1d;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #23304a;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+    }
+
     /* Hide number input spinners/arrows across Chrome, Safari, Edge, Firefox */
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
+
     input[type=number] {
       -moz-appearance: textfield;
       appearance: textfield;
     }
   </style>
 </head>
-<body class="bg-darkbg text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans antialiased select-none">
+
+<body
+  class="bg-darkbg text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans antialiased select-none">
 
   <!-- 1. COMPACT TOP NAVBAR (Fixed height, no page scroll) -->
-  <header class="h-12 bg-darkpanel border-b border-darkborder px-4 flex items-center justify-between shrink-0 shadow-md z-30">
+  <header
+    class="h-12 bg-darkpanel border-b border-darkborder px-4 flex items-center justify-between shrink-0 shadow-md z-30">
     <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xs shadow">
+      <div
+        class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xs shadow">
         AI
       </div>
       <div>
@@ -68,7 +94,8 @@
     <!-- Active Hardware & Telemetry Bar: Only CPU, RAM, GPU & Nhiệt độ -->
     <div class="flex items-center space-x-2 text-xs">
       <!-- CPU & RAM -->
-      <div class="px-2.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-medium text-[11px] flex items-center space-x-1">
+      <div
+        class="px-2.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-medium text-[11px] flex items-center space-x-1">
         <span>CPU:</span>
         <span id="cpuHostVal" class="font-bold text-purple-200">0%</span>
         <span class="text-slate-500">|</span>
@@ -77,7 +104,8 @@
       </div>
 
       <!-- GPU & Nhiệt độ -->
-      <div class="px-2.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-medium text-[11px] flex items-center space-x-1">
+      <div
+        class="px-2.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-medium text-[11px] flex items-center space-x-1">
         <span>GPU:</span>
         <span id="gpuLoadVal" class="font-bold text-amber-200">0%</span>
         <span class="text-slate-500">|</span>
@@ -86,7 +114,9 @@
       </div>
 
       <!-- Quick Action Buttons -->
-      <button onclick="openViolationsHistoryModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder font-medium text-xs flex items-center space-x-1 transition cursor-pointer" title="Xem lịch sử vi phạm">
+      <button onclick="openViolationsHistoryModal()"
+        class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder font-medium text-xs flex items-center space-x-1 transition cursor-pointer"
+        title="Xem lịch sử vi phạm">
         <span>Lịch Sử</span>
       </button>
     </div>
@@ -96,7 +126,8 @@
   <main class="flex-1 min-h-0 p-2.5 sm:p-3 flex flex-row gap-3 overflow-hidden">
 
     <!-- LEFT AREA: CAMERA LIVE VIEW (Takes all remaining width and 100% height) -->
-    <section class="flex-1 min-w-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden">
+    <section
+      class="flex-1 min-w-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden">
       <!-- Camera Bar: Chrome-Style Tabs + Controls -->
       <div class="flex items-center justify-between pb-1.5 mb-2 border-b border-darkborder shrink-0 text-xs">
         <!-- Google Chrome Style Camera Tabs Container + '+' Add Camera Button -->
@@ -106,7 +137,9 @@
           </div>
 
           <!-- Chrome-style '+' New Tab Button to Add Camera -->
-          <button onclick="openAddCameraModal()" class="w-6 h-6 shrink-0 rounded-full hover:bg-slate-700/80 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm transition cursor-pointer mb-0.5 border border-transparent hover:border-slate-600" title="Thêm Camera Mới (+)">
+          <button onclick="openAddCameraModal()"
+            class="w-6 h-6 shrink-0 rounded-full hover:bg-slate-700/80 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm transition cursor-pointer mb-0.5 border border-transparent hover:border-slate-600"
+            title="Thêm Camera Mới (+)">
             +
           </button>
         </div>
@@ -115,20 +148,29 @@
         <div class="flex items-center space-x-2 shrink-0">
           <!-- Windows 11 Snap Layouts Picker Button & Popover -->
           <div class="relative">
-            <button id="snapLayoutBtn" onclick="toggleSnapLayoutMenu(event)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-darkborder hover:border-slate-600 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow" title="Chọn bố cục chia màn hình (Windows Snap Layouts)">
+            <button id="snapLayoutBtn" onclick="toggleSnapLayoutMenu(event)"
+              class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-darkborder hover:border-slate-600 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow"
+              title="Chọn bố cục chia màn hình (Windows Snap Layouts)">
               <!-- Windows Snap Layout Icon -->
               <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-11zM2.5 2a.5.5 0 0 0-.5.5V8h5.5V2H2.5zm6.5 0v6H14V2.5a.5.5 0 0 0-.5-.5H9zM2 9v4.5a.5.5 0 0 0 .5.5H8V9H2zm7 5h4.5a.5.5 0 0 0 .5-.5V9H9v5z"/>
+                <path
+                  d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-11zM2.5 2a.5.5 0 0 0-.5.5V8h5.5V2H2.5zm6.5 0v6H14V2.5a.5.5 0 0 0-.5-.5H9zM2 9v4.5a.5.5 0 0 0 .5.5H8V9H2zm7 5h4.5a.5.5 0 0 0 .5-.5V9H9v5z" />
               </svg>
               <span id="snapLayoutCurrentText" class="text-[11px] font-semibold text-slate-200">1x1</span>
-              <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
             </button>
 
             <!-- Windows 11 Snap Layouts Popover Panel -->
-            <div id="snapLayoutMenu" class="hidden absolute right-0 top-full mt-2 z-50 bg-[#141824]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-3 shadow-2xl w-80 text-xs flex flex-col space-y-2.5 animate-in fade-in zoom-in-95">
+            <div id="snapLayoutMenu"
+              class="hidden absolute right-0 top-full mt-2 z-50 bg-[#141824]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-3 shadow-2xl w-80 text-xs flex flex-col space-y-2.5 animate-in fade-in zoom-in-95">
               <div class="flex items-center justify-between pb-1.5 border-b border-slate-700/60">
                 <span class="font-bold text-slate-200 text-xs flex items-center space-x-1.5">
-                  <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-11z"/></svg>
+                  <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 16 16" fill="currentColor">
+                    <path
+                      d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-11z" />
+                  </svg>
                   <span>Bố Cục Camera (Snap Layouts)</span>
                 </span>
                 <span class="text-[10px] text-slate-400">Click đúp ô để phóng to</span>
@@ -137,53 +179,93 @@
               <!-- 4 Cards matching Windows 11 screenshot -->
               <div class="grid grid-cols-2 gap-2.5">
                 <!-- 1. Chia đôi 50/50 -->
-                <div onclick="selectLayout('split_2')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="Chia đôi 2 cột bằng nhau (50/50)">
-                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-2 gap-1 group-hover:border-blue-500/50">
-                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
-                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                <div onclick="selectLayout('split_2')"
+                  class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5"
+                  title="Chia đôi 2 cột bằng nhau (50/50)">
+                  <div
+                    class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-2 gap-1 group-hover:border-blue-500/50">
+                    <div
+                      class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
+                    <div
+                      class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
                   </div>
-                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">Chia đôi (50/50)</span>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">Chia đôi
+                    (50/50)</span>
                 </div>
 
                 <!-- 2. Chia 1 Lớn + 1 Nhỏ (70/30) -->
-                <div onclick="selectLayout('focus_2')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="1 Cam lớn chính (70%) + 1 Cam phụ (30%)">
-                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-3 gap-1 group-hover:border-blue-500/50">
-                    <div class="col-span-2 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
-                    <div class="col-span-1 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                <div onclick="selectLayout('focus_2')"
+                  class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5"
+                  title="1 Cam lớn chính (70%) + 1 Cam phụ (30%)">
+                  <div
+                    class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-3 gap-1 group-hover:border-blue-500/50">
+                    <div
+                      class="col-span-2 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
+                    <div
+                      class="col-span-1 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
                   </div>
-                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">1 Lớn + 1 Nhỏ</span>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">1 Lớn + 1
+                    Nhỏ</span>
                 </div>
 
                 <!-- 3. Chia 1 Lớn + 2 Nhỏ Xếp Dọc -->
-                <div onclick="selectLayout('focus_3')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="1 Cam lớn tiêu điểm + 2 Cam phụ xếp dọc bên phải">
-                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-3 gap-1 group-hover:border-blue-500/50">
-                    <div class="col-span-2 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                <div onclick="selectLayout('focus_3')"
+                  class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5"
+                  title="1 Cam lớn tiêu điểm + 2 Cam phụ xếp dọc bên phải">
+                  <div
+                    class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-3 gap-1 group-hover:border-blue-500/50">
+                    <div
+                      class="col-span-2 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
                     <div class="col-span-1 grid grid-rows-2 gap-1">
-                      <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
-                      <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                      <div
+                        class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                      </div>
+                      <div
+                        class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                      </div>
                     </div>
                   </div>
-                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">1 Lớn + 2 Nhỏ</span>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">1 Lớn + 2
+                    Nhỏ</span>
                 </div>
 
                 <!-- 4. Lưới 4 Cams (2x2) -->
-                <div onclick="selectLayout('grid_4')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="Lưới 4 ô đều nhau (2x2)">
-                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-2 grid-rows-2 gap-1 group-hover:border-blue-500/50">
-                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
-                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
-                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
-                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                <div onclick="selectLayout('grid_4')"
+                  class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5"
+                  title="Lưới 4 ô đều nhau (2x2)">
+                  <div
+                    class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-2 grid-rows-2 gap-1 group-hover:border-blue-500/50">
+                    <div
+                      class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
+                    <div
+                      class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
+                    <div
+                      class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
+                    <div
+                      class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition">
+                    </div>
                   </div>
-                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">Lưới 4 Cams (2x2)</span>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">Lưới 4 Cams
+                    (2x2)</span>
                 </div>
               </div>
 
               <!-- Bottom Bar: Toàn màn hình & Tự Động vừa màn hình -->
               <div class="grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-700/60">
-                <button type="button" onclick="selectLayout('single')" class="py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-600 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
+                <button type="button" onclick="selectLayout('single')"
+                  class="py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-600 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
                   <span>1 Cam (Toàn Màn Hình)</span>
                 </button>
-                <button type="button" onclick="selectLayout('auto')" class="py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
+                <button type="button" onclick="selectLayout('auto')"
+                  class="py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
                   <span>Tự Động Vừa Khít</span>
                 </button>
               </div>
@@ -195,11 +277,14 @@
       <!-- Live Stream Viewport + Docked Compact ROI Panel Row (Fills remaining height, zero overlap) -->
       <div class="flex-1 min-h-0 flex flex-row gap-2 overflow-hidden">
         <!-- Live Stream Viewport Container -->
-        <div id="cameraViewportContainer" class="flex-1 min-w-0 h-full bg-black rounded-lg overflow-hidden relative flex items-center justify-center border border-darkborder/50">
+        <div id="cameraViewportContainer"
+          class="flex-1 min-w-0 h-full bg-black rounded-lg overflow-hidden relative flex items-center justify-center border border-darkborder/50">
           <!-- Inner Stream Display Container (Managed by renderViewport) -->
           <div id="cameraStreamsInner" class="w-full h-full relative flex items-center justify-center overflow-hidden">
-            <img id="mainLiveStream" src="" alt="Camera Live Stream" class="w-full h-full object-contain pointer-events-none">
-            <div class="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/80 backdrop-blur-sm border border-slate-700 text-[11px] text-slate-200 flex items-center space-x-2 pointer-events-none">
+            <img id="mainLiveStream" src="" alt="Camera Live Stream"
+              class="w-full h-full object-contain pointer-events-none">
+            <div
+              class="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/80 backdrop-blur-sm border border-slate-700 text-[11px] text-slate-200 flex items-center space-x-2 pointer-events-none">
               <span id="hudCamInfo">Cam 1 • Đang chạy</span>
               <span class="text-slate-500">|</span>
               <span id="hudFpsText" class="text-emerald-400 font-bold">15.0 FPS</span>
@@ -212,16 +297,17 @@
 
         <!-- ROI Collapse / Expand Edge Toggle Handle ("lia vào cạnh mới thấy nút đó") -->
         <div id="roiCollapseToggleWrapper" onclick="toggleRoiDrawerCollapse()"
-             class="group relative shrink-0 w-2.5 hover:w-4 flex items-center justify-center h-full -mx-1 z-20 cursor-pointer select-none transition-all"
-             title="Thu gọn / Mở rộng bảng ROI">
+          class="group relative shrink-0 w-2.5 hover:w-4 flex items-center justify-center h-full -mx-1 z-20 cursor-pointer select-none transition-all"
+          title="Thu gọn / Mở rộng bảng ROI">
           <button type="button" id="roiCollapseBtn"
-                  class="w-4 h-12 rounded-l-md bg-darkpanel/90 hover:bg-indigo-600 text-slate-400 hover:text-white border border-darkborder/80 border-r-0 shadow-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 select-none pointer-events-none">
+            class="w-4 h-12 rounded-l-md bg-darkpanel/90 hover:bg-indigo-600 text-slate-400 hover:text-white border border-darkborder/80 border-r-0 shadow-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 select-none pointer-events-none">
             <span id="roiCollapseIcon" class="text-[10px] font-mono font-bold leading-none">&gt;</span>
           </button>
         </div>
 
         <!-- DOCKED COMPACT ROI & RULE PANEL (Side-by-side, always visible, sleek & minimal text) -->
-        <div id="onScreenRuleDrawer" class="w-[275px] shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2 text-xs flex flex-col space-y-1.5 overflow-y-auto shadow-xl transition-all duration-300 ease-in-out">
+        <div id="onScreenRuleDrawer"
+          class="w-[275px] shrink-0 h-full bg-darkbg/95 border border-indigo-500/40 rounded-xl p-2 text-xs flex flex-col space-y-1.5 overflow-y-auto shadow-xl transition-all duration-300 ease-in-out">
           <!-- Drawer Header: ROI Title + Pen Toggle Button + Camera Badge -->
           <div class="flex items-center justify-between pb-1 border-b border-darkborder shrink-0">
             <div class="flex items-center space-x-1.5">
@@ -229,29 +315,36 @@
               <span class="font-bold text-white text-[11px] tracking-wide uppercase">ROI</span>
               <!-- Pen Icon Button: Bấm vào để vẽ/sửa ROI, bấm lần nữa là thoát -->
               <button type="button" id="roiDrawToggleBtn" onclick="toggleRoiDrawingMode()"
-                      class="w-5 h-5 rounded border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white transition shadow-sm flex items-center justify-center select-none cursor-pointer"
-                      title="Vẽ / Sửa ROI (Bấm để bật hoặc thoát)">
-                <svg id="roiDrawPenIcon" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9"/>
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                class="w-5 h-5 rounded border border-slate-700 bg-darkpanel hover:bg-slate-800 text-slate-300 hover:text-white transition shadow-sm flex items-center justify-center select-none cursor-pointer"
+                title="Vẽ / Sửa ROI (Bấm để bật hoặc thoát)">
+                <svg id="roiDrawPenIcon" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                 </svg>
               </button>
             </div>
-            <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[8.5px] uppercase font-mono">CAM 1</span>
+            <span id="onScreenCamBadge"
+              class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[8.5px] uppercase font-mono">CAM
+              1</span>
           </div>
 
           <!-- Vùng chức năng (Mặc định xám màu & vô hiệu hóa, khi bấm icon bút mới kích hoạt) -->
-          <div id="roiControlsContainer" class="flex flex-col space-y-1.5 opacity-40 pointer-events-none filter grayscale select-none transition-all duration-200 shrink-0">
+          <div id="roiControlsContainer"
+            class="flex flex-col space-y-1.5 opacity-40 pointer-events-none filter grayscale select-none transition-all duration-200 shrink-0">
             <!-- Camera & Hiển thị ROI hàng ngang gọn gàng -->
             <div class="grid grid-cols-2 gap-1 shrink-0">
               <div>
                 <label class="block text-slate-400 text-[9px] mb-0.5">Cam</label>
-                <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded px-1 py-0.5 text-amber-300 font-semibold text-[10px] outline-none cursor-pointer">
+                <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)"
+                  class="w-full bg-darkpanel border border-slate-700 rounded px-1 py-0.5 text-amber-300 font-semibold text-[10px] outline-none cursor-pointer">
                 </select>
               </div>
               <div>
                 <label class="block text-slate-400 text-[9px] mb-0.5">Kiểu ROI</label>
-                <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()" class="w-full py-0.5 px-1 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-slate-200 text-[9.5px] font-medium transition truncate flex items-center justify-center shadow-sm" title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
+                <button type="button" id="drawerRoiModeBtn" onclick="cycleRoiDisplayMode()"
+                  class="w-full py-0.5 px-1 bg-darkpanel hover:bg-slate-700 border border-slate-700 rounded text-slate-200 text-[9.5px] font-medium transition truncate flex items-center justify-center shadow-sm"
+                  title="Click để đổi kiểu hiển thị: Sọc chéo / Đầy đủ / Chỉ viền / Ẩn">
                   <span id="drawerRoiModeText">Sọc chéo</span>
                 </button>
               </div>
@@ -261,7 +354,7 @@
             <div class="shrink-0">
               <label class="block text-slate-400 text-[9px] mb-0.5">Luật *</label>
               <select id="onScreenRuleType" onchange="onOnScreenRuleTypeChange()"
-                      class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none focus:border-indigo-500 cursor-pointer">
+                class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none focus:border-indigo-500 cursor-pointer">
                 <option value="no_parking">Dừng đỗ trái phép</option>
                 <option value="lane_roi">Đi sai làn</option>
                 <option value="sidewalk_encroachment">Lấn chiếm vỉa hè</option>
@@ -272,29 +365,34 @@
             <!-- Compact ROI Region Name -->
             <div class="shrink-0">
               <input type="text" id="onScreenRoiName" placeholder="Tên ROI (VD: ROI 1)"
-                      onchange="if(currentEditingRuleId) saveEditedRuleChanges()"
-                      class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none focus:border-indigo-500">
+                onchange="if(currentEditingRuleId) saveEditedRuleChanges()"
+                class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none focus:border-indigo-500">
             </div>
 
             <!-- Dwell Time (Ngưỡng giây) -->
             <div id="onScreenDwellGroup" class="flex items-center justify-between text-[10px] shrink-0">
               <span class="text-slate-400 font-medium">Thời gian:</span>
               <div class="flex items-center space-x-1">
-                <button type="button" onclick="adjustDwell(-1)" class="w-5 h-5 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-[10px] select-none transition shadow-sm" title="Giảm 1 giây">-</button>
+                <button type="button" onclick="adjustDwell(-1)"
+                  class="w-5 h-5 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-[10px] select-none transition shadow-sm"
+                  title="Giảm 1 giây">-</button>
                 <div class="flex items-center bg-darkpanel border border-slate-700 rounded px-1 py-0.2 shadow-inner">
                   <input type="number" id="onScreenDwellInput" min="0.5" max="120.0" step="0.5" value="10.0"
-                         oninput="syncDwellFromInput(this.value)"
-                         class="w-8 bg-transparent text-center font-bold text-amber-400 font-mono text-[10px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    oninput="syncDwellFromInput(this.value)"
+                    class="w-8 bg-transparent text-center font-bold text-amber-400 font-mono text-[10px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                   <span class="text-slate-400 text-[9px] ml-0.5">s</span>
                 </div>
-                <button type="button" onclick="adjustDwell(1)" class="w-5 h-5 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-[10px] select-none transition shadow-sm" title="Tăng 1 giây">+</button>
+                <button type="button" onclick="adjustDwell(1)"
+                  class="w-5 h-5 rounded bg-darkpanel hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-500 flex items-center justify-center font-bold text-[10px] select-none transition shadow-sm"
+                  title="Tăng 1 giây">+</button>
               </div>
             </div>
 
             <!-- Direction (for line crossing) -->
             <div id="onScreenDirectionGroup" class="hidden shrink-0">
               <label class="block text-slate-400 text-[9px] mb-0.5">Chiều Cắt</label>
-              <select id="onScreenRuleDirection" onchange="if(currentEditingRuleId) saveEditedRuleChanges()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none cursor-pointer">
+              <select id="onScreenRuleDirection" onchange="if(currentEditingRuleId) saveEditedRuleChanges()"
+                class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-0.5 text-white text-[10px] outline-none cursor-pointer">
                 <option value="both">Cả 2 chiều</option>
                 <option value="left_to_right">Trái sang Phải</option>
                 <option value="right_to_left">Phải sang Trái</option>
@@ -309,137 +407,180 @@
                   <span id="inlineThresholdToast" class="text-[8.5px] text-emerald-400 hidden font-medium">Đã lưu</span>
                 </div>
                 <div class="flex space-x-1.5 text-[8.5px]">
-                  <button type="button" onclick="selectAllRoiClasses(true)" class="text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer">Tất cả</button>
+                  <button type="button" onclick="selectAllRoiClasses(true)"
+                    class="text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer">Tất cả</button>
                   <span class="text-slate-600">|</span>
-                  <button type="button" onclick="selectAllRoiClasses(false)" class="text-slate-400 hover:text-slate-300 font-medium transition cursor-pointer">Bỏ chọn</button>
+                  <button type="button" onclick="selectAllRoiClasses(false)"
+                    class="text-slate-400 hover:text-slate-300 font-medium transition cursor-pointer">Bỏ chọn</button>
                 </div>
               </div>
               <div id="roiClassCheckboxesContainer" class="grid grid-cols-2 gap-1 text-[9.5px]">
                 <!-- Ô tô -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_0" value="0" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_0" value="0" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-slate-200 truncate font-medium text-[9px]">Ô tô</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(0, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(0, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_0" min="0.05" max="0.95" step="0.01" value="0.45"
-                           onchange="onClassThresholdInputChange(0, this.value)"
-                           oninput="onClassThresholdInputTyping(0, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(0, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Tăng 0.01">+</button>
+                      onchange="onClassThresholdInputChange(0, this.value)"
+                      oninput="onClassThresholdInputTyping(0, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(0, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Tăng 0.01">+</button>
                   </div>
                 </div>
 
                 <!-- Xe máy (Amber Highlight) -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-amber-500/40 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-amber-500/40 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_1" value="1" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_1" value="1" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-amber-200 truncate font-medium text-[9px]">Xe máy</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(1, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(1, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_1" min="0.05" max="0.95" step="0.01" value="0.25"
-                           onchange="onClassThresholdInputChange(1, this.value)"
-                           oninput="onClassThresholdInputTyping(1, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-amber-500/40 focus:border-amber-400 rounded py-0 text-amber-300 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(1, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                      onchange="onClassThresholdInputChange(1, this.value)"
+                      oninput="onClassThresholdInputTyping(1, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-amber-500/40 focus:border-amber-400 rounded py-0 text-amber-300 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(1, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
                   </div>
                 </div>
 
                 <!-- Xe đạp -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_2" value="2" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_2" value="2" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-slate-200 truncate font-medium text-[9px]">Xe đạp</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(2, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(2, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_2" min="0.05" max="0.95" step="0.01" value="0.30"
-                           onchange="onClassThresholdInputChange(2, this.value)"
-                           oninput="onClassThresholdInputTyping(2, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(2, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                      onchange="onClassThresholdInputChange(2, this.value)"
+                      oninput="onClassThresholdInputTyping(2, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(2, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
                   </div>
                 </div>
 
                 <!-- Xe buýt -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_3" value="3" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_3" value="3" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-slate-200 truncate font-medium text-[9px]">Xe buýt</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(3, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(3, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_3" min="0.05" max="0.95" step="0.01" value="0.45"
-                           onchange="onClassThresholdInputChange(3, this.value)"
-                           oninput="onClassThresholdInputTyping(3, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(3, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                      onchange="onClassThresholdInputChange(3, this.value)"
+                      oninput="onClassThresholdInputTyping(3, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(3, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
                   </div>
                 </div>
 
                 <!-- Xe tải -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_4" value="4" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_4" value="4" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-slate-200 truncate font-medium text-[9px]">Xe tải</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(4, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(4, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_4" min="0.05" max="0.95" step="0.01" value="0.42"
-                           onchange="onClassThresholdInputChange(4, this.value)"
-                           oninput="onClassThresholdInputTyping(4, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(4, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                      onchange="onClassThresholdInputChange(4, this.value)"
+                      oninput="onClassThresholdInputTyping(4, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(4, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
                   </div>
                 </div>
 
                 <!-- Ba gác -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_5" value="5" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_5" value="5" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-slate-200 truncate font-medium text-[9px]">Ba gác</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(5, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(5, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_5" min="0.05" max="0.95" step="0.01" value="0.42"
-                           onchange="onClassThresholdInputChange(5, this.value)"
-                           oninput="onClassThresholdInputTyping(5, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(5, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                      onchange="onClassThresholdInputChange(5, this.value)"
+                      oninput="onClassThresholdInputTyping(5, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(5, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
                   </div>
                 </div>
 
                 <!-- Cứu thương -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_6" value="6" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_6" value="6" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-slate-200 truncate font-medium text-[9px]">Cứu thương</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(6, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(6, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_6" min="0.05" max="0.95" step="0.01" value="0.50"
-                           onchange="onClassThresholdInputChange(6, this.value)"
-                           oninput="onClassThresholdInputTyping(6, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(6, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                      onchange="onClassThresholdInputChange(6, this.value)"
+                      oninput="onClassThresholdInputTyping(6, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(6, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
                   </div>
                 </div>
 
                 <!-- Cứu hỏa -->
-                <div class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
+                <div
+                  class="flex items-center justify-between bg-darkpanel/90 border border-slate-700/80 rounded px-1.5 py-0.5 pointer-events-auto transition">
                   <label class="flex items-center space-x-1 cursor-pointer select-none min-w-0 pr-1">
-                    <input type="checkbox" id="roiClassCheck_7" value="7" checked onchange="onRoiClassCheckboxChange()" class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
+                    <input type="checkbox" id="roiClassCheck_7" value="7" checked onchange="onRoiClassCheckboxChange()"
+                      class="w-3 h-3 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0 accent-indigo-500 cursor-pointer shrink-0">
                     <span class="text-slate-200 truncate font-medium text-[9px]">Cứu hỏa</span>
                   </label>
                   <div class="flex items-center space-x-0.5 shrink-0">
-                    <button type="button" onclick="adjustClassThreshold(7, -0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none" title="Giảm 0.01">-</button>
+                    <button type="button" onclick="adjustClassThreshold(7, -0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none"
+                      title="Giảm 0.01">-</button>
                     <input type="number" id="inlineClassInput_7" min="0.05" max="0.95" step="0.01" value="0.50"
-                           onchange="onClassThresholdInputChange(7, this.value)"
-                           oninput="onClassThresholdInputTyping(7, this.value)"
-                           class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    <button type="button" onclick="adjustClassThreshold(7, 0.01)" class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
+                      onchange="onClassThresholdInputChange(7, this.value)"
+                      oninput="onClassThresholdInputTyping(7, this.value)"
+                      class="w-7 text-center bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded py-0 text-emerald-400 font-mono font-bold text-[9px] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" onclick="adjustClassThreshold(7, 0.01)"
+                      class="w-3.5 h-3.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-[9px] select-none cursor-pointer border border-slate-700/60 leading-none">+</button>
                   </div>
                 </div>
               </div>
@@ -449,20 +590,24 @@
           <!-- Nút Lưu & Hủy (Hiện khi vẽ hoặc sửa ROI) -->
           <div id="roiActionButtons" class="hidden grid grid-cols-2 gap-1.5 shrink-0 pt-0.5">
             <button type="button" id="roiSaveBtn" onclick="handleSaveOnScreenRule()"
-                    class="py-1 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow flex items-center justify-center cursor-pointer select-none">
+              class="py-1 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow flex items-center justify-center cursor-pointer select-none">
               Lưu
             </button>
             <button type="button" id="roiCancelBtn" onclick="cancelEditingRule()"
-                    class="py-1 px-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white font-medium text-[11px] transition border border-slate-600 flex items-center justify-center cursor-pointer select-none">
+              class="py-1 px-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white font-medium text-[11px] transition border border-slate-600 flex items-center justify-center cursor-pointer select-none">
               Hủy
             </button>
           </div>
 
-          <div id="onScreenRuleToast" class="text-[9.5px] text-emerald-400 hidden text-center font-medium bg-emerald-500/15 border border-emerald-500/30 rounded py-0.5 shrink-0">Đã lưu thành công!</div>
+          <div id="onScreenRuleToast"
+            class="text-[9.5px] text-emerald-400 hidden text-center font-medium bg-emerald-500/15 border border-emerald-500/30 rounded py-0.5 shrink-0">
+            Đã lưu thành công!</div>
 
           <!-- Existing Rules of this Camera -->
           <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
-            <div class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-0.5" onclick="toggleExistingRulesList()">
+            <div
+              class="flex justify-between items-center text-[10.5px] text-slate-300 font-semibold cursor-pointer hover:text-white shrink-0 pb-0.5"
+              onclick="toggleExistingRulesList()">
               <span>ROI hiện có (<span id="onScreenRuleCount">0</span>)</span>
               <span id="rulesToggleArrow">▲</span>
             </div>
@@ -476,16 +621,17 @@
 
     <!-- Events Sidebar Collapse / Expand Edge Toggle Handle ("lia vào cạnh mới thấy nút đó") -->
     <div id="eventsCollapseToggleWrapper" onclick="toggleEventsSidebarCollapse()"
-         class="group relative shrink-0 w-3 hover:w-5 flex items-center justify-center h-full -mx-1.5 z-20 cursor-pointer select-none transition-all"
-         title="Thu gọn / Mở rộng bảng Sự kiện">
+      class="group relative shrink-0 w-3 hover:w-5 flex items-center justify-center h-full -mx-1.5 z-20 cursor-pointer select-none transition-all"
+      title="Thu gọn / Mở rộng bảng Sự kiện">
       <button type="button" id="eventsCollapseBtn"
-              class="w-4 h-14 rounded-l-md bg-darkpanel/90 hover:bg-rose-600 text-slate-400 hover:text-white border border-darkborder/80 border-r-0 shadow-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 select-none pointer-events-none">
+        class="w-4 h-14 rounded-l-md bg-darkpanel/90 hover:bg-rose-600 text-slate-400 hover:text-white border border-darkborder/80 border-r-0 shadow-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 select-none pointer-events-none">
         <span id="eventsCollapseIcon" class="text-[11px] font-mono font-bold leading-none">&gt;</span>
       </button>
     </div>
 
     <!-- RIGHT AREA: DANH SÁCH VI PHẠM (REAL-TIME) (Bảng Log Duy Nhất Chiếm Toàn Bộ Chiều Cao) -->
-    <aside id="eventsSidebar" class="w-[290px] sm:w-[305px] md:w-[320px] lg:w-[335px] xl:w-[350px] shrink-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+    <aside id="eventsSidebar"
+      class="w-[290px] sm:w-[305px] md:w-[320px] lg:w-[335px] xl:w-[350px] shrink-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden transition-all duration-300 ease-in-out">
       <!-- Header: Title & Counter -->
       <div class="flex items-center justify-between pb-2 mb-2 border-b border-darkborder shrink-0">
         <div class="flex items-center space-x-2">
@@ -495,10 +641,14 @@
           </h2>
         </div>
         <div class="flex items-center space-x-1.5">
-          <button type="button" id="pendingViolationsBtn" onclick="scrollToPendingViolation()" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 hover:bg-slate-800 text-slate-300 hover:text-amber-300 text-[11px] shadow-inner transition flex items-center space-x-1 cursor-pointer select-none group" title="Bấm để nhảy tới cảnh báo chưa xử lý">
+          <button type="button" id="pendingViolationsBtn" onclick="scrollToPendingViolation()"
+            class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-amber-500 hover:bg-slate-800 text-slate-300 hover:text-amber-300 text-[11px] shadow-inner transition flex items-center space-x-1 cursor-pointer select-none group"
+            title="Bấm để nhảy tới cảnh báo chưa xử lý">
             <span>(Chưa xử lý: <span id="liveViolationCount" class="font-bold text-amber-400 font-mono">0</span>)</span>
           </button>
-          <button type="button" onclick="refreshEventLog()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-[11px] font-medium transition flex items-center space-x-1" title="Làm mới (Xóa màn hình log hiện tại)">
+          <button type="button" onclick="refreshEventLog()"
+            class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-[11px] font-medium transition flex items-center space-x-1"
+            title="Làm mới (Xóa màn hình log hiện tại)">
             <span id="refreshLogIcon" class="inline-block transition-transform duration-300">↻</span>
             <span>Làm mới</span>
           </button>
@@ -510,14 +660,16 @@
         <!-- Violation Card template rendered dynamically from camera streams -->
         <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2.5 h-64">
           <span class="text-slate-300 font-semibold text-sm">Hệ thống đang giám sát trực tiếp</span>
-          <span class="text-slate-400 text-xs max-w-xs">Chưa có vi phạm mới. Khi camera phát hiện phương tiện vi phạm, sự kiện và hình ảnh đối soát sẽ bắn sang đây theo thời gian thực.</span>
+          <span class="text-slate-400 text-xs max-w-xs">Chưa có vi phạm mới. Khi camera phát hiện phương tiện vi phạm,
+            sự kiện và hình ảnh đối soát sẽ bắn sang đây theo thời gian thực.</span>
         </div>
       </div>
     </aside>
   </main>
 
   <!-- MODAL: ADD / EDIT CAMERA -->
-  <div id="cameraModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div id="cameraModal"
+    class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-darkpanel border border-darkborder rounded-xl w-full max-w-md p-5 shadow-2xl">
       <div class="flex justify-between items-center mb-4">
         <h3 id="cameraModalTitle" class="font-semibold text-base">Thêm Camera Mới</h3>
@@ -527,38 +679,48 @@
         <input type="hidden" id="editCamId" value="">
         <div>
           <label class="block text-slate-400 mb-1">Tên Camera *</label>
-          <input type="text" id="camNameInput" required placeholder="VD: Cam Ngã Tư Lê Duẩn" class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+          <input type="text" id="camNameInput" required placeholder="VD: Cam Ngã Tư Lê Duẩn"
+            class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
         </div>
-        
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1">Loại Nguồn *</label>
-            <select id="camTypeInput" onchange="onCameraTypeChange()" class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+            <select id="camTypeInput" onchange="onCameraTypeChange()"
+              class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
               <option value="rtsp">RTSP Stream</option>
               <option value="video_file">Video File (.mp4)</option>
             </select>
           </div>
           <div>
             <label class="block text-slate-400 mb-1">Giới Hạn FPS</label>
-            <input type="number" id="camFpsInput" value="15" min="1" max="60" class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+            <input type="number" id="camFpsInput" value="15" min="1" max="60"
+              class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
           </div>
         </div>
 
         <div>
           <label class="block text-slate-400 mb-1" id="camUrlLabel">Nguồn Stream (RTSP URL hoặc file MP4) *</label>
           <div class="flex space-x-2">
-            <input type="text" id="camUrlInput" required placeholder="rtsp://admin:pass@192.168.1.100:554/stream" class="flex-1 bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
-            <input type="file" id="videoFileInput" accept=".mp4,.avi,.mkv,.mov" class="hidden" onchange="handleVideoFileSelected(event)">
-            <button type="button" id="browseExplorerBtn" onclick="browseLocalFile()" class="hidden px-3.5 py-2 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/30 font-medium text-xs flex items-center space-x-1.5 shrink-0 transition" title="Chọn mở file video">
+            <input type="text" id="camUrlInput" required placeholder="rtsp://admin:pass@192.168.1.100:554/stream"
+              class="flex-1 bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+            <input type="file" id="videoFileInput" accept=".mp4,.avi,.mkv,.mov" class="hidden"
+              onchange="handleVideoFileSelected(event)">
+            <button type="button" id="browseExplorerBtn" onclick="browseLocalFile()"
+              class="hidden px-3.5 py-2 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/30 font-medium text-xs flex items-center space-x-1.5 shrink-0 transition"
+              title="Chọn mở file video">
               <span>Mở file</span>
             </button>
           </div>
-          <p id="camUrlHint" class="text-[10px] text-slate-500 mt-1">Hệ thống tự động che mật khẩu rtsp://***:***@ khi hiển thị.</p>
+          <p id="camUrlHint" class="text-[10px] text-slate-500 mt-1">Hệ thống tự động che mật khẩu rtsp://***:***@ khi
+            hiển thị.</p>
         </div>
 
         <div class="pt-2 flex justify-end space-x-2">
-          <button type="button" onclick="closeCameraModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Hủy</button>
-          <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded font-medium hover:bg-emerald-500">Lưu Camera</button>
+          <button type="button" onclick="closeCameraModal()"
+            class="px-4 py-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Hủy</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded font-medium hover:bg-emerald-500">Lưu
+            Camera</button>
         </div>
       </form>
     </div>
@@ -566,27 +728,33 @@
 
 
   <!-- MODAL: AI THRESHOLDS ADJUSTMENT -->
-  <div id="thresholdModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-2xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
+  <div id="thresholdModal"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-2xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
       <div class="flex justify-between items-center pb-3 border-b border-darkborder">
         <div>
           <h3 class="font-semibold text-base flex items-center space-x-2">
             <span>Cài Đặt Ngưỡng & Phối Cảnh</span>
           </h3>
-          <p class="text-xs text-slate-400">Tùy chỉnh độ nhạy cho từng loại xe. Xe máy nhỏ hoặc ở xa nên hạ ngưỡng xuống 0.20 - 0.30 để bắt nhạy hơn.</p>
+          <p class="text-xs text-slate-400">Tùy chỉnh độ nhạy cho từng loại xe. Xe máy nhỏ hoặc ở xa nên hạ ngưỡng xuống
+            0.20 - 0.30 để bắt nhạy hơn.</p>
         </div>
         <button onclick="closeThresholdModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
 
       <div class="py-4 space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
         <!-- Preset buttons -->
-        <div class="flex flex-wrap items-center justify-between gap-2 bg-darkbg/70 p-2.5 rounded-lg border border-darkborder">
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 bg-darkbg/70 p-2.5 rounded-lg border border-darkborder">
           <span class="text-slate-400 font-medium">Cấu hình nhanh:</span>
           <div class="flex space-x-2">
-            <button type="button" onclick="presetMotorcycleBoost()" class="px-3 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/40 rounded font-medium transition">
+            <button type="button" onclick="presetMotorcycleBoost()"
+              class="px-3 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/40 rounded font-medium transition">
               Tối ưu bắt nhạy xe máy (0.28)
             </button>
-            <button type="button" onclick="presetStandard()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-darkborder transition">
+            <button type="button" onclick="presetStandard()"
+              class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-darkborder transition">
               Mặc định chuẩn
             </button>
           </div>
@@ -597,22 +765,24 @@
           <div>
             <div class="flex justify-between items-center mb-1">
               <label class="font-medium text-slate-300">Ngưỡng chung (Default Conf)</label>
-              <span id="defaultConfVal" class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold font-mono">0.43</span>
+              <span id="defaultConfVal"
+                class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold font-mono">0.43</span>
             </div>
             <input type="range" id="defaultConfSlider" min="0.10" max="0.80" step="0.01" value="0.43"
-                   oninput="document.getElementById('defaultConfVal').innerText = parseFloat(this.value).toFixed(2)"
-                   class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+              oninput="document.getElementById('defaultConfVal').innerText = parseFloat(this.value).toFixed(2)"
+              class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
             <p class="text-[10px] text-slate-500 mt-1">Áp dụng cho các lớp không có ngưỡng riêng.</p>
           </div>
 
           <div>
             <div class="flex justify-between items-center mb-1">
               <label class="font-medium text-slate-300">Ngưỡng NMS (IoU Threshold)</label>
-              <span id="iouThreshVal" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold font-mono">0.45</span>
+              <span id="iouThreshVal"
+                class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold font-mono">0.45</span>
             </div>
             <input type="range" id="iouThreshSlider" min="0.10" max="0.80" step="0.01" value="0.45"
-                   oninput="document.getElementById('iouThreshVal').innerText = parseFloat(this.value).toFixed(2)"
-                   class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
+              oninput="document.getElementById('iouThreshVal').innerText = parseFloat(this.value).toFixed(2)"
+              class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
             <p class="text-[10px] text-slate-500 mt-1">Lọc các bounding box trùng lặp nhau.</p>
           </div>
         </div>
@@ -640,41 +810,46 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-slate-400 font-medium">Plate Cooldown (giây)</label>
-                <span id="plateCooldownVal" class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono font-bold">600s</span>
+                <span id="plateCooldownVal"
+                  class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono font-bold">600s</span>
               </div>
               <input type="range" id="plateCooldownSlider" min="60" max="1800" step="30" value="600"
-                     oninput="document.getElementById('plateCooldownVal').innerText = this.value + 's'"
-                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                oninput="document.getElementById('plateCooldownVal').innerText = this.value + 's'"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
               <p class="text-[10px] text-slate-500 mt-0.5">Không tạo cảnh báo trùng cho xe cùng biển số.</p>
             </div>
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-slate-400 font-medium">Khóa Không Gian (Spatial IoU)</label>
-                <span id="spatialIouVal" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-mono font-bold">0.65</span>
+                <span id="spatialIouVal"
+                  class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-mono font-bold">0.65</span>
               </div>
               <input type="range" id="spatialIouSlider" min="0.40" max="0.90" step="0.05" value="0.65"
-                     oninput="document.getElementById('spatialIouVal').innerText = parseFloat(this.value).toFixed(2)"
-                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                oninput="document.getElementById('spatialIouVal').innerText = parseFloat(this.value).toFixed(2)"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
               <p class="text-[10px] text-slate-500 mt-0.5">Khóa xe đứng yên khi biển số bị che hoặc chưa nhận diện.</p>
             </div>
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-slate-400 font-medium">Thời gian xe rời ROI (Exit Grace)</label>
-                <span id="exitGraceVal" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono font-bold">45s</span>
+                <span id="exitGraceVal"
+                  class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono font-bold">45s</span>
               </div>
               <input type="range" id="exitGraceSlider" min="15" max="180" step="5" value="45"
-                     oninput="document.getElementById('exitGraceVal').innerText = this.value + 's'"
-                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-              <p class="text-[10px] text-slate-500 mt-0.5">Xe phải rời liên tục quá thời gian này mới kết thúc phiên.</p>
+                oninput="document.getElementById('exitGraceVal').innerText = this.value + 's'"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">Xe phải rời liên tục quá thời gian này mới kết thúc phiên.
+              </p>
             </div>
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-slate-400 font-medium">Cooldown khi Báo Sai (False Positive)</label>
-                <span id="fpCooldownVal" class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-mono font-bold">1800s</span>
+                <span id="fpCooldownVal"
+                  class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-mono font-bold">1800s</span>
               </div>
               <input type="range" id="fpCooldownSlider" min="300" max="3600" step="60" value="1800"
-                     oninput="document.getElementById('fpCooldownVal').innerText = this.value + 's'"
-                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                oninput="document.getElementById('fpCooldownVal').innerText = this.value + 's'"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500">
               <p class="text-[10px] text-slate-500 mt-0.5">Khóa xe đã báo sai 30 phút để không báo lại.</p>
             </div>
           </div>
@@ -685,17 +860,21 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
               <span class="text-amber-400 font-semibold text-xs">Phối Cảnh & Tối Ưu Render ROI</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">CCTV 3D Perspective</span>
+              <span
+                class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">CCTV
+                3D Perspective</span>
             </div>
           </div>
-          <p class="text-[11px] text-slate-400">Tối ưu hiệu năng vẽ ROI (Bounded-box blend 98% nhanh hơn), khắc phục sai lệch góc nhìn nghiêng bằng điểm chạm bánh xe và viền kép tương phản cao.</p>
+          <p class="text-[11px] text-slate-400">Tối ưu hiệu năng vẽ ROI (Bounded-box blend 98% nhanh hơn), khắc phục sai
+            lệch góc nhìn nghiêng bằng điểm chạm bánh xe và viền kép tương phản cao.</p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-slate-400 font-medium">Chế độ hiển thị ROI</label>
               </div>
-              <select id="roiDisplayModeSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-amber-500 outline-none">
+              <select id="roiDisplayModeSelect"
+                class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-amber-500 outline-none">
                 <option value="full">Đầy đủ (Fill Poly + Viền kép)</option>
                 <option value="border_only">Chỉ viền (Border Only - Giữ rõ mặt đường)</option>
                 <option value="striped">Sọc chéo cảnh báo (Striped Hatch)</option>
@@ -707,19 +886,22 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-slate-400 font-medium">Độ mờ ROI (Alpha Blending)</label>
-                <span id="roiAlphaVal" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono font-bold">0.22</span>
+                <span id="roiAlphaVal"
+                  class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono font-bold">0.22</span>
               </div>
               <input type="range" id="roiAlphaSlider" min="0.10" max="0.50" step="0.02" value="0.22"
-                     oninput="document.getElementById('roiAlphaVal').innerText = parseFloat(this.value).toFixed(2)"
-                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500">
-              <p class="text-[10px] text-slate-500 mt-0.5">Chỉ blend trong Bounding Rect của ROI (không copy cả khung hình).</p>
+                oninput="document.getElementById('roiAlphaVal').innerText = parseFloat(this.value).toFixed(2)"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">Chỉ blend trong Bounding Rect của ROI (không copy cả khung
+                hình).</p>
             </div>
 
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-slate-400 font-medium">Điểm xét vi phạm (Ground-Contact)</label>
               </div>
-              <select id="groundContactModeSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-amber-500 outline-none">
+              <select id="groundContactModeSelect"
+                class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-amber-500 outline-none">
                 <option value="bottom_center">Đáy giữa BBox (Bottom-Center - Điểm chạm đất)</option>
                 <option value="bottom_strip_20">Dải 20% chân bánh xe (Bottom 20% Wheel Base)</option>
               </select>
@@ -731,7 +913,8 @@
                 <label class="text-slate-400 font-medium">Hiệu chuẩn phối cảnh (Homography)</label>
               </div>
               <label class="flex items-center space-x-2 cursor-pointer mt-1">
-                <input type="checkbox" id="enableHomographyToggle" class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0 w-4 h-4">
+                <input type="checkbox" id="enableHomographyToggle"
+                  class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0 w-4 h-4">
                 <span class="text-slate-300 text-xs">Bật hiệu chuẩn phối cảnh mặt đường</span>
               </label>
               <p class="text-[10px] text-slate-500 mt-1">Chiếu ROI theo 4 điểm mốc mặt đường thực tế.</p>
@@ -743,8 +926,10 @@
       <div class="pt-3 border-t border-darkborder flex items-center justify-between">
         <span id="thresholdToast" class="text-xs text-emerald-400 hidden font-medium">Đã áp dụng ngay lập tức!</span>
         <div class="flex space-x-2 ml-auto">
-          <button type="button" onclick="closeThresholdModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 text-xs">Đóng</button>
-          <button type="button" onclick="saveAIThresholds()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium text-xs shadow transition flex items-center space-x-1.5">
+          <button type="button" onclick="closeThresholdModal()"
+            class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 text-xs">Đóng</button>
+          <button type="button" onclick="saveAIThresholds()"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium text-xs shadow transition flex items-center space-x-1.5">
             <span>Lưu & Áp Dụng Ngay</span>
           </button>
         </div>
@@ -753,7 +938,8 @@
   </div>
 
   <!-- MODAL: IMAGE INSPECTION (Raw, Annotated, Crop, Plate) -->
-  <div id="imageModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+  <div id="imageModal"
+    class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-4xl p-5 shadow-2xl flex flex-col">
       <div class="flex justify-between items-center mb-3 pb-2 border-b border-darkborder">
         <div>
@@ -765,44 +951,61 @@
 
       <!-- Tab Switcher -->
       <div class="flex space-x-2 mb-3 text-xs">
-        <button onclick="switchImageTab('annotated')" id="tabAnnotated" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium">Toàn Cảnh (Overlay)</button>
-        <button onclick="switchImageTab('raw')" id="tabRaw" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Ảnh Gốc Sạch (Raw)</button>
-        <button onclick="switchImageTab('crop')" id="tabCrop" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Best-Shot Xe</button>
-        <button onclick="switchImageTab('plate')" id="tabPlate" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Biển Số Cắt (OCR)</button>
+        <button onclick="switchImageTab('annotated')" id="tabAnnotated"
+          class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium">Toàn Cảnh (Overlay)</button>
+        <button onclick="switchImageTab('raw')" id="tabRaw"
+          class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Ảnh Gốc Sạch (Raw)</button>
+        <button onclick="switchImageTab('crop')" id="tabCrop"
+          class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Best-Shot Xe</button>
+        <button onclick="switchImageTab('plate')" id="tabPlate"
+          class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Biển Số Cắt (OCR)</button>
       </div>
 
       <!-- Image Display Area -->
-      <div class="bg-darkbg rounded-xl p-2 border border-darkborder flex items-center justify-center min-h-[380px] max-h-[560px] overflow-hidden">
+      <div
+        class="bg-darkbg rounded-xl p-2 border border-darkborder flex items-center justify-center min-h-[380px] max-h-[560px] overflow-hidden">
         <img id="modalInspectImage" src="" alt="Evidence" class="max-h-[540px] max-w-full object-contain rounded">
       </div>
     </div>
   </div>
 
   <!-- MODAL: VIOLATIONS HISTORY & EXPORT PDF TABLE -->
-  <div id="historyModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-6xl h-[86vh] min-h-[560px] p-4 sm:p-5 shadow-2xl flex flex-col">
+  <div id="historyModal"
+    class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+    <div
+      class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-6xl h-[86vh] min-h-[560px] p-4 sm:p-5 shadow-2xl flex flex-col">
       <!-- Modal Header -->
       <div class="flex justify-between items-center pb-3 border-b border-darkborder shrink-0">
         <div>
           <h3 class="font-bold text-base text-white flex items-center space-x-2">
             <span>Quản Lý Lịch Sử Vi Phạm</span>
           </h3>
-          <p class="text-xs text-slate-400">Tra cứu, đối soát toàn bộ hồ sơ vi phạm giao thông và trích xuất báo cáo biên bản.</p>
+          <p class="text-xs text-slate-400">Tra cứu, đối soát toàn bộ hồ sơ vi phạm giao thông và trích xuất báo cáo
+            biên bản.</p>
         </div>
         <div class="flex items-center space-x-2">
-          <button type="button" onclick="exportViolationsPDF()" class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs rounded-lg font-semibold flex items-center space-x-1.5 transition shadow cursor-pointer" title="In hoặc lưu file PDF biên bản báo cáo vi phạm">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <button type="button" onclick="exportViolationsPDF()"
+            class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs rounded-lg font-semibold flex items-center space-x-1.5 transition shadow cursor-pointer"
+            title="In hoặc lưu file PDF biên bản báo cáo vi phạm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+              </path>
+            </svg>
             <span>Xuất PDF</span>
           </button>
-          <button onclick="closeViolationsHistoryModal()" class="text-slate-400 hover:text-white text-xl cursor-pointer ml-1">&times;</button>
+          <button onclick="closeViolationsHistoryModal()"
+            class="text-slate-400 hover:text-white text-xl cursor-pointer ml-1">&times;</button>
         </div>
       </div>
 
       <!-- Filters Bar (Bổ sung trường ngày giờ thời gian) -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs bg-darkbg/50 p-2.5 sm:p-3 rounded-lg border border-darkborder/50 my-3 shrink-0">
+      <div
+        class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs bg-darkbg/50 p-2.5 sm:p-3 rounded-lg border border-darkborder/50 my-3 shrink-0">
         <div>
           <label class="block text-slate-400 mb-1 text-[11px]">Loại Vi Phạm</label>
-          <select id="filterType" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
+          <select id="filterType" onchange="fetchHistoryViolations()"
+            class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
             <option value="">Tất cả</option>
             <option value="no_parking">Dừng đỗ trái phép</option>
             <option value="sidewalk_encroachment">Lấn chiếm vỉa hè</option>
@@ -811,7 +1014,8 @@
         </div>
         <div>
           <label class="block text-slate-400 mb-1 text-[11px]">Loại Phương Tiện</label>
-          <select id="filterClass" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
+          <select id="filterClass" onchange="fetchHistoryViolations()"
+            class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
             <option value="">Tất cả 8 nhóm</option>
             <option value="car">Ô tô (car)</option>
             <option value="motorcycle">Xe máy (motorcycle)</option>
@@ -825,7 +1029,8 @@
         </div>
         <div>
           <label class="block text-slate-400 mb-1 text-[11px]">Trạng Thái</label>
-          <select id="filterStatus" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
+          <select id="filterStatus" onchange="fetchHistoryViolations()"
+            class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 outline-none">
             <option value="">Tất cả</option>
             <option value="pending">Chờ duyệt</option>
             <option value="confirmed">Đã duyệt</option>
@@ -834,15 +1039,18 @@
         </div>
         <div>
           <label class="block text-slate-400 mb-1 text-[11px]">Từ ngày giờ</label>
-          <input type="datetime-local" id="filterDateFrom" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-slate-200 text-xs outline-none">
+          <input type="datetime-local" id="filterDateFrom" onchange="fetchHistoryViolations()"
+            class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-slate-200 text-xs outline-none">
         </div>
         <div>
           <label class="block text-slate-400 mb-1 text-[11px]">Đến ngày giờ</label>
-          <input type="datetime-local" id="filterDateTo" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-slate-200 text-xs outline-none">
+          <input type="datetime-local" id="filterDateTo" onchange="fetchHistoryViolations()"
+            class="w-full bg-darkpanel border border-darkborder rounded px-1.5 py-1 text-slate-200 text-xs outline-none">
         </div>
         <div>
           <label class="block text-slate-400 mb-1 text-[11px]">Tìm Kiếm Biển Số</label>
-          <input type="text" id="searchPlate" placeholder="VD: 92A-005..." oninput="debouncedHistoryFilter()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 text-xs outline-none">
+          <input type="text" id="searchPlate" placeholder="VD: 92A-005..." oninput="debouncedHistoryFilter()"
+            class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200 text-xs outline-none">
         </div>
       </div>
 
@@ -874,8 +1082,12 @@
       <div class="flex items-center justify-between text-xs text-slate-400 pt-3 shrink-0">
         <div>Hiển thị <span id="pageInfo">0 - 0 / 0</span> bản ghi</div>
         <div class="flex space-x-2">
-          <button id="prevPageBtn" onclick="changeHistoryPage(-1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40 hover:bg-slate-800 transition">Trang trước</button>
-          <button id="nextPageBtn" onclick="changeHistoryPage(1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40 hover:bg-slate-800 transition">Trang sau</button>
+          <button id="prevPageBtn" onclick="changeHistoryPage(-1)"
+            class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40 hover:bg-slate-800 transition">Trang
+            trước</button>
+          <button id="nextPageBtn" onclick="changeHistoryPage(1)"
+            class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40 hover:bg-slate-800 transition">Trang
+            sau</button>
         </div>
       </div>
     </div>
@@ -992,7 +1204,7 @@
       const provEl = document.getElementById('providerText');
       if (provEl && provEl.parentElement) {
         provEl.innerText = isDirectML ? 'ORT: DirectML (GPU)' : `ORT: CPU (Safe Mode)`;
-        provEl.parentElement.className = isDirectML 
+        provEl.parentElement.className = isDirectML
           ? 'px-2 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-400 font-medium text-[11px] flex items-center space-x-1.5'
           : 'px-2 py-0.5 rounded bg-slate-700/50 border border-slate-600 text-slate-300 font-medium text-[11px] flex items-center space-x-1.5';
       }
@@ -2232,7 +2444,7 @@
       const clickY = e.clientY - rect.top;
 
       if (clickX < box.left || clickX > box.left + box.width ||
-          clickY < box.top || clickY > box.top + box.height) {
+        clickY < box.top || clickY > box.top + box.height) {
         return null;
       }
 
@@ -2307,7 +2519,7 @@
                     return;
                   }
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
           }
 
@@ -2361,7 +2573,7 @@
                   }
                 }
                 if (hoveringExisting) break;
-              } catch (e) {}
+              } catch (e) { }
             }
             canvas.style.cursor = hoveringExisting ? 'pointer' : 'default';
             return;
@@ -2533,7 +2745,7 @@
             ctx.fillText(label, firstPx + 5, Math.max(13, firstPy - 6));
             ctx.restore();
           }
-        } catch (e) {}
+        } catch (e) { }
       });
 
       // 2. Draw currently drawn or edited points
@@ -2913,12 +3125,12 @@
         try {
           const parsed = JSON.parse(r.forbidden_classes_json);
           if (Array.isArray(parsed)) targetClasses = parsed;
-        } catch (e) {}
+        } catch (e) { }
       } else if (r.allowed_classes_json) {
         try {
           const parsed = JSON.parse(r.allowed_classes_json);
           if (Array.isArray(parsed)) targetClasses = parsed;
-        } catch (e) {}
+        } catch (e) { }
       }
       for (let cid = 0; cid <= 7; cid++) {
         const chk = document.getElementById(`roiClassCheck_${cid}`);
@@ -3787,7 +3999,7 @@
                 window.print();
               }, 400);
             };
-          </script>
+          <\/script>
         </body>
         </html>
       `;
