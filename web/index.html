@@ -2422,11 +2422,13 @@
                 <button type="button" onclick="adjustRuleDwellDirect(${r.id}, 1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-[10px] select-none transition" title="Tăng 1 giây">+</button>
               </div>
 
-              <!-- Cảnh báo Bật / Tắt (Tích vào sẽ cảnh báo, bỏ tích thì vẫn giữ vùng trên video nhưng không cảnh báo) -->
-              <label class="flex items-center space-x-1 cursor-pointer select-none" title="Tích để bật cảnh báo, bỏ tích để tắt cảnh báo (vẫn giữ vùng trên video)">
+              <!-- Cảnh báo (Tích vào sẽ bật cảnh báo, bỏ tích để tắt cảnh báo) -->
+              <label class="flex items-center space-x-1.5 cursor-pointer select-none" title="Tích để bật cảnh báo, bỏ tích để tắt cảnh báo (vẫn giữ vùng trên video)">
                 <span class="text-slate-400 text-[9px]">Cảnh báo:</span>
-                <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleRuleActiveDirect(${r.id}, this.checked)" class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
-                <span class="text-[9px] font-semibold ${isActive ? 'text-emerald-400' : 'text-slate-500'}">${isActive ? 'Bật' : 'Tắt'}</span>
+                <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleRuleActiveDirect(${r.id}, this.checked)" class="sr-only">
+                <div class="w-3.5 h-3.5 rounded-sm border border-white bg-slate-900/80 flex items-center justify-center transition shadow-sm">
+                  ${isActive ? '<svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>' : ''}
+                </div>
               </label>
             </div>
           </div>
