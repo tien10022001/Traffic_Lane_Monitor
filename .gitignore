@@ -1,0 +1,38 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local SQLite Databases & WAL files
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.db-journal
+
+# Evidence images & videos (runtime artifacts)
+data/evidence/
+data/videos/
+data/test_videos/
+data/test_export/
+data/test_plates/
+
+# Runtime Logs
+logs/*.log
+*.log
+
+# IDE & OS temporary files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+temp_*

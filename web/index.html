@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>CCTV Traffic Monitor - Giám Sát Giao Thông</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
+            darkbg: '#0a0f1d',
+            darkpanel: '#131b2e',
+            darkborder: '#23304a'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Absolute zero-scroll guarantee on 100vh window */
+    html, body {
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden !important;
+      margin: 0;
+      padding: 0;
+    }
+    /* Custom scrollbars for inner scrollable panels */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0a0f1d; }
+    ::-webkit-scrollbar-thumb { background: #23304a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    .canvas-container { position: relative; display: inline-block; }
+  </style>
+</head>
+<body class="bg-darkbg text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans antialiased select-none">
+
+  <!-- 1. COMPACT TOP NAVBAR (Fixed height, no page scroll) -->
+  <header class="h-12 bg-darkpanel border-b border-darkborder px-4 flex items-center justify-between shrink-0 shadow-md z-30">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-base shadow">
+        🚦
+      </div>
+      <div>
+        <h1 class="font-bold text-sm tracking-wide text-white leading-tight">CCTV Traffic Monitor</h1>
+        <p class="text-[10px] text-slate-400">Multi-Cam Surveillance • OCR Biển Số</p>
+      </div>
+    </div>
+
+    <!-- Active Hardware & Telemetry Bar -->
+    <div class="flex items-center space-x-2.5 text-xs">
+      <!-- Hardware Badges -->
+      <div id="deviceBadge" class="px-2 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-400 font-medium flex items-center space-x-1.5 text-[11px]">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+        <span id="providerText">ORT: DirectML (GPU)</span>
+      </div>
+
+      <div class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-medium text-[11px] hidden sm:flex items-center space-x-1">
+        <span>CPU:</span>
+        <span id="cpuHostVal" class="font-bold">0%</span>
+        <span class="text-slate-500">|</span>
+        <span>RAM:</span>
+        <span id="ramHostVal" class="font-bold">0%</span>
+      </div>
+
+      <div class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-medium text-[11px] hidden md:flex items-center space-x-1">
+        <span>GPU:</span>
+        <span id="gpuLoadVal" class="font-bold">0%</span>
+        <span class="text-slate-500">(<span id="gpuTempText">0°C</span>)</span>
+      </div>
+
+      <div class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-medium text-[11px] flex items-center space-x-1">
+        <span>FPS:</span>
+        <span id="totalFpsVal" class="font-bold">0.0</span>
+      </div>
+
+      <div class="px-2 py-0.5 rounded bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 font-medium text-[11px] hidden lg:flex items-center space-x-1">
+        <span>OCR Queue:</span>
+        <span id="ocrQueueVal" class="font-bold">0</span>
+      </div>
+
+      <div id="wsStatusBadge" class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400">
+        WS: <span id="wsStatusText" class="text-yellow-400 font-bold">●</span>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <button onclick="openViolationsHistoryModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder font-medium text-xs flex items-center space-x-1 transition" title="Xem lịch sử và xuất dữ liệu Active Learning">
+        <span>📋 Lịch Sử & Xuất ZIP</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. MAIN 1-PAGE WORKSPACE (Strictly 1-page side-by-side flex layout, zero vertical scroll) -->
+  <main class="flex-1 min-h-0 p-2.5 sm:p-3 flex flex-row gap-3 overflow-hidden">
+
+    <!-- LEFT AREA: CAMERA LIVE VIEW (Takes all remaining width and 100% height) -->
+    <section class="flex-1 min-w-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-2.5 shadow-xl min-h-0 overflow-hidden">
+      <!-- Camera Bar: Chrome-Style Tabs + Controls -->
+      <div class="flex items-center justify-between pb-1.5 mb-2 border-b border-darkborder shrink-0 text-xs">
+        <!-- Google Chrome Style Camera Tabs Container + '+' Add Camera Button -->
+        <div class="flex items-center space-x-1 overflow-x-auto min-w-0 flex-1 pr-3 items-end">
+          <div id="camTabsContainer" class="flex items-end space-x-1">
+            <!-- Dynamically populated Chrome-style tabs -->
+          </div>
+
+          <!-- Chrome-style '+' New Tab Button to Add Camera -->
+          <button onclick="openAddCameraModal()" class="w-6 h-6 shrink-0 rounded-full hover:bg-slate-700/80 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm transition cursor-pointer mb-0.5 border border-transparent hover:border-slate-600" title="Thêm Camera Mới (+)">
+            +
+          </button>
+        </div>
+
+        <!-- Right Side Controls: Grid mode switcher & ROI Editor -->
+        <div class="flex items-center space-x-2 shrink-0">
+          <!-- Windows 11 Snap Layouts Picker Button & Popover -->
+          <div class="relative">
+            <button id="snapLayoutBtn" onclick="toggleSnapLayoutMenu(event)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-darkborder hover:border-slate-600 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 shadow" title="Chọn bố cục chia màn hình (Windows Snap Layouts)">
+              <!-- Windows Snap Layout Icon -->
+              <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-11zM2.5 2a.5.5 0 0 0-.5.5V8h5.5V2H2.5zm6.5 0v6H14V2.5a.5.5 0 0 0-.5-.5H9zM2 9v4.5a.5.5 0 0 0 .5.5H8V9H2zm7 5h4.5a.5.5 0 0 0 .5-.5V9H9v5z"/>
+              </svg>
+              <span id="snapLayoutCurrentText" class="text-[11px] font-semibold text-slate-200">1x1</span>
+              <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <!-- Windows 11 Snap Layouts Popover Panel -->
+            <div id="snapLayoutMenu" class="hidden absolute right-0 top-full mt-2 z-50 bg-[#141824]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl p-3 shadow-2xl w-80 text-xs flex flex-col space-y-2.5 animate-in fade-in zoom-in-95">
+              <div class="flex items-center justify-between pb-1.5 border-b border-slate-700/60">
+                <span class="font-bold text-slate-200 text-xs flex items-center space-x-1.5">
+                  <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-11z"/></svg>
+                  <span>Bố Cục Camera (Snap Layouts)</span>
+                </span>
+                <span class="text-[10px] text-slate-400">Click đúp ô để phóng to</span>
+              </div>
+
+              <!-- 4 Cards matching Windows 11 screenshot -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <!-- 1. Chia đôi 50/50 -->
+                <div onclick="selectLayout('split_2')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="Chia đôi 2 cột bằng nhau (50/50)">
+                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-2 gap-1 group-hover:border-blue-500/50">
+                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                  </div>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">Chia đôi (50/50)</span>
+                </div>
+
+                <!-- 2. Chia 1 Lớn + 1 Nhỏ (70/30) -->
+                <div onclick="selectLayout('focus_2')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="1 Cam lớn chính (70%) + 1 Cam phụ (30%)">
+                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-3 gap-1 group-hover:border-blue-500/50">
+                    <div class="col-span-2 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                    <div class="col-span-1 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                  </div>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">1 Lớn + 1 Nhỏ</span>
+                </div>
+
+                <!-- 3. Chia 1 Lớn + 2 Nhỏ Xếp Dọc -->
+                <div onclick="selectLayout('focus_3')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="1 Cam lớn tiêu điểm + 2 Cam phụ xếp dọc bên phải">
+                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-3 gap-1 group-hover:border-blue-500/50">
+                    <div class="col-span-2 bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                    <div class="col-span-1 grid grid-rows-2 gap-1">
+                      <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                      <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                    </div>
+                  </div>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">1 Lớn + 2 Nhỏ</span>
+                </div>
+
+                <!-- 4. Lưới 4 Cams (2x2) -->
+                <div onclick="selectLayout('grid_4')" class="group p-2 rounded-xl bg-darkbg/80 hover:bg-slate-800 border border-slate-700/60 hover:border-blue-500 cursor-pointer transition flex flex-col space-y-1.5" title="Lưới 4 ô đều nhau (2x2)">
+                  <div class="h-14 rounded-lg bg-black/50 border border-slate-700/50 p-1 grid grid-cols-2 grid-rows-2 gap-1 group-hover:border-blue-500/50">
+                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                    <div class="bg-slate-700/50 rounded group-hover:bg-blue-500/40 border border-transparent group-hover:border-blue-400/60 transition"></div>
+                  </div>
+                  <span class="text-[11px] font-medium text-slate-300 group-hover:text-blue-300 text-center">Lưới 4 Cams (2x2)</span>
+                </div>
+              </div>
+
+              <!-- Bottom Bar: Toàn màn hình & Tự Động vừa màn hình -->
+              <div class="grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-700/60">
+                <button type="button" onclick="selectLayout('single')" class="py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-600 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
+                  <span>⛶ 1 Cam (Toàn Màn Hình)</span>
+                </button>
+                <button type="button" onclick="selectLayout('auto')" class="py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 font-medium text-[11px] transition flex items-center justify-center space-x-1.5">
+                  <span>Tự Động Vừa Khít</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick 1-Click ROI Display Mode Cycle (Full / Border Only / Striped / Hidden) -->
+          <button id="roiDisplayModeBtn" onclick="cycleRoiDisplayMode()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-xs font-medium transition flex items-center space-x-1" title="Chuyển nhanh hiển thị ROI: Đầy đủ / Chỉ viền / Sọc chéo / Ẩn">
+            <span id="roiDisplayModeText">👁️ ROI: Đầy đủ</span>
+          </button>
+
+          <button id="roiDrawBtn" onclick="toggleOnScreenDrawMode()" class="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded text-xs font-medium transition flex items-center space-x-1" title="Bật/Tắt chế độ vẽ trực tiếp trên màn hình camera">
+            <span id="roiDrawBtnIcon">✏️</span>
+            <span id="roiDrawBtnText">Vẽ Luật / ROI</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Stream Viewport + Docked ROI Panel Row (Fills remaining height, zero overlap) -->
+      <div class="flex-1 min-h-0 flex flex-row gap-2 overflow-hidden">
+        <!-- Live Stream Viewport Container -->
+        <div id="cameraViewportContainer" class="flex-1 min-w-0 h-full bg-black rounded-lg overflow-hidden relative flex items-center justify-center border border-darkborder/50">
+          <!-- Inner Stream Display Container (Managed by renderViewport) -->
+          <div id="cameraStreamsInner" class="w-full h-full relative flex items-center justify-center overflow-hidden">
+            <img id="mainLiveStream" src="" alt="Camera Live Stream" class="w-full h-full object-contain pointer-events-none"
+                 onerror="this.onerror=null; this.src='/api/cameras/1/snapshot'">
+            <div class="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/80 backdrop-blur-sm border border-slate-700 text-[11px] text-slate-200 flex items-center space-x-2 pointer-events-none">
+              <span id="hudCamInfo">Cam #1 • Đang chạy</span>
+              <span class="text-slate-500">|</span>
+              <span id="hudFpsText" class="text-emerald-400 font-bold">15.0 FPS</span>
+            </div>
+          </div>
+
+          <!-- ON-SCREEN DIRECT DRAWING OVERLAY CANVAS -->
+          <canvas id="onScreenDrawCanvas" class="hidden absolute inset-0 w-full h-full cursor-crosshair z-30"></canvas>
+        </div>
+
+        <!-- DOCKED ROI & RULE PANEL (Side-by-side, never floats over video) -->
+        <div id="onScreenRuleDrawer" class="hidden w-64 shrink-0 h-full bg-darkbg/90 border border-indigo-500/50 rounded-lg p-2.5 text-xs flex flex-col space-y-2 overflow-y-auto">
+          <!-- Drawer Header -->
+          <div class="flex items-center justify-between pb-1.5 border-b border-darkborder shrink-0">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <span class="font-bold text-white text-[11px] tracking-wide">VẼ VÙNG ROI</span>
+            </div>
+            <button onclick="closeOnScreenDraw()" class="text-slate-400 hover:text-white text-base font-bold px-1 leading-none" title="Đóng chế độ vẽ">&times;</button>
+          </div>
+
+          <!-- Active Target Camera Selector -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-400 font-medium">Camera:</span>
+              <span id="onScreenCamBadge" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px]">ĐANG CHỌN</span>
+            </div>
+            <select id="onScreenCamSelect" onchange="onDrawerCamSelectChange(this.value)" class="w-full bg-darkpanel border border-slate-700 rounded px-2 py-1 text-amber-300 font-semibold text-xs outline-none focus:border-amber-400 cursor-pointer">
+              <!-- Dynamically populated from camerasData -->
+            </select>
+          </div>
+
+          <!-- Rule Type Select (Only Luật) -->
+          <div>
+            <label class="block text-slate-400 mb-1 text-[11px] font-medium">Luật *</label>
+            <select id="onScreenRuleType" onchange="onOnScreenRuleTypeChange()"
+                    class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1.5 text-white text-xs outline-none focus:border-indigo-500">
+              <option value="no_parking">🚫 Dừng đỗ trái phép (no_parking)</option>
+              <option value="lane_roi">⚠️ Đi sai làn vùng cấm (lane_roi)</option>
+              <option value="sidewalk_encroachment">🚶 Lấn chiếm vỉa hè (sidewalk)</option>
+              <option value="lane_line">📏 Đè / Cắt vạch cấm (lane_line)</option>
+            </select>
+          </div>
+
+          <!-- Compact ROI Region Name -->
+          <div>
+            <label class="block text-slate-400 mb-1 text-[11px] font-medium">Tên vùng ROI <span class="text-slate-500 font-normal">(tùy chọn)</span></label>
+            <input type="text" id="onScreenRoiName" placeholder="VD: ROI 1"
+                   class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-white text-xs outline-none focus:border-indigo-500">
+          </div>
+
+          <!-- Dwell Time (for parking / sidewalk / lane_roi) -->
+          <div id="onScreenDwellGroup">
+            <div class="flex justify-between items-center mb-1 text-[11px]">
+              <label class="text-slate-400 font-medium">Ngưỡng Giây</label>
+              <span id="onScreenDwellVal" class="font-bold text-amber-400 font-mono">10.0s</span>
+            </div>
+            <input type="range" id="onScreenRuleDwell" min="1.0" max="60.0" step="0.5" value="10.0"
+                   oninput="document.getElementById('onScreenDwellVal').innerText = parseFloat(this.value).toFixed(1) + 's'"
+                   class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500">
+          </div>
+
+          <!-- Direction (for line crossing) -->
+          <div id="onScreenDirectionGroup" class="hidden">
+            <label class="block text-slate-400 mb-1 text-[11px] font-medium">Chiều Cắt Vạch</label>
+            <select id="onScreenRuleDirection" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-white text-xs outline-none">
+              <option value="both">Cả 2 chiều (both)</option>
+              <option value="left_to_right">Trái sang Phải (left_to_right)</option>
+              <option value="right_to_left">Phải sang Trái (right_to_left)</option>
+            </select>
+          </div>
+
+          <!-- Drawing Status & Quick Guide -->
+          <div id="onScreenDrawStatus" class="text-[10px] text-slate-400 bg-darkpanel/70 border border-darkborder/70 rounded px-2 py-1 leading-relaxed">
+            Click trái: thêm điểm • Click điểm 1 / Double-click: đóng • Chuột phải: lùi • Kéo đỉnh: chỉnh
+          </div>
+
+          <!-- Drawing Action Buttons -->
+          <div class="grid grid-cols-3 gap-1">
+            <button type="button" onclick="finishOnScreenPolygon()" class="px-1.5 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/40 font-medium text-[11px] transition text-center" title="Đóng vùng đa giác">
+              ✓ Đóng
+            </button>
+            <button type="button" onclick="undoLastOnScreenPoint()" class="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[11px] transition text-center" title="Xóa điểm vừa click">
+              ↩ Lùi
+            </button>
+            <button type="button" onclick="clearOnScreenDrawing()" class="px-1.5 py-1 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 rounded border border-rose-500/30 text-[11px] transition text-center" title="Xóa toàn bộ điểm đang vẽ">
+              ✕ Vẽ lại
+            </button>
+          </div>
+
+          <!-- Save Button -->
+          <button type="button" onclick="handleSaveOnScreenRule()" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition shadow flex items-center justify-center space-x-1 text-xs">
+            <span>💾 Lưu Luật</span>
+          </button>
+          <span id="onScreenRuleToast" class="text-[11px] text-emerald-400 hidden text-center font-medium">✓ Đã lưu & áp dụng ngay!</span>
+
+          <!-- Existing Rules of this Camera -->
+          <div class="border-t border-darkborder pt-1.5 flex-1 min-h-0 flex flex-col">
+            <div class="flex justify-between items-center text-[11px] text-slate-400 font-medium cursor-pointer hover:text-slate-200 shrink-0" onclick="toggleExistingRulesList()">
+              <span>📋 Luật hiện có (<span id="onScreenRuleCount">0</span>)</span>
+              <span id="rulesToggleArrow">▲</span>
+            </div>
+            <div id="onScreenExistingRulesList" class="space-y-1 mt-1.5 flex-1 overflow-y-auto pr-0.5">
+              <p class="text-slate-500 text-[10px]">Chưa có luật nào.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPACT INLINE CLASS THRESHOLDS BAR (Minimal, no modal needed) -->
+      <div id="inlineThresholdsBox" class="shrink-0 mt-2 bg-darkbg/80 border border-darkborder rounded-lg px-2.5 py-1.5">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <div class="flex items-center space-x-2">
+            <span class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Ngưỡng Class</span>
+            <span id="inlineThresholdToast" class="text-[10px] text-emerald-400 hidden font-medium">✓ Đã áp dụng</span>
+          </div>
+          <div class="flex items-center space-x-1.5 text-[10px]">
+            <button type="button" onclick="presetMotorcycleBoost(); saveInlineClassThresholds();" class="px-2 py-0.5 bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded transition">
+              Xe máy 0.28
+            </button>
+            <button type="button" onclick="presetStandard(); saveInlineClassThresholds();" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-darkborder rounded transition">
+              Mặc định
+            </button>
+            <button type="button" onclick="saveInlineClassThresholds()" class="px-2.5 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded transition shadow">
+              Lưu
+            </button>
+          </div>
+        </div>
+        <div id="inlineClassSliders" class="grid grid-cols-4 xl:grid-cols-8 gap-1.5">
+          <!-- Rendered compactly by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT AREA: DANH SÁCH VI PHẠM (REAL-TIME) (Bảng Log Duy Nhất Chiếm Toàn Bộ Chiều Cao) -->
+    <aside class="w-[380px] md:w-[410px] lg:w-[430px] xl:w-[460px] 2xl:w-[490px] shrink-0 h-full flex flex-col bg-darkpanel border border-darkborder rounded-xl p-3 shadow-xl min-h-0 overflow-hidden">
+      <!-- Header: Title & Counter -->
+      <div class="flex items-center justify-between pb-2 mb-2 border-b border-darkborder shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+          <h2 class="font-bold text-xs tracking-wider text-slate-200 uppercase flex items-center space-x-1.5">
+            <span>DANH SÁCH VI PHẠM (REAL-TIME)</span>
+          </h2>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span id="liveViolationCount" class="px-2.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-white font-mono font-bold text-xs shadow-inner">0</span>
+          <button onclick="refreshEventLog()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-darkborder rounded text-[11px] font-medium transition flex items-center space-x-1" title="Làm mới danh sách sự kiện vi phạm">
+            <span id="refreshLogIcon" class="inline-block transition-transform duration-300">🔄</span>
+            <span>Làm mới</span>
+          </button>
+          <button onclick="clearEventLogUI()" class="px-1.5 py-0.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-white border border-rose-800/40 rounded text-[11px] font-medium transition flex items-center space-x-1" title="Xóa màn hình log hiện tại">
+            <span>🗑️ Xóa log</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-time Violation Feed (Scrollable vertically inside this container only) -->
+      <div id="liveViolationsFeed" class="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1">
+        <!-- Violation Card template rendered dynamically from camera streams -->
+        <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2.5 h-64">
+          <span class="text-3xl block animate-pulse">🛡️</span>
+          <span class="text-slate-300 font-semibold text-sm">Hệ thống đang giám sát trực tiếp</span>
+          <span class="text-slate-400 text-xs max-w-xs">Chưa có vi phạm mới. Khi camera phát hiện phương tiện vi phạm, sự kiện và hình ảnh đối soát sẽ bắn sang đây theo thời gian thực.</span>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- MODAL: ADD / EDIT CAMERA -->
+  <div id="cameraModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-darkpanel border border-darkborder rounded-xl w-full max-w-md p-5 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="cameraModalTitle" class="font-semibold text-base">Thêm Camera Mới</h3>
+        <button onclick="closeCameraModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <form id="cameraForm" onsubmit="handleSaveCamera(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="editCamId" value="">
+        <div>
+          <label class="block text-slate-400 mb-1">Tên Camera *</label>
+          <input type="text" id="camNameInput" required placeholder="VD: Cam Ngã Tư Lê Duẩn" class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">Loại Nguồn *</label>
+            <select id="camTypeInput" onchange="onCameraTypeChange()" class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+              <option value="rtsp">RTSP Stream</option>
+              <option value="video_file">Video File (.mp4)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Giới Hạn FPS</label>
+            <input type="number" id="camFpsInput" value="15" min="1" max="60" class="w-full bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1" id="camUrlLabel">Nguồn Stream (RTSP URL hoặc file MP4) *</label>
+          <div class="flex space-x-2">
+            <input type="text" id="camUrlInput" required placeholder="rtsp://admin:pass@192.168.1.100:554/stream" class="flex-1 bg-darkbg border border-darkborder rounded px-3 py-2 text-white">
+            <input type="file" id="videoFileInput" accept=".mp4,.avi,.mkv,.mov" class="hidden" onchange="handleVideoFileSelected(event)">
+            <button type="button" id="browseExplorerBtn" onclick="browseLocalFile()" class="hidden px-3.5 py-2 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/30 font-medium text-xs flex items-center space-x-1.5 shrink-0 transition" title="Chọn mở file video">
+              <span>🖥️ Mở file</span>
+            </button>
+          </div>
+          <p id="camUrlHint" class="text-[10px] text-slate-500 mt-1">Hệ thống tự động che mật khẩu rtsp://***:***@ khi hiển thị.</p>
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeCameraModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Hủy</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded font-medium hover:bg-emerald-500">Lưu Camera</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL: AI THRESHOLDS ADJUSTMENT -->
+  <div id="thresholdModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-2xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
+      <div class="flex justify-between items-center pb-3 border-b border-darkborder">
+        <div>
+          <h3 class="font-semibold text-base flex items-center space-x-2">
+            <span>⚙️ Cài Đặt Ngưỡng & Phối Cảnh</span>
+          </h3>
+          <p class="text-xs text-slate-400">Tùy chỉnh độ nhạy cho từng loại xe. Xe máy nhỏ hoặc ở xa nên hạ ngưỡng xuống 0.20 - 0.30 để bắt nhạy hơn.</p>
+        </div>
+        <button onclick="closeThresholdModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <div class="py-4 space-y-4 overflow-y-auto flex-1 pr-1 text-xs">
+        <!-- Preset buttons -->
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-darkbg/70 p-2.5 rounded-lg border border-darkborder">
+          <span class="text-slate-400 font-medium">Cấu hình nhanh:</span>
+          <div class="flex space-x-2">
+            <button type="button" onclick="presetMotorcycleBoost()" class="px-3 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/40 rounded font-medium transition">
+              🏍️ Tối ưu bắt nhạy xe máy (0.28)
+            </button>
+            <button type="button" onclick="presetStandard()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-darkborder transition">
+              ↺ Mặc định chuẩn
+            </button>
+          </div>
+        </div>
+
+        <!-- Global Thresholds -->
+        <div class="grid grid-cols-2 gap-4 p-3 bg-darkbg/50 rounded-lg border border-darkborder/50">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="font-medium text-slate-300">Ngưỡng chung (Default Conf)</label>
+              <span id="defaultConfVal" class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold font-mono">0.43</span>
+            </div>
+            <input type="range" id="defaultConfSlider" min="0.10" max="0.80" step="0.01" value="0.43"
+                   oninput="document.getElementById('defaultConfVal').innerText = parseFloat(this.value).toFixed(2)"
+                   class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+            <p class="text-[10px] text-slate-500 mt-1">Áp dụng cho các lớp không có ngưỡng riêng.</p>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="font-medium text-slate-300">Ngưỡng NMS (IoU Threshold)</label>
+              <span id="iouThreshVal" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold font-mono">0.45</span>
+            </div>
+            <input type="range" id="iouThreshSlider" min="0.10" max="0.80" step="0.01" value="0.45"
+                   oninput="document.getElementById('iouThreshVal').innerText = parseFloat(this.value).toFixed(2)"
+                   class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
+            <p class="text-[10px] text-slate-500 mt-1">Lọc các bounding box trùng lặp nhau.</p>
+          </div>
+        </div>
+
+        <!-- Per-Class Thresholds -->
+        <div>
+          <h4 class="font-semibold text-slate-300 mb-2">Ngưỡng tin cậy theo từng loại xe (Per-Class Confidence):</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="classSlidersContainer">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Deduplication & Session Lifecycle Settings -->
+        <div class="p-3 bg-darkbg/70 rounded-lg border border-darkborder space-y-3">
+          <div class="flex items-center justify-between pb-1.5 border-b border-darkborder/60">
+            <h4 class="font-semibold text-slate-200 flex items-center space-x-1.5 text-xs">
+              <span>🛡️ Khử Trùng Lặp Cảnh Báo & Quản Lý Phiên (Deduplication)</span>
+            </h4>
+            <label class="flex items-center space-x-1.5 cursor-pointer text-xs">
+              <input type="checkbox" id="dedupEnabledCheck" checked class="rounded accent-emerald-500">
+              <span class="text-emerald-400 font-semibold text-[11px]">Bật khử trùng</span>
+            </label>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Plate Cooldown (giây)</label>
+                <span id="plateCooldownVal" class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono font-bold">600s</span>
+              </div>
+              <input type="range" id="plateCooldownSlider" min="60" max="1800" step="30" value="600"
+                     oninput="document.getElementById('plateCooldownVal').innerText = this.value + 's'"
+                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">Không tạo cảnh báo trùng cho xe cùng biển số.</p>
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Khóa Không Gian (Spatial IoU)</label>
+                <span id="spatialIouVal" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-mono font-bold">0.65</span>
+              </div>
+              <input type="range" id="spatialIouSlider" min="0.40" max="0.90" step="0.05" value="0.65"
+                     oninput="document.getElementById('spatialIouVal').innerText = parseFloat(this.value).toFixed(2)"
+                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">Khóa xe đứng yên khi biển số bị che hoặc chưa nhận diện.</p>
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Thời gian xe rời ROI (Exit Grace)</label>
+                <span id="exitGraceVal" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono font-bold">45s</span>
+              </div>
+              <input type="range" id="exitGraceSlider" min="15" max="180" step="5" value="45"
+                     oninput="document.getElementById('exitGraceVal').innerText = this.value + 's'"
+                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">Xe phải rời liên tục quá thời gian này mới kết thúc phiên.</p>
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Cooldown khi Báo Sai (False Positive)</label>
+                <span id="fpCooldownVal" class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-mono font-bold">1800s</span>
+              </div>
+              <input type="range" id="fpCooldownSlider" min="300" max="3600" step="60" value="1800"
+                     oninput="document.getElementById('fpCooldownVal').innerText = this.value + 's'"
+                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">Khóa xe đã báo sai 30 phút để không báo lại.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. PHỐI CẢNH & HIỂN THỊ ROI (CCTV PERSPECTIVE & RENDERING) -->
+        <div class="bg-darkbg/60 p-3 rounded-xl border border-darkborder space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-amber-400 font-semibold text-xs">📐 Phối Cảnh & Tối Ưu Render ROI</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">CCTV 3D Perspective</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Tối ưu hiệu năng vẽ ROI (Bounded-box blend 98% nhanh hơn), khắc phục sai lệch góc nhìn nghiêng bằng điểm chạm bánh xe và viền kép tương phản cao.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Chế độ hiển thị ROI</label>
+              </div>
+              <select id="roiDisplayModeSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-amber-500 outline-none">
+                <option value="full">Đầy đủ (Fill Poly + Viền kép)</option>
+                <option value="border_only">Chỉ viền (Border Only - Giữ rõ mặt đường)</option>
+                <option value="striped">Sọc chéo cảnh báo (Striped Hatch)</option>
+                <option value="hidden">Ẩn toàn bộ (Hidden - Tối ưu FPS)</option>
+              </select>
+              <p class="text-[10px] text-slate-500 mt-0.5">Viền kép tương phản cao không che khuất vạch kẻ đường.</p>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Độ mờ ROI (Alpha Blending)</label>
+                <span id="roiAlphaVal" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono font-bold">0.22</span>
+              </div>
+              <input type="range" id="roiAlphaSlider" min="0.10" max="0.50" step="0.02" value="0.22"
+                     oninput="document.getElementById('roiAlphaVal').innerText = parseFloat(this.value).toFixed(2)"
+                     class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">Chỉ blend trong Bounding Rect của ROI (không copy cả khung hình).</p>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Điểm xét vi phạm (Ground-Contact)</label>
+              </div>
+              <select id="groundContactModeSelect" class="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:ring-1 focus:ring-amber-500 outline-none">
+                <option value="bottom_center">Đáy giữa BBox (Bottom-Center - Điểm chạm đất)</option>
+                <option value="bottom_strip_20">Dải 20% chân bánh xe (Bottom 20% Wheel Base)</option>
+              </select>
+              <p class="text-[10px] text-slate-500 mt-0.5">Khắc phục triệt để thị sai góc nghiêng camera CCTV.</p>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-400 font-medium">Hiệu chuẩn phối cảnh (Homography)</label>
+              </div>
+              <label class="flex items-center space-x-2 cursor-pointer mt-1">
+                <input type="checkbox" id="enableHomographyToggle" class="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0 w-4 h-4">
+                <span class="text-slate-300 text-xs">Bật hiệu chuẩn phối cảnh mặt đường</span>
+              </label>
+              <p class="text-[10px] text-slate-500 mt-1">Chiếu ROI theo 4 điểm mốc mặt đường thực tế.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-darkborder flex items-center justify-between">
+        <span id="thresholdToast" class="text-xs text-emerald-400 hidden font-medium">✓ Đã áp dụng ngay lập tức!</span>
+        <div class="flex space-x-2 ml-auto">
+          <button type="button" onclick="closeThresholdModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 text-xs">Đóng</button>
+          <button type="button" onclick="saveAIThresholds()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium text-xs shadow transition flex items-center space-x-1.5">
+            <span>💾 Lưu & Áp Dụng Ngay</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMAGE INSPECTION (Raw, Annotated, Crop, Plate) -->
+  <div id="imageModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-4xl p-5 shadow-2xl flex flex-col">
+      <div class="flex justify-between items-center mb-3 pb-2 border-b border-darkborder">
+        <div>
+          <h3 class="font-semibold text-base" id="imageModalTitle">Đối Soát Bằng Chứng Vi Phạm</h3>
+          <p class="text-xs text-slate-400" id="imageModalSubtitle"></p>
+        </div>
+        <button onclick="closeImageModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex space-x-2 mb-3 text-xs">
+        <button onclick="switchImageTab('annotated')" id="tabAnnotated" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium">Toàn Cảnh (Overlay)</button>
+        <button onclick="switchImageTab('raw')" id="tabRaw" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Ảnh Gốc Sạch (Raw)</button>
+        <button onclick="switchImageTab('crop')" id="tabCrop" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Best-Shot Xe</button>
+        <button onclick="switchImageTab('plate')" id="tabPlate" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Biển Số Cắt (OCR)</button>
+      </div>
+
+      <!-- Image Display Area -->
+      <div class="bg-darkbg rounded-xl p-2 border border-darkborder flex items-center justify-center min-h-[380px] max-h-[560px] overflow-hidden">
+        <img id="modalInspectImage" src="" alt="Evidence" class="max-h-[540px] max-w-full object-contain rounded">
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: VIOLATIONS HISTORY & ACTIVE LEARNING EXPORT TABLE -->
+  <div id="historyModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-darkpanel border border-darkborder rounded-2xl w-full max-w-6xl p-5 shadow-2xl flex flex-col max-h-[92vh]">
+      <div class="flex justify-between items-center pb-3 border-b border-darkborder">
+        <div>
+          <h3 class="font-bold text-base text-white flex items-center space-x-2">
+            <span>📋 Quản Lý Lịch Sử Vi Phạm & Dữ Liệu Huấn Luyện (Active Learning)</span>
+          </h3>
+          <p class="text-xs text-slate-400">Kiểm tra toàn bộ hồ sơ vi phạm, lọc theo ngày/loại xe, và tải về file ZIP chuẩn định dạng YOLO để huấn luyện lại mô hình.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <a href="/api/violations/export-feedback/download?review_status=confirmed" download class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg font-medium flex items-center space-x-1.5 transition shadow">
+            <span>📦 Xuất Feedback ZIP (YOLO)</span>
+          </a>
+          <button onclick="closeViolationsHistoryModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+        </div>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-darkbg/50 p-3 rounded-lg border border-darkborder/50 my-3 shrink-0">
+        <div>
+          <label class="block text-slate-400 mb-1">Loại Vi Phạm</label>
+          <select id="filterType" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+            <option value="">Tất cả</option>
+            <option value="no_parking">Dừng đỗ trái phép</option>
+            <option value="sidewalk_encroachment">Lấn chiếm vỉa hè</option>
+            <option value="wrong_lane">Đi sai làn / Lấn làn</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Loại Phương Tiện</label>
+          <select id="filterClass" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+            <option value="">Tất cả 8 nhóm</option>
+            <option value="car">Car (Ô tô con)</option>
+            <option value="motorcycle">Motorcycle (Xe máy)</option>
+            <option value="bicycle">Bicycle (Xe đạp)</option>
+            <option value="bus">Bus (Xe buýt)</option>
+            <option value="truck">Truck (Xe tải)</option>
+            <option value="tricycle">Tricycle (Xe ba gác)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Trạng Thái Duyệt</label>
+          <select id="filterStatus" onchange="fetchHistoryViolations()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+            <option value="">Tất cả</option>
+            <option value="pending">Chờ duyệt</option>
+            <option value="confirmed">Đã duyệt (Confirmed)</option>
+            <option value="false_positive">Báo sai</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Tìm Kiếm Biển Số</label>
+          <input type="text" id="searchPlate" placeholder="VD: 51K-732..." oninput="debouncedHistoryFilter()" class="w-full bg-darkpanel border border-darkborder rounded px-2 py-1 text-slate-200">
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="flex-1 min-h-0 overflow-y-auto border border-darkborder rounded-lg">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-darkpanel text-slate-400 uppercase text-[11px] border-b border-darkborder sticky top-0 z-10">
+            <tr>
+              <th class="py-2.5 px-3">ID / Thời Gian</th>
+              <th class="py-2.5 px-3">Camera</th>
+              <th class="py-2.5 px-3">Loại Vi Phạm</th>
+              <th class="py-2.5 px-3">Phương Tiện</th>
+              <th class="py-2.5 px-3">Thời Gian Dừng</th>
+              <th class="py-2.5 px-3">Biển Số (OCR)</th>
+              <th class="py-2.5 px-3">Hình Ảnh</th>
+              <th class="py-2.5 px-3">Trạng Thái</th>
+              <th class="py-2.5 px-3 text-right">Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-darkborder">
+            <tr>
+              <td colspan="9" class="py-6 text-center text-slate-500">Đang tải dữ liệu...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between text-xs text-slate-400 pt-3 shrink-0">
+        <div>Hiển thị <span id="pageInfo">0 - 0 / 0</span> bản ghi</div>
+        <div class="flex space-x-2">
+          <button id="prevPageBtn" onclick="changeHistoryPage(-1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40">Trang trước</button>
+          <button id="nextPageBtn" onclick="changeHistoryPage(1)" class="px-2.5 py-1 bg-darkpanel border border-darkborder rounded disabled:opacity-40">Trang sau</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // State & Layouts
+    let currentLayout = 1;
+    let currentLayoutMode = 'single'; // 'single', 'split_2', 'focus_2', 'focus_3', 'grid_4', 'auto'
+    let previousMultiLayout = 'grid_4';
+    let primaryFocusCamId = null;
+    let camerasData = [];
+    let currentActiveCamId = null;
+    let liveViolations = [];
+    let historyPage = 1;
+    let historyTotalPages = 1;
+
+    // WebSockets
+    let metricsWs = null;
+    let eventsWs = null;
+
+    // Canvas & On-Screen Drawing
+    let activeCameraForEditor = null;
+    let existingCameraRules = [];
+    let activeViolationForModal = null;
+    let isOnScreenDrawActive = false;
+    let onScreenDrawnPoints = [];
+    let isPolygonClosed = false;
+    let draggingVertexIdx = -1;
+    let hoveredVertexIdx = -1;
+    let hoveredRuleId = null;
+    let previousLayoutBeforeDraw = 'single';
+    let currentHoverPoint = null;
+    let onScreenCanvasInited = false;
+    let viewportResizeObserver = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initWebSockets();
+      loadCameras();
+      fetchLiveViolations();
+      loadInlineThresholds();
+    });
+
+    // 1. WEBSOCKETS (Metrics & Events)
+    function initWebSockets() {
+      const loc = window.location;
+      const wsProto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+      const baseWsUrl = `${wsProto}//${loc.host}`;
+
+      // Metrics WS
+      metricsWs = new WebSocket(`${baseWsUrl}/ws/metrics`);
+      metricsWs.onopen = () => {
+        document.getElementById('wsStatusText').innerText = '●';
+        document.getElementById('wsStatusText').className = 'text-emerald-400 font-bold';
+      };
+      metricsWs.onmessage = (event) => {
+        try {
+          const snapshot = JSON.parse(event.data);
+          updateDashboardMetrics(snapshot);
+        } catch (e) { console.error('Error parsing metrics WS:', e); }
+      };
+      metricsWs.onclose = () => {
+        document.getElementById('wsStatusText').innerText = '○';
+        document.getElementById('wsStatusText').className = 'text-amber-400 font-bold';
+        setTimeout(initWebSockets, 3000);
+      };
+
+      // Events WS (Realtime Violations & OCR & Deduplication Updates)
+      eventsWs = new WebSocket(`${baseWsUrl}/ws/events`);
+      eventsWs.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'new_violation') {
+            onNewViolationReceived(data.violation);
+          } else if (data.type === 'ocr_completed') {
+            onOcrCompletedReceived(data);
+          } else if (data.type === 'violation_updated') {
+            onViolationUpdatedReceived(data);
+          }
+        } catch (e) { console.error('Error parsing events WS:', e); }
+      };
+    }
+
+    // 2. DASHBOARD METRICS UPDATE
+    function updateDashboardMetrics(s) {
+      if (!s) return;
+      const hostCpu = s.host?.cpu_percent ?? 0;
+      document.getElementById('cpuHostVal').innerText = `${hostCpu.toFixed(1)}%`;
+
+      const ramPct = s.host?.ram_percent ?? 0;
+      document.getElementById('ramHostVal').innerText = `${ramPct.toFixed(0)}%`;
+
+      const gpu = s.gpu || {};
+      document.getElementById('gpuLoadVal').innerText = `${(gpu.util_percent ?? 0).toFixed(0)}%`;
+      document.getElementById('gpuTempText').innerText = `${gpu.temp_c ?? 0}°C`;
+
+      const provider = gpu.provider || 'CPUExecutionProvider';
+      const isDirectML = provider.includes('Dml') || (gpu.available && !provider.includes('CPU'));
+      const provEl = document.getElementById('providerText');
+      if (provEl) {
+        provEl.innerText = isDirectML ? 'ORT: DirectML (GPU)' : `ORT: CPU (Safe Mode)`;
+        provEl.parentElement.className = isDirectML 
+          ? 'px-2 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-400 font-medium text-[11px] flex items-center space-x-1.5'
+          : 'px-2 py-0.5 rounded bg-slate-700/50 border border-slate-600 text-slate-300 font-medium text-[11px] flex items-center space-x-1.5';
+      }
+
+      const pipeline = s.pipeline || {};
+      const totalFps = (pipeline.total_fps ?? 0).toFixed(1);
+      document.getElementById('totalFpsVal').innerText = totalFps;
+      document.getElementById('hudFpsText').innerText = `${totalFps} FPS`;
+      document.getElementById('ocrQueueVal').innerText = `${pipeline.ocr_queue_size ?? 0}/${pipeline.ocr_queue_maxsize ?? 100}`;
+    }
+
+    // 3. CAMERAS & STREAMING VIEW
+    async function loadCameras() {
+      try {
+        const res = await fetch('/api/cameras');
+        camerasData = await res.json();
+        renderCameraTabs();
+        if (camerasData.length > 0 && !currentActiveCamId) {
+          selectCamera(camerasData[0].id);
+        } else {
+          renderViewport();
+        }
+      } catch (e) {
+        console.error('Error loading cameras:', e);
+      }
+    }
+
+    function renderCameraTabs() {
+      const container = document.getElementById('camTabsContainer');
+      if (!container) return;
+
+      container.innerHTML = camerasData.map(c => {
+        const isActive = c.id === currentActiveCamId;
+        const displayName = c.name ? c.name : `Cam #${c.id}`;
+        const safeName = displayName.replace(/'/g, "\\'");
+
+        if (isActive) {
+          return `
+            <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-t-lg bg-slate-800 border-t-2 border-emerald-400 border-x border-slate-700/80 text-white font-medium text-xs shadow-md shrink-0 cursor-pointer select-none transition" title="Camera đang chọn. Bấm vào tên để đổi tên">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+              <span onclick="onCameraNameClick(${c.id})" class="truncate max-w-[120px] font-semibold hover:text-emerald-300 transition" title="Bấm để đổi tên camera">${displayName}</span>
+              
+              <!-- Gear Icon (⚙️) to Rename/Configure Camera -->
+              <button onclick="event.stopPropagation(); openEditCameraModal(${c.id})" class="p-0.5 hover:bg-slate-700 text-slate-400 hover:text-amber-300 rounded transition text-xs ml-0.5" title="Đổi tên / Chỉnh sửa ${displayName}">
+                ⚙️
+              </button>
+              
+              <!-- Close Icon (✕) to Delete Camera -->
+              <button onclick="event.stopPropagation(); deleteCameraById(${c.id}, '${safeName}')" class="w-4 h-4 flex items-center justify-center hover:bg-rose-900/60 text-slate-400 hover:text-rose-400 rounded-full transition text-[11px] font-bold" title="Xóa ${displayName}">
+                ✕
+              </button>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-t-lg bg-darkbg/70 hover:bg-slate-800/60 border-t-2 border-transparent hover:border-slate-700 border-x border-darkborder text-slate-400 hover:text-slate-200 text-xs shrink-0 cursor-pointer transition select-none group" onclick="selectCamera(${c.id})">
+              <span class="truncate max-w-[110px]" title="${displayName}">${displayName}</span>
+              
+              <!-- Gear Icon (⚙️) -->
+              <button onclick="event.stopPropagation(); openEditCameraModal(${c.id})" class="p-0.5 hover:bg-slate-700 text-slate-500 hover:text-amber-300 rounded transition text-xs opacity-60 group-hover:opacity-100" title="Đổi tên / Chỉnh sửa ${displayName}">
+                ⚙️
+              </button>
+              
+              <!-- Close Icon (✕) -->
+              <button onclick="event.stopPropagation(); deleteCameraById(${c.id}, '${safeName}')" class="w-4 h-4 flex items-center justify-center hover:bg-rose-900/60 text-slate-500 hover:text-rose-400 rounded-full transition text-[11px] font-bold opacity-60 group-hover:opacity-100" title="Xóa ${displayName}">
+                ✕
+              </button>
+            </div>
+          `;
+        }
+      }).join('');
+    }
+
+    function onCameraNameClick(camId) {
+      if (currentActiveCamId === camId) {
+        // If clicking on active tab name, open rename/edit modal!
+        openEditCameraModal(camId);
+      } else {
+        selectCamera(camId);
+      }
+    }
+
+    function selectCamera(camId) {
+      currentActiveCamId = camId;
+      if (!primaryFocusCamId) primaryFocusCamId = camId;
+      const cam = camerasData.find(c => c.id === camId);
+      if (cam) {
+        const camLabel = cam.name || `Cam #${cam.id}`;
+        const hud = document.getElementById('hudCamInfo');
+        if (hud) hud.innerText = `${camLabel} • ${cam.source_type.toUpperCase()}`;
+        const mainStream = document.getElementById('mainLiveStream');
+        if (mainStream) {
+          mainStream.onload = () => {
+            if (isOnScreenDrawActive) {
+              syncCanvasDimensions();
+              redrawOnScreenCanvas();
+            }
+          };
+          mainStream.src = `/api/stream/${cam.id}`;
+        }
+      }
+      renderCameraTabs();
+      if (currentLayoutMode !== 'single') {
+        renderViewport();
+      }
+      if (isOnScreenDrawActive) {
+        bindOnScreenDrawToCamera(camId);
+      }
+    }
+
+    function openEditCameraModal(camId) {
+      const cam = camerasData.find(c => c.id === camId);
+      if (!cam) return;
+      document.getElementById('editCamId').value = cam.id;
+      document.getElementById('camNameInput').value = cam.name || '';
+      document.getElementById('camUrlInput').value = cam.source_url || '';
+      document.getElementById('camTypeInput').value = cam.source_type || 'rtsp';
+      document.getElementById('camFpsInput').value = cam.fps_limit || 15;
+      document.getElementById('cameraModalTitle').innerText = `Chỉnh Sửa Camera #${cam.id}`;
+      onCameraTypeChange();
+      document.getElementById('cameraModal').classList.remove('hidden');
+      setTimeout(() => {
+        const input = document.getElementById('camNameInput');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 100);
+    }
+
+    async function deleteCameraById(camId, camName) {
+      if (!confirm(`Bạn có chắc chắn muốn xóa Camera "${camName}" (ID: ${camId}) khỏi hệ thống?\nLuồng camera này sẽ dừng hoạt động ngay lập tức.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/cameras/${camId}`, { method: 'DELETE' });
+        if (res.ok) {
+          if (currentActiveCamId === camId) currentActiveCamId = null;
+          await loadCameras();
+          if (camerasData.length > 0 && !currentActiveCamId) {
+            selectCamera(camerasData[0].id);
+          } else if (camerasData.length === 0) {
+            const mainStream = document.getElementById('mainLiveStream');
+            if (mainStream) mainStream.src = '';
+            const hud = document.getElementById('hudCamInfo');
+            if (hud) hud.innerText = 'Không có camera';
+          }
+        } else {
+          alert('Không thể xóa camera.');
+        }
+      } catch (err) {
+        console.error('Lỗi khi xóa camera:', err);
+        alert('Lỗi kết nối khi xóa camera.');
+      }
+    }
+
+    // 3.1 WINDOWS 11 SNAP LAYOUTS & VIEWPORT ENGINE
+    const SNAP_LAYOUT_LABELS = {
+      'single': '1x1',
+      'split_2': 'Chia đôi (50/50)',
+      'focus_2': '1 Lớn + 1 Nhỏ',
+      'focus_3': '1 Lớn + 2 Nhỏ',
+      'grid_4': 'Lưới 4 (2x2)',
+      'auto': 'Tự Động'
+    };
+
+    function toggleSnapLayoutMenu(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('snapLayoutMenu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('snapLayoutMenu');
+      const btn = document.getElementById('snapLayoutBtn');
+      if (menu && !menu.classList.contains('hidden')) {
+        if (!menu.contains(e.target) && !btn.contains(e.target)) {
+          menu.classList.add('hidden');
+        }
+      }
+    });
+
+    function selectLayout(mode, targetCamId = null) {
+      if (mode === 1) mode = 'single';
+      if (mode === 2) mode = 'grid_4';
+
+      if (mode !== 'single') {
+        previousMultiLayout = mode;
+      }
+      currentLayoutMode = mode;
+      currentLayout = (mode === 'single' ? 1 : 2);
+
+      if (targetCamId) {
+        currentActiveCamId = targetCamId;
+        primaryFocusCamId = targetCamId;
+      } else if (!primaryFocusCamId && currentActiveCamId) {
+        primaryFocusCamId = currentActiveCamId;
+      } else if (!primaryFocusCamId && camerasData.length > 0) {
+        primaryFocusCamId = camerasData[0].id;
+      }
+
+      // Update button label
+      const labelEl = document.getElementById('snapLayoutCurrentText');
+      if (labelEl) {
+        labelEl.innerText = SNAP_LAYOUT_LABELS[mode] || mode;
+      }
+
+      // Close popover
+      const menu = document.getElementById('snapLayoutMenu');
+      if (menu) menu.classList.add('hidden');
+
+      renderViewport();
+      renderCameraTabs();
+    }
+
+    function setGridLayout(mode) {
+      selectLayout(mode);
+    }
+
+    function zoomCameraToSingle(camId) {
+      if (currentLayoutMode !== 'single') {
+        previousMultiLayout = currentLayoutMode;
+      }
+      currentActiveCamId = camId;
+      primaryFocusCamId = camId;
+      selectLayout('single', camId);
+    }
+
+    function restorePreviousMultiLayout() {
+      const restoreTarget = (previousMultiLayout && previousMultiLayout !== 'single') ? previousMultiLayout : 'grid_4';
+      selectLayout(restoreTarget);
+    }
+
+    function onCameraTileClick(camId) {
+      if (isOnScreenDrawActive) {
+        bindOnScreenDrawToCamera(camId);
+        return;
+      }
+
+      selectCamera(camId);
+
+      // In focus modes, clicking any side camera promotes it to primary focus
+      if (currentLayoutMode === 'focus_2' || currentLayoutMode === 'focus_3') {
+        primaryFocusCamId = camId;
+        renderViewport();
+      }
+    }
+
+    function createCameraTileHtml(cam, isFocus = false, labelPrefix = '') {
+      if (!cam) return '';
+      const isSelected = cam.id === currentActiveCamId;
+      const isBeingDrawn = cam.id === activeCameraForEditor && isOnScreenDrawActive;
+      const isPrimaryFocus = cam.id === primaryFocusCamId && (currentLayoutMode === 'focus_2' || currentLayoutMode === 'focus_3');
+
+      let borderClass = 'border-slate-800/90 hover:border-slate-600';
+      if (isBeingDrawn) {
+        borderClass = 'border-amber-400 ring-2 ring-amber-400/80 shadow-lg';
+      } else if (isPrimaryFocus) {
+        borderClass = 'border-blue-500 ring-2 ring-blue-500/70 shadow-lg';
+      } else if (isSelected) {
+        borderClass = 'border-emerald-500/80 ring-1 ring-emerald-500/50';
+      }
+
+      return `
+        <div class="relative bg-darkbg rounded-lg overflow-hidden cursor-pointer border ${borderClass} group select-none flex items-center justify-center h-full w-full min-h-0"
+             onclick="onCameraTileClick(${cam.id})"
+             ondblclick="zoomCameraToSingle(${cam.id})"
+             title="Click để chọn • Click đúp để phóng to toàn màn hình">
+          <img src="/api/stream/${cam.id}" alt="${cam.name}" class="w-full h-full object-contain pointer-events-none"
+               onerror="this.onerror=null; this.src='/api/cameras/${cam.id}/snapshot'">
+
+          <!-- Top-Left Camera Label & Status -->
+          <div class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[10px] text-white font-medium border border-slate-700 flex items-center space-x-1.5 pointer-events-none z-10">
+            <span class="w-1.5 h-1.5 rounded-full ${cam.is_active ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
+            <span class="truncate max-w-[130px]">${labelPrefix ? labelPrefix + ': ' : ''}${cam.name || 'Cam #' + cam.id}</span>
+            ${isBeingDrawn ? '<span class="text-amber-300 font-bold ml-1">[ĐANG VẼ]</span>' : ''}
+            ${isPrimaryFocus ? '<span class="text-blue-300 font-semibold ml-1">[TIÊU ĐIỂM]</span>' : ''}
+          </div>
+
+          <!-- Top-Right Maximize Button (Click to zoom) -->
+          <button onclick="event.stopPropagation(); zoomCameraToSingle(${cam.id})" class="absolute top-1.5 right-1.5 p-1 px-2 rounded-md bg-black/80 hover:bg-emerald-600 text-slate-300 hover:text-white border border-slate-700/80 transition opacity-0 group-hover:opacity-100 text-[10px] font-bold flex items-center space-x-1 shadow-lg z-10" title="Phóng to camera này lên toàn màn hình">
+            <span>⛶ Phóng to</span>
+          </button>
+
+          <!-- Bottom-Right Hint on Hover -->
+          <div class="absolute bottom-1 right-2 text-[9px] text-slate-400 bg-black/80 px-1.5 py-0.5 rounded border border-slate-800 pointer-events-none opacity-0 group-hover:opacity-100 transition z-10">
+            Click đúp để phóng to
+          </div>
+        </div>
+      `;
+    }
+
+    function renderViewport() {
+      const container = document.getElementById('cameraStreamsInner');
+      if (!container) return;
+
+      const activeCams = camerasData.filter(c => c.is_active !== 0);
+      if (activeCams.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2">
+            <span class="text-3xl">📹</span>
+            <span class="text-slate-300 font-semibold">Chưa có camera nào hoạt động</span>
+            <span class="text-slate-500 text-[11px]">Bấm vào dấu "+" bên dưới thanh camera để thêm nguồn stream RTSP hoặc video file.</span>
+          </div>
+        `;
+        return;
+      }
+
+      // Ensure focus cam is valid
+      if (!primaryFocusCamId || !activeCams.some(c => c.id === primaryFocusCamId)) {
+        primaryFocusCamId = currentActiveCamId || activeCams[0].id;
+      }
+
+      const focusCam = activeCams.find(c => c.id === primaryFocusCamId) || activeCams[0];
+      const otherCams = activeCams.filter(c => c.id !== focusCam.id);
+
+      // 1. SINGLE FULL VIEW (1x1)
+      if (currentLayoutMode === 'single') {
+        const cam = activeCams.find(c => c.id === currentActiveCamId) || focusCam;
+        const camLabel = cam.name || `Cam #${cam.id}`;
+        const hudText = `${camLabel} • ${cam.source_type.toUpperCase()}`;
+        const hasRestoreBtn = previousMultiLayout && previousMultiLayout !== 'single';
+
+        container.innerHTML = `
+          <div class="w-full h-full relative flex items-center justify-center overflow-hidden bg-black">
+            <img id="mainLiveStream" src="/api/stream/${cam.id}" alt="${camLabel}" class="w-full h-full object-contain pointer-events-none"
+                 onload="if(isOnScreenDrawActive){syncCanvasDimensions();redrawOnScreenCanvas();}"
+                 onerror="this.onerror=null; this.src='/api/cameras/${cam.id}/snapshot'">
+
+            <!-- Bottom Left HUD -->
+            <div class="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/80 backdrop-blur-sm border border-slate-700 text-[11px] text-slate-200 flex items-center space-x-2 pointer-events-none z-10">
+              <span id="hudCamInfo">${hudText}</span>
+              <span class="text-slate-500">|</span>
+              <span id="hudFpsText" class="text-emerald-400 font-bold">15.0 FPS</span>
+            </div>
+
+            <!-- Top Right Restore Multi-Grid Button -->
+            ${hasRestoreBtn ? `
+              <button onclick="restorePreviousMultiLayout()" class="absolute top-2 right-2 z-20 px-3 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-white border border-emerald-500/60 hover:border-emerald-400 text-xs font-semibold flex items-center space-x-1.5 transition shadow-2xl backdrop-blur-md cursor-pointer animate-in fade-in" title="Trở về lưới hiển thị đa camera">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <span>Trở về lưới đa cam</span>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }
+      // 2. SPLIT 2 (50/50 Columns)
+      else if (currentLayoutMode === 'split_2') {
+        const cam1 = focusCam;
+        const cam2 = otherCams[0] || focusCam;
+        container.innerHTML = `
+          <div class="w-full h-full grid grid-cols-2 gap-1.5 p-1 bg-black">
+            ${createCameraTileHtml(cam1, true, 'Cam 1')}
+            ${createCameraTileHtml(cam2, false, 'Cam 2')}
+          </div>
+        `;
+      }
+      // 3. FOCUS 2 (1 Large 68% + 1 Secondary 32%)
+      else if (currentLayoutMode === 'focus_2') {
+        const cam1 = focusCam;
+        const cam2 = otherCams[0] || activeCams[1] || focusCam;
+        container.innerHTML = `
+          <div class="w-full h-full flex flex-row gap-1.5 p-1 bg-black overflow-hidden">
+            <div class="flex-1 h-full min-w-0">
+              ${createCameraTileHtml(cam1, true, 'Tiêu điểm')}
+            </div>
+            <div class="w-[32%] h-full min-w-[200px]">
+              ${createCameraTileHtml(cam2, false, 'Cam phụ')}
+            </div>
+          </div>
+        `;
+      }
+      // 4. FOCUS 3 (1 Large 68% + 2 Stacked 32%)
+      else if (currentLayoutMode === 'focus_3') {
+        const cam1 = focusCam;
+        const cam2 = otherCams[0] || activeCams[1] || focusCam;
+        const cam3 = otherCams[1] || activeCams[2] || cam2;
+        container.innerHTML = `
+          <div class="w-full h-full flex flex-row gap-1.5 p-1 bg-black overflow-hidden">
+            <div class="flex-1 h-full min-w-0">
+              ${createCameraTileHtml(cam1, true, 'Tiêu điểm')}
+            </div>
+            <div class="w-[32%] h-full flex flex-col gap-1.5 min-w-[200px]">
+              <div class="flex-1 min-h-0">
+                ${createCameraTileHtml(cam2, false, 'Phụ 1')}
+              </div>
+              <div class="flex-1 min-h-0">
+                ${createCameraTileHtml(cam3, false, 'Phụ 2')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      // 5. GRID 4 (2x2 Grid)
+      else if (currentLayoutMode === 'grid_4') {
+        const top4 = activeCams.slice(0, 4);
+        container.innerHTML = `
+          <div class="w-full h-full grid grid-cols-2 grid-rows-2 gap-1.5 p-1 bg-black">
+            ${top4.map((c, i) => createCameraTileHtml(c, false, `Cam ${i + 1}`)).join('')}
+          </div>
+        `;
+      }
+      // 6. AUTO-FIT GRID (Adapts seamlessly to any number of cameras)
+      else if (currentLayoutMode === 'auto') {
+        const n = activeCams.length;
+        let gridClass = 'grid-cols-2 grid-rows-2';
+        if (n <= 1) {
+          selectLayout('single');
+          return;
+        } else if (n === 2) {
+          gridClass = 'grid-cols-2 grid-rows-1';
+        } else if (n === 3) {
+          const cam1 = focusCam;
+          const cam2 = otherCams[0] || activeCams[1] || focusCam;
+          const cam3 = otherCams[1] || activeCams[2] || cam2;
+          container.innerHTML = `
+            <div class="w-full h-full flex flex-row gap-1.5 p-1 bg-black overflow-hidden">
+              <div class="flex-1 h-full min-w-0">
+                ${createCameraTileHtml(cam1, true, 'Tiêu điểm')}
+              </div>
+              <div class="w-[32%] h-full flex flex-col gap-1.5 min-w-[200px]">
+                <div class="flex-1 min-h-0">
+                  ${createCameraTileHtml(cam2, false, 'Phụ 1')}
+                </div>
+                <div class="flex-1 min-h-0">
+                  ${createCameraTileHtml(cam3, false, 'Phụ 2')}
+                </div>
+              </div>
+            </div>
+          `;
+          if (isOnScreenDrawActive) redrawOnScreenCanvas();
+          return;
+        } else if (n === 4) {
+          gridClass = 'grid-cols-2 grid-rows-2';
+        } else if (n <= 6) {
+          gridClass = 'grid-cols-3 grid-rows-2';
+        } else {
+          gridClass = 'grid-cols-3 grid-rows-3';
+        }
+
+        container.innerHTML = `
+          <div class="w-full h-full grid ${gridClass} gap-1.5 p-1 bg-black">
+            ${activeCams.map((c, i) => createCameraTileHtml(c, false, `Cam ${i + 1}`)).join('')}
+          </div>
+        `;
+      }
+
+      if (isOnScreenDrawActive) {
+        redrawOnScreenCanvas();
+      }
+    }
+
+    function onGridCameraClicked(camId) {
+      onCameraTileClick(camId);
+    }
+
+    function openCurrentCamRuleEditor() {
+      openOnScreenDraw();
+    }
+
+    // 4. REALTIME VIOLATION CARDS (MATCHING REFERENCE IMAGE)
+    async function fetchLiveViolations() {
+      try {
+        const res = await fetch('/api/violations?page=1&page_size=25');
+        const data = await res.json();
+        liveViolations = data.items || [];
+        document.getElementById('liveViolationCount').innerText = data.total || liveViolations.length;
+        renderLiveViolations();
+      } catch (e) {
+        console.error('Error fetching violations:', e);
+      }
+    }
+
+    async function refreshEventLog() {
+      const icon = document.getElementById('refreshLogIcon');
+      if (icon) icon.classList.add('rotate-180');
+      try {
+        await fetchLiveViolations();
+      } finally {
+        setTimeout(() => {
+          if (icon) icon.classList.remove('rotate-180');
+        }, 350);
+      }
+    }
+
+    async function clearEventLogUI() {
+      if (confirm('Làm mới bảng log vi phạm trên màn hình? (Dữ liệu lịch sử trong cơ sở dữ liệu vẫn được bảo lưu)')) {
+        liveViolations = [];
+        document.getElementById('liveViolationCount').innerText = '0';
+        renderLiveViolations();
+        try {
+          await fetch('/api/violations/reset-feed', { method: 'POST' });
+        } catch (e) {
+          console.error('Error resetting feed cache:', e);
+        }
+      }
+    }
+
+    function onNewViolationReceived(violation) {
+      // Prepend to live violations list
+      liveViolations.unshift(violation);
+      if (liveViolations.length > 30) liveViolations.pop();
+
+      const countBadge = document.getElementById('liveViolationCount');
+      const count = parseInt(countBadge.innerText, 10) || 0;
+      countBadge.innerText = count + 1;
+
+      renderLiveViolations();
+
+      // Append to System Log
+      appendSystemLog(`🚨 [Mới] ${violation.violation_type.toUpperCase()}: ${violation.vehicle_class_name} (Cam #${violation.camera_id})`, 'text-rose-400');
+    }
+
+    function onViolationUpdatedReceived(data) {
+      // Smart Deduplication: Update duration & repeat counter in-place
+      let v = liveViolations.find(item => item.id === data.violation_id);
+      if (v) {
+        v.dwell_duration_sec = data.dwell_duration_sec;
+        v.repeat_count = data.repeat_count;
+        v.session_status = data.session_status || 'ACTIVE';
+        renderLiveViolations();
+      } else {
+        fetchLiveViolations();
+      }
+      appendSystemLog(`🔄 [DEDUP] Cập nhật vi phạm #${data.violation_id}: Đang đỗ ${parseFloat(data.dwell_duration_sec).toFixed(1)}s (Lặp lại: x${data.repeat_count})`, 'text-blue-400');
+    }
+
+    function onOcrCompletedReceived(data) {
+      const v = liveViolations.find(item => item.id === data.violation_id);
+      if (v) {
+        v.plate_number = data.plate_number;
+        v.ocr_status = data.ocr_status;
+        v.ocr_conf = data.ocr_conf;
+        v.plate_image_path = data.plate_image_path;
+        renderLiveViolations();
+      }
+      appendSystemLog(`🔍 OCR #${data.violation_id}: Biển số [${data.plate_number || 'N/A'}] (Conf: ${(data.ocr_conf * 100).toFixed(0)}%)`, 'text-amber-300');
+    }
+
+    function appendSystemLog(msg, colorClass = 'text-slate-300') {
+      console.log(`[SYSTEM LOG] ${msg}`);
+    }
+
+    function renderLiveViolations() {
+      const container = document.getElementById('liveViolationsFeed');
+      if (!container) return;
+
+      if (liveViolations.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center space-y-2.5 h-64">
+            <span class="text-3xl block animate-pulse">🛡️</span>
+            <span class="text-slate-300 font-semibold text-sm">Hệ thống đang giám sát trực tiếp</span>
+            <span class="text-slate-400 text-xs max-w-xs">Chưa có vi phạm mới. Khi camera phát hiện phương tiện vi phạm, sự kiện và hình ảnh đối soát sẽ bắn sang đây theo thời gian thực.</span>
+          </div>
+        `;
+        return;
+      }
+
+      // UI DEDUPLICATION (Layer 4): Group records with same session_id or plate+violation_type
+      const dedupedMap = new Map();
+      for (const item of liveViolations) {
+        const key = item.session_id || (item.plate_number ? `${item.camera_id}_${item.violation_type}_${item.plate_number}` : `id_${item.id}`);
+        if (!dedupedMap.has(key)) {
+          dedupedMap.set(key, { ...item });
+        } else {
+          const existing = dedupedMap.get(key);
+          existing.dwell_duration_sec = Math.max(existing.dwell_duration_sec || 0, item.dwell_duration_sec || 0);
+          existing.repeat_count = Math.max(existing.repeat_count || 1, (existing.repeat_count || 1) + (item.repeat_count || 1) - 1);
+          if (!existing.plate_number && item.plate_number) {
+            existing.plate_number = item.plate_number;
+            existing.plate_image_path = item.plate_image_path;
+            existing.ocr_status = item.ocr_status;
+          }
+        }
+      }
+      const displayViolations = Array.from(dedupedMap.values());
+
+      const VN_CLASS_NAMES = {
+        car: 'Ô tô con',
+        motorcycle: 'Xe máy',
+        bus: 'Xe buýt',
+        truck: 'Xe tải',
+        bicycle: 'Xe đạp',
+        tricycle: 'Xe ba gác',
+        ambulance: 'Xe cứu thương [Miễn trừ]',
+        fire_truck: 'Xe cứu hỏa [Miễn trừ]'
+      };
+
+      container.innerHTML = displayViolations.map((v, idx) => {
+        const timeStr = new Date(v.created_at).toLocaleTimeString('vi-VN');
+        const dateStr = new Date(v.created_at).toLocaleDateString('vi-VN');
+        const numStr = String(v.id).padStart(2, '0');
+        const durationSec = parseFloat(v.dwell_duration_sec || 0).toFixed(1);
+        const repeatCount = v.repeat_count || 1;
+
+        // Violation badge label & style matching real camera events
+        let typeBadge = '';
+        let violationBehavior = '';
+        let laneLocation = 'Khu vực cấm dừng đỗ';
+
+        if (v.violation_type === 'no_parking') {
+          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>⚠️</span><span>DỪNG ĐỖ TRÁI PHÉP</span></span>';
+          violationBehavior = `Dừng đỗ xe trái quy định trong khu vực cấm (${durationSec}s)`;
+          laneLocation = 'Khu vực cấm dừng đỗ';
+        } else if (v.violation_type === 'sidewalk_encroachment') {
+          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-amber-600 text-white font-bold text-xs uppercase shadow"><span>⚠️</span><span>LẤN CHIẾM VỈA HÈ</span></span>';
+          violationBehavior = `Phương tiện lấn chiếm vỉa hè người đi bộ (${durationSec}s)`;
+          laneLocation = 'Vỉa hè người đi bộ';
+        } else {
+          typeBadge = '<span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-rose-600 text-white font-bold text-xs uppercase shadow"><span>⚠️</span><span>SAI LÀN</span></span>';
+          violationBehavior = 'Đi sai làn đường quy định hoặc đè vạch cấm';
+          laneLocation = 'Làn đường quy định';
+        }
+
+        const isConfirmed = v.review_status === 'confirmed';
+        const isFalsePositive = v.review_status === 'false_positive';
+
+        const plateText = v.plate_number ? v.plate_number : 'ĐANG NHẬN DIỆN...';
+        const plateColor = v.plate_number ? 'text-white' : 'text-slate-400 italic';
+        const vehicleClassDisplay = VN_CLASS_NAMES[v.vehicle_class_name] || v.vehicle_class_name.toUpperCase();
+        const confPct = ((v.detect_conf || 0.85) * 100).toFixed(1);
+
+        const cardId = `vCard_${v.id}`;
+
+        return `
+          <div id="${cardId}" class="rounded-xl border ${repeatCount > 1 ? 'border-amber-500/70' : 'border-rose-600/70'} bg-[#13111c] p-3 shadow-xl space-y-2 text-xs transition hover:border-rose-500">
+            <!-- Header Row: Event title & Time + Repeat Badge -->
+            <div class="flex items-center justify-between text-[11px]">
+              <div class="flex items-center space-x-1.5 flex-wrap gap-1">
+                <span class="font-bold text-white tracking-wide uppercase">SỰ KIỆN #${v.id}</span>
+                ${repeatCount > 1 ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold text-[10px] animate-pulse">Lặp lại: x${repeatCount}</span>` : ''}
+                ${v.session_status === 'ACTIVE' ? `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-medium">Đang đỗ</span>` : ''}
+              </div>
+              <span class="text-slate-400 font-mono text-[10px]">${timeStr} | ${dateStr}</span>
+            </div>
+
+            <!-- Violation Badge & Type -->
+            <div class="flex items-center space-x-2">
+              ${typeBadge}
+            </div>
+
+            <!-- Behavior Description -->
+            <div class="text-[11px] text-slate-300">
+              <span class="text-slate-400">Hành vi:</span> <span class="font-medium text-slate-100">${violationBehavior}</span>
+            </div>
+
+            <!-- Live Dwell Duration Counter (Layer 4 UI Deduplication) -->
+            ${v.dwell_duration_sec > 0 ? `
+              <div class="flex items-center justify-between p-1.5 rounded bg-darkbg/80 border border-darkborder text-[11px]">
+                <span class="text-slate-400">⏱️ Thời gian đỗ tích lũy:</span>
+                <span class="font-mono font-bold text-emerald-400">${durationSec}s ${repeatCount > 1 ? `<span class="text-slate-500 text-[10px] font-normal">(x${repeatCount})</span>` : ''}</span>
+              </div>
+            ` : ''}
+
+            <!-- Vehicle Class -->
+            <div class="text-[11px] text-slate-300">
+              <span class="text-slate-400">Loại xe:</span> <span class="font-semibold text-white">${vehicleClassDisplay}</span>
+            </div>
+
+            <!-- License Plate Row -->
+            <div class="flex items-center justify-between pt-0.5">
+              <div class="flex items-center space-x-2">
+                <span class="text-slate-400 text-[11px] font-semibold">BIỂN SỐ:</span>
+                <span class="px-3 py-1 rounded bg-[#0b1329] border border-blue-500/40 font-mono font-extrabold tracking-widest text-sm ${plateColor} shadow-inner">
+                  ${plateText}
+                </span>
+              </div>
+              <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow ${
+                isConfirmed ? 'bg-emerald-600 text-white' : (isFalsePositive ? 'bg-rose-700 text-white' : 'bg-[#dc2626] text-white')
+              }">
+                ${isConfirmed ? 'ĐÃ DUYỆT' : (isFalsePositive ? 'BÁO SAI' : 'ĐÃ GHI NHẬN')}
+              </span>
+            </div>
+
+            <!-- Best-Shot Vehicle Crop Image (Clickable for zoom) -->
+            <div class="relative rounded-lg overflow-hidden border border-slate-700/80 aspect-[16/9] bg-black/60 group cursor-pointer" onclick="openImageModal(${v.id}, 'crop')">
+              <img src="/api/violations/${v.id}/image/crop" alt="Vehicle Crop" class="w-full h-full object-contain group-hover:scale-105 transition duration-200"
+                   onerror="this.src='/api/violations/${v.id}/image/annotated'">
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-[11px] text-white font-medium">
+                🔍 Bấm để phóng to & đối soát
+              </div>
+            </div>
+
+            <!-- Footer Meta & Actions -->
+            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+              <div>Độ tin cậy: <span class="text-emerald-400 font-bold">${confPct}%</span> | Vị trí: <span class="text-slate-200">${laneLocation}</span></div>
+              <div class="flex space-x-1">
+                <button onclick="handleQuickReview(${v.id}, 'confirmed')" class="px-2 py-0.5 rounded bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white font-medium transition text-[10px]" title="Xác nhận vi phạm đúng">
+                  Duyệt
+                </button>
+                <button onclick="handleQuickReview(${v.id}, 'false_positive')" class="px-2 py-0.5 rounded bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-medium transition text-[10px]" title="Báo nhận diện sai (Khóa 30 phút)">
+                  Báo sai
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function handleQuickReview(violationId, status) {
+      try {
+        await fetch(`/api/violations/${violationId}/review`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ review_status: status })
+        });
+        const v = liveViolations.find(item => item.id === violationId);
+        if (v) v.review_status = status;
+        renderLiveViolations();
+      } catch (e) { console.error(e); }
+    }
+
+    // 5. MODAL: CAMERA ADD / EDIT
+    function openAddCameraModal() {
+      document.getElementById('editCamId').value = '';
+      document.getElementById('camNameInput').value = '';
+      document.getElementById('camUrlInput').value = '';
+      document.getElementById('camTypeInput').value = 'rtsp';
+      document.getElementById('camFpsInput').value = 15;
+      document.getElementById('cameraModalTitle').innerText = 'Thêm Camera Mới';
+      onCameraTypeChange();
+      document.getElementById('cameraModal').classList.remove('hidden');
+    }
+
+    function closeCameraModal() {
+      document.getElementById('cameraModal').classList.add('hidden');
+    }
+
+    function onCameraTypeChange() {
+      const type = document.getElementById('camTypeInput').value;
+      const isVideo = type === 'video_file';
+      const urlLabel = document.getElementById('camUrlLabel');
+      const urlInput = document.getElementById('camUrlInput');
+      const urlHint = document.getElementById('camUrlHint');
+      const browseBtn = document.getElementById('browseExplorerBtn');
+
+      if (isVideo) {
+        if (urlLabel) urlLabel.innerText = 'Đường dẫn File Video (.mp4) *';
+        if (urlInput) urlInput.placeholder = 'Chọn file video MP4 từ nút Mở file hoặc nhập đường dẫn';
+        if (urlHint) urlHint.innerText = 'Bấm nút "🖥️ Mở file" để duyệt và chọn video trên máy tính.';
+        if (browseBtn) browseBtn.classList.remove('hidden');
+      } else {
+        if (urlLabel) urlLabel.innerText = 'Nguồn Stream (RTSP URL hoặc file MP4) *';
+        if (urlInput) urlInput.placeholder = 'rtsp://admin:pass@192.168.1.100:554/stream';
+        if (urlHint) urlHint.innerText = 'Hệ thống tự động che mật khẩu rtsp://***:***@ khi hiển thị.';
+        if (browseBtn) browseBtn.classList.add('hidden');
+      }
+    }
+
+    async function browseLocalFile() {
+      try {
+        const res = await fetch('/api/cameras/browse-file', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'selected' && data.file_path) {
+          document.getElementById('camUrlInput').value = data.file_path;
+        } else if (data.status === 'cancelled') {
+          // Cancelled
+        } else {
+          document.getElementById('videoFileInput').click();
+        }
+      } catch (err) {
+        document.getElementById('videoFileInput').click();
+      }
+    }
+
+    async function handleVideoFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const urlInput = document.getElementById('camUrlInput');
+      urlInput.value = `Đang nạp file "${file.name}"...`;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/cameras/upload-video', { method: 'POST', body: formData });
+        if (res.ok) {
+          const data = await res.json();
+          urlInput.value = data.file_path;
+        } else {
+          alert('Lỗi nạp file video.');
+          urlInput.value = '';
+        }
+      } catch (e) {
+        alert('Lỗi kết nối khi nạp video.');
+        urlInput.value = '';
+      }
+    }
+
+    async function handleSaveCamera(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editCamId').value;
+      const payload = {
+        name: document.getElementById('camNameInput').value,
+        source_url: document.getElementById('camUrlInput').value,
+        source_type: document.getElementById('camTypeInput').value,
+        fps_limit: parseInt(document.getElementById('camFpsInput').value, 10),
+        is_active: 1
+      };
+
+      try {
+        const url = editId ? `/api/cameras/${editId}` : '/api/cameras';
+        const method = editId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          closeCameraModal();
+          await loadCameras();
+          const targetId = editId ? parseInt(editId, 10) : data.id;
+          if (targetId) selectCamera(targetId);
+        } else {
+          alert(editId ? 'Lỗi khi cập nhật camera!' : 'Lỗi khi thêm camera!');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối máy chủ khi lưu camera.');
+      }
+    }
+
+    // 6. DIRECT ON-SCREEN RULE & ROI DRAWING ENGINE (Docked Panel, Optimized Vertex & Snap-to-Close)
+    const RULE_TYPE_LABELS = {
+      no_parking: 'Cấm dừng đỗ',
+      lane_roi: 'Sai làn',
+      sidewalk_encroachment: 'Lấn vỉa hè',
+      lane_line: 'Đè vạch'
+    };
+
+    function toggleOnScreenDrawMode() {
+      if (isOnScreenDrawActive) {
+        closeOnScreenDraw();
+      } else {
+        openOnScreenDraw();
+      }
+    }
+
+    async function openOnScreenDraw() {
+      isOnScreenDrawActive = true;
+      isPolygonClosed = false;
+      draggingVertexIdx = -1;
+      hoveredVertexIdx = -1;
+      previousLayoutBeforeDraw = currentLayoutMode || 'single';
+
+      const canvas = document.getElementById('onScreenDrawCanvas');
+      const drawer = document.getElementById('onScreenRuleDrawer');
+      const btn = document.getElementById('roiDrawBtn');
+      const btnIcon = document.getElementById('roiDrawBtnIcon');
+      const btnText = document.getElementById('roiDrawBtnText');
+
+      if (canvas) canvas.classList.remove('hidden');
+      if (drawer) drawer.classList.remove('hidden');
+      if (btn) {
+        btn.className = "px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white border border-rose-400 rounded text-xs font-bold transition flex items-center space-x-1 shadow-lg";
+      }
+      if (btnIcon) btnIcon.innerText = "🔴";
+      if (btnText) btnText.innerText = "Đang Vẽ (Thoát)";
+
+      // Switch to single (1x1) of current camera for maximum drawing precision
+      if (currentLayoutMode !== 'single') {
+        selectLayout('single', currentActiveCamId);
+      }
+
+      const targetCamId = currentActiveCamId || (camerasData[0] ? camerasData[0].id : 1);
+      await bindOnScreenDrawToCamera(targetCamId);
+      initOnScreenCanvas();
+      updateDrawStatusHint();
+    }
+
+    function closeOnScreenDraw() {
+      isOnScreenDrawActive = false;
+      onScreenDrawnPoints = [];
+      isPolygonClosed = false;
+      draggingVertexIdx = -1;
+      hoveredVertexIdx = -1;
+      hoveredRuleId = null;
+      currentHoverPoint = null;
+
+      const canvas = document.getElementById('onScreenDrawCanvas');
+      const drawer = document.getElementById('onScreenRuleDrawer');
+      const btn = document.getElementById('roiDrawBtn');
+      const btnIcon = document.getElementById('roiDrawBtnIcon');
+      const btnText = document.getElementById('roiDrawBtnText');
+
+      if (canvas) canvas.classList.add('hidden');
+      if (drawer) drawer.classList.add('hidden');
+      if (btn) {
+        btn.className = "px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 rounded text-xs font-medium transition flex items-center space-x-1";
+      }
+      if (btnIcon) btnIcon.innerText = "✏️";
+      if (btnText) btnText.innerText = "Vẽ Luật / ROI";
+
+      // Restore previous multi-cam layout if was in grid
+      if (previousLayoutBeforeDraw && previousLayoutBeforeDraw !== 'single') {
+        selectLayout(previousLayoutBeforeDraw);
+      } else {
+        renderViewport();
+      }
+    }
+
+    function getCameraDisplayName(camId) {
+      const c = camerasData.find(x => x.id === camId);
+      return c ? (c.name || `Cam #${c.id}`) : `Cam #${camId}`;
+    }
+
+    async function bindOnScreenDrawToCamera(camId) {
+      activeCameraForEditor = camId;
+      onScreenDrawnPoints = [];
+      isPolygonClosed = false;
+      draggingVertexIdx = -1;
+      hoveredVertexIdx = -1;
+      currentHoverPoint = null;
+
+      if (currentActiveCamId !== camId) {
+        selectCamera(camId);
+      }
+
+      // Sync drawer camera dropdown with exact camera names
+      const selectEl = document.getElementById('onScreenCamSelect');
+      if (selectEl) {
+        selectEl.innerHTML = camerasData.map(c => `
+          <option value="${c.id}" ${c.id === camId ? 'selected' : ''}>
+            ${c.name || 'Cam #' + c.id}
+          </option>
+        `).join('');
+        selectEl.value = camId;
+      }
+
+      // Update save button target camera label
+      const camName = getCameraDisplayName(camId);
+      const saveBtn = document.querySelector('#onScreenRuleDrawer button[onclick="handleSaveOnScreenRule()"] span');
+      if (saveBtn) {
+        saveBtn.innerText = `💾 Lưu Luật (${camName})`;
+      }
+
+      await loadExistingRulesForDrawer(camId);
+      syncCanvasDimensions();
+      redrawOnScreenCanvas();
+      updateDrawStatusHint();
+    }
+
+    function onDrawerCamSelectChange(camIdStr) {
+      const camId = parseInt(camIdStr, 10);
+      if (!isNaN(camId)) {
+        bindOnScreenDrawToCamera(camId);
+      }
+    }
+
+    function syncCanvasDimensions() {
+      const container = document.getElementById('cameraViewportContainer');
+      const canvas = document.getElementById('onScreenDrawCanvas');
+      if (!container || !canvas) return;
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+    }
+
+    function getVideoRenderBox(canvas) {
+      const img = document.getElementById('mainLiveStream');
+      const cw = canvas.width;
+      const ch = canvas.height;
+      if (!img || !img.naturalWidth || !img.naturalHeight) {
+        return { left: 0, top: 0, width: cw, height: ch };
+      }
+      const contRatio = cw / ch;
+      const imgRatio = img.naturalWidth / img.naturalHeight;
+      let rWidth, rHeight, offX, offY;
+      if (contRatio > imgRatio) {
+        rHeight = ch;
+        rWidth = ch * imgRatio;
+        offX = (cw - rWidth) / 2;
+        offY = 0;
+      } else {
+        rWidth = cw;
+        rHeight = cw / imgRatio;
+        offX = 0;
+        offY = (ch - rHeight) / 2;
+      }
+      return { left: offX, top: offY, width: rWidth, height: rHeight };
+    }
+
+    function getCanvasPixelCoords(e, canvas) {
+      const rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    function normToPixel(pt, box) {
+      return { x: box.left + pt.x * box.width, y: box.top + pt.y * box.height };
+    }
+
+    function findNearVertexIndex(px, py, box, threshold = 11) {
+      for (let i = 0; i < onScreenDrawnPoints.length; i++) {
+        const vp = normToPixel(onScreenDrawnPoints[i], box);
+        if (Math.hypot(px - vp.x, py - vp.y) <= threshold) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    function getNormalizedCoords(e, canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const box = getVideoRenderBox(canvas);
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      if (clickX < box.left || clickX > box.left + box.width ||
+          clickY < box.top || clickY > box.top + box.height) {
+        return null;
+      }
+
+      const normX = Math.max(0, Math.min(1, (clickX - box.left) / box.width));
+      const normY = Math.max(0, Math.min(1, (clickY - box.top) / box.height));
+      return { x: normX, y: normY };
+    }
+
+    function updateDrawStatusHint() {
+      const el = document.getElementById('onScreenDrawStatus');
+      if (!el) return;
+      const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
+      const n = onScreenDrawnPoints.length;
+      if (isPolygonClosed) {
+        el.innerHTML = `<span class="text-emerald-400 font-semibold">✓ Đã khóa hình (${n} điểm)</span> • Kéo đỉnh để chỉnh hoặc bấm Lưu.`;
+      } else if (ruleType === 'lane_line') {
+        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}/2</span> • Click 2 điểm tạo vạch cấm. Chuột phải: lùi.`;
+      } else if (n >= 3) {
+        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}</span> • Click lại <span class="text-emerald-400">điểm 1</span> hoặc Double-click để đóng vùng.`;
+      } else {
+        el.innerHTML = `Điểm: <span class="text-white font-bold">${n}</span> • Click trái thêm điểm (tối thiểu 3 điểm). Chuột phải: lùi.`;
+      }
+    }
+
+    function initOnScreenCanvas() {
+      const canvas = document.getElementById('onScreenDrawCanvas');
+      const container = document.getElementById('cameraViewportContainer');
+      if (!canvas) return;
+
+      syncCanvasDimensions();
+
+      if (!viewportResizeObserver && container && typeof ResizeObserver !== 'undefined') {
+        viewportResizeObserver = new ResizeObserver(() => {
+          if (isOnScreenDrawActive) {
+            syncCanvasDimensions();
+            redrawOnScreenCanvas();
+          }
+        });
+        viewportResizeObserver.observe(container);
+      }
+
+      if (!onScreenCanvasInited) {
+        window.addEventListener('resize', () => {
+          if (isOnScreenDrawActive) {
+            syncCanvasDimensions();
+            redrawOnScreenCanvas();
+          }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+          if (!isOnScreenDrawActive || e.button !== 0) return;
+          const box = getVideoRenderBox(canvas);
+          const px = getCanvasPixelCoords(e, canvas);
+          const nearIdx = findNearVertexIndex(px.x, px.y, box, 11);
+
+          // Snap-to-close if clicking vertex 0 when polygon has >= 3 points and is not closed
+          const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
+          if (nearIdx === 0 && !isPolygonClosed && ruleType !== 'lane_line' && onScreenDrawnPoints.length >= 3) {
+            isPolygonClosed = true;
+            currentHoverPoint = null;
+            redrawOnScreenCanvas();
+            updateDrawStatusHint();
+            return;
+          }
+
+          // Start dragging an existing vertex (when closed or clicking any vertex except adding)
+          if (nearIdx >= 0 && (isPolygonClosed || nearIdx > 0)) {
+            draggingVertexIdx = nearIdx;
+            canvas.style.cursor = 'grabbing';
+            return;
+          }
+
+          if (isPolygonClosed) return;
+
+          const pt = getNormalizedCoords(e, canvas);
+          if (pt) {
+            onScreenDrawnPoints.push(pt);
+            if (ruleType === 'lane_line' && onScreenDrawnPoints.length >= 2) {
+              isPolygonClosed = true;
+              currentHoverPoint = null;
+            }
+            redrawOnScreenCanvas();
+            updateDrawStatusHint();
+          }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+          if (!isOnScreenDrawActive) return;
+          const box = getVideoRenderBox(canvas);
+          const px = getCanvasPixelCoords(e, canvas);
+
+          if (draggingVertexIdx >= 0) {
+            const pt = getNormalizedCoords(e, canvas);
+            if (pt) {
+              onScreenDrawnPoints[draggingVertexIdx] = pt;
+              redrawOnScreenCanvas();
+            }
+            return;
+          }
+
+          const nearIdx = findNearVertexIndex(px.x, px.y, box, 11);
+          if (nearIdx !== hoveredVertexIdx) {
+            hoveredVertexIdx = nearIdx;
+          }
+          canvas.style.cursor = nearIdx >= 0 ? (nearIdx === 0 && !isPolygonClosed && onScreenDrawnPoints.length >= 3 ? 'pointer' : 'grab') : 'crosshair';
+
+          if (!isPolygonClosed && onScreenDrawnPoints.length > 0) {
+            currentHoverPoint = getNormalizedCoords(e, canvas);
+            redrawOnScreenCanvas();
+          } else if (nearIdx >= 0) {
+            redrawOnScreenCanvas();
+          }
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (draggingVertexIdx >= 0) {
+            draggingVertexIdx = -1;
+            const c = document.getElementById('onScreenDrawCanvas');
+            if (c) c.style.cursor = 'crosshair';
+          }
+        });
+
+        canvas.addEventListener('dblclick', (e) => {
+          if (!isOnScreenDrawActive) return;
+          e.preventDefault();
+          finishOnScreenPolygon(true);
+        });
+
+        canvas.addEventListener('contextmenu', (e) => {
+          if (!isOnScreenDrawActive) return;
+          e.preventDefault();
+          undoLastOnScreenPoint();
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+          if (currentHoverPoint) {
+            currentHoverPoint = null;
+            redrawOnScreenCanvas();
+          }
+        });
+
+        onScreenCanvasInited = true;
+      }
+
+      redrawOnScreenCanvas();
+    }
+
+    function redrawOnScreenCanvas() {
+      const canvas = document.getElementById('onScreenDrawCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const cw = canvas.width;
+      const ch = canvas.height;
+
+      ctx.clearRect(0, 0, cw, ch);
+      const box = getVideoRenderBox(canvas);
+
+      // Subtle boundary border around active video area
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(box.left, box.top, box.width, box.height);
+      ctx.restore();
+
+      // 1. Draw existing rules for activeCameraForEditor
+      existingCameraRules.forEach(r => {
+        try {
+          const pts = JSON.parse(r.geometry_json);
+          if (pts.length >= 2) {
+            const isHighlighted = hoveredRuleId === r.id;
+            ctx.save();
+            ctx.beginPath();
+            const isParking = r.rule_type === 'no_parking';
+            const isSidewalk = r.rule_type === 'sidewalk_encroachment';
+            const color = isHighlighted ? '#facc15' : (isParking ? '#ef4444' : (isSidewalk ? '#f59e0b' : '#3b82f6'));
+            ctx.strokeStyle = color;
+            ctx.lineWidth = isHighlighted ? 3 : 2;
+            ctx.fillStyle = isHighlighted ? 'rgba(250, 204, 21, 0.22)' : (isParking ? 'rgba(239, 68, 68, 0.14)' : 'rgba(245, 158, 11, 0.14)');
+
+            pts.forEach((p, i) => {
+              const px = box.left + p[0] * box.width;
+              const py = box.top + p[1] * box.height;
+              if (i === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            });
+
+            if (pts.length > 2) {
+              ctx.closePath();
+              ctx.fill();
+            }
+            ctx.stroke();
+
+            // Clean label tag on first vertex
+            const firstPx = box.left + pts[0][0] * box.width;
+            const firstPy = box.top + pts[0][1] * box.height;
+            const label = r.name || RULE_TYPE_LABELS[r.rule_type] || r.rule_type;
+            ctx.font = 'bold 10px Inter, sans-serif';
+            const textWidth = ctx.measureText(label).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.fillRect(firstPx, Math.max(2, firstPy - 18), textWidth + 10, 16);
+            ctx.fillStyle = isHighlighted ? '#facc15' : '#ffffff';
+            ctx.fillText(label, firstPx + 5, Math.max(13, firstPy - 6));
+            ctx.restore();
+          }
+        } catch (e) {}
+      });
+
+      // 2. Draw currently drawn points
+      if (onScreenDrawnPoints.length > 0) {
+        const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = isPolygonClosed ? '#10b981' : '#22c55e';
+        ctx.lineWidth = 2.5;
+        ctx.fillStyle = isPolygonClosed ? 'rgba(16, 185, 129, 0.25)' : 'rgba(34, 197, 94, 0.18)';
+
+        onScreenDrawnPoints.forEach((p, i) => {
+          const px = box.left + p.x * box.width;
+          const py = box.top + p.y * box.height;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+
+        // Hover guide line only when not closed
+        if (!isPolygonClosed && currentHoverPoint) {
+          const hx = box.left + currentHoverPoint.x * box.width;
+          const hy = box.top + currentHoverPoint.y * box.height;
+          ctx.lineTo(hx, hy);
+        }
+
+        if (ruleType !== 'lane_line' && onScreenDrawnPoints.length > 2) {
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.stroke();
+
+        // Draw vertex dots and index numbers
+        onScreenDrawnPoints.forEach((p, i) => {
+          const px = box.left + p.x * box.width;
+          const py = box.top + p.y * box.height;
+          const isHovered = hoveredVertexIdx === i;
+          const isSnapTarget = i === 0 && !isPolygonClosed && ruleType !== 'lane_line' && onScreenDrawnPoints.length >= 3;
+
+          ctx.beginPath();
+          ctx.arc(px, py, isHovered || isSnapTarget ? 9 : 6, 0, Math.PI * 2);
+          ctx.fillStyle = isSnapTarget && isHovered ? 'rgba(250, 204, 21, 0.5)' : 'rgba(34, 197, 94, 0.35)';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(px, py, isHovered ? 5 : 4, 0, Math.PI * 2);
+          ctx.fillStyle = isHovered ? '#facc15' : '#22c55e';
+          ctx.fill();
+
+          // Number bubble
+          ctx.beginPath();
+          ctx.arc(px + 9, py - 9, 7, 0, Math.PI * 2);
+          ctx.fillStyle = '#0f172a';
+          ctx.fill();
+          ctx.strokeStyle = isHovered ? '#facc15' : '#22c55e';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 9px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${i + 1}`, px + 9, py - 9);
+        });
+
+        ctx.restore();
+      }
+    }
+
+    function onOnScreenRuleTypeChange() {
+      const type = document.getElementById('onScreenRuleType').value;
+      const dwellGroup = document.getElementById('onScreenDwellGroup');
+      const dirGroup = document.getElementById('onScreenDirectionGroup');
+      if (type === 'lane_line') {
+        if (dirGroup) dirGroup.classList.remove('hidden');
+        if (dwellGroup) dwellGroup.classList.add('hidden');
+      } else {
+        if (dirGroup) dirGroup.classList.add('hidden');
+        if (dwellGroup) dwellGroup.classList.remove('hidden');
+      }
+      isPolygonClosed = false;
+      updateDrawStatusHint();
+      redrawOnScreenCanvas();
+    }
+
+    function finishOnScreenPolygon(silent = false) {
+      const ruleType = document.getElementById('onScreenRuleType')?.value || 'no_parking';
+      const minPts = ruleType === 'lane_line' ? 2 : 3;
+      if (onScreenDrawnPoints.length < minPts) {
+        if (!silent) alert(`Cần ít nhất ${minPts} điểm!`);
+        return;
+      }
+      isPolygonClosed = true;
+      currentHoverPoint = null;
+      redrawOnScreenCanvas();
+      updateDrawStatusHint();
+    }
+
+    function undoLastOnScreenPoint() {
+      onScreenDrawnPoints.pop();
+      isPolygonClosed = false;
+      currentHoverPoint = null;
+      redrawOnScreenCanvas();
+      updateDrawStatusHint();
+    }
+
+    function clearOnScreenDrawing() {
+      onScreenDrawnPoints = [];
+      isPolygonClosed = false;
+      draggingVertexIdx = -1;
+      hoveredVertexIdx = -1;
+      currentHoverPoint = null;
+      redrawOnScreenCanvas();
+      updateDrawStatusHint();
+    }
+
+    function toggleExistingRulesList() {
+      const list = document.getElementById('onScreenExistingRulesList');
+      const arrow = document.getElementById('rulesToggleArrow');
+      if (!list) return;
+      const isHidden = list.classList.contains('hidden');
+      if (isHidden) {
+        list.classList.remove('hidden');
+        if (arrow) arrow.innerText = '▲';
+      } else {
+        list.classList.add('hidden');
+        if (arrow) arrow.innerText = '▼';
+      }
+    }
+
+    async function loadExistingRulesForDrawer(camId) {
+      try {
+        const res = await fetch(`/api/cameras/${camId}/rules`);
+        existingCameraRules = await res.json();
+        const list = document.getElementById('onScreenExistingRulesList');
+        const countBadge = document.getElementById('onScreenRuleCount');
+        if (countBadge) countBadge.innerText = existingCameraRules.length;
+        if (!list) return;
+
+        if (existingCameraRules.length === 0) {
+          list.innerHTML = '<p class="text-slate-500 text-[10px] py-1">Chưa có luật nào.</p>';
+          return;
+        }
+
+        list.innerHTML = existingCameraRules.map(r => {
+          const typeLabel = RULE_TYPE_LABELS[r.rule_type] || r.rule_type;
+          const dwellLabel = r.rule_type !== 'lane_line' ? ` (${r.dwell_threshold_sec}s)` : '';
+          return `
+            <div class="flex items-center justify-between p-1.5 rounded bg-darkpanel border border-slate-700/70 text-[10px] hover:border-amber-400/60 transition"
+                 onmouseenter="hoveredRuleId=${r.id}; redrawOnScreenCanvas();"
+                 onmouseleave="hoveredRuleId=null; redrawOnScreenCanvas();">
+              <div class="truncate max-w-[175px]">
+                <span class="font-semibold text-slate-200 block truncate">${r.name || typeLabel}</span>
+                <span class="text-slate-400 text-[9px]">${typeLabel}${dwellLabel}</span>
+              </div>
+              <button onclick="deleteOnScreenRule(${r.id})" class="text-rose-400 hover:text-rose-300 font-bold px-1.5 py-0.5 text-xs hover:bg-rose-950/40 rounded transition" title="Xóa luật này">&times;</button>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Error loading rules for drawer:', e);
+      }
+    }
+
+    async function deleteOnScreenRule(ruleId) {
+      if (!confirm('Bạn có chắc muốn xóa luật này khỏi camera?')) return;
+      try {
+        const res = await fetch(`/api/cameras/${activeCameraForEditor}/rules/${ruleId}`, { method: 'DELETE' });
+        if (res.ok) {
+          hoveredRuleId = null;
+          await loadExistingRulesForDrawer(activeCameraForEditor);
+          redrawOnScreenCanvas();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function handleSaveOnScreenRule() {
+      const ruleType = document.getElementById('onScreenRuleType').value;
+      const roiNameInput = document.getElementById('onScreenRoiName');
+      let roiName = (roiNameInput ? roiNameInput.value : '').trim();
+
+      if (ruleType === 'lane_line' && onScreenDrawnPoints.length < 2) {
+        alert('Vạch cấm cần ít nhất 2 điểm!');
+        return;
+      }
+      if (ruleType !== 'lane_line' && onScreenDrawnPoints.length < 3) {
+        alert('Vùng ROI cần ít nhất 3 điểm tạo thành đa giác!');
+        return;
+      }
+
+      if (!roiName) {
+        const label = RULE_TYPE_LABELS[ruleType] || ruleType;
+        roiName = `${label} #${existingCameraRules.length + 1}`;
+      }
+
+      const geom = onScreenDrawnPoints.map(p => [parseFloat(p.x.toFixed(4)), parseFloat(p.y.toFixed(4))]);
+
+      const payload = {
+        name: roiName,
+        rule_type: ruleType,
+        geometry_json: JSON.stringify(geom),
+        direction: document.getElementById('onScreenRuleDirection').value || 'both',
+        dwell_threshold_sec: parseFloat(document.getElementById('onScreenRuleDwell').value) || 10.0,
+        is_active: 1
+      };
+
+      try {
+        const res = await fetch(`/api/cameras/${activeCameraForEditor}/rules`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          onScreenDrawnPoints = [];
+          isPolygonClosed = false;
+          currentHoverPoint = null;
+          if (roiNameInput) roiNameInput.value = '';
+
+          const camName = getCameraDisplayName(activeCameraForEditor);
+          const toast = document.getElementById('onScreenRuleToast');
+          if (toast) {
+            toast.innerText = `✓ Đã lưu luật cho ${camName}!`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+          }
+
+          await loadExistingRulesForDrawer(activeCameraForEditor);
+          redrawOnScreenCanvas();
+          updateDrawStatusHint();
+        } else {
+          const err = await res.json();
+          alert(`Lỗi khi lưu luật: ${err.detail || 'Không xác định'}`);
+        }
+      } catch (err) {
+        console.error('Error saving rule:', err);
+        alert('Lỗi kết nối máy chủ khi lưu luật.');
+      }
+    }
+
+    function openCurrentCamRuleEditor() {
+      openOnScreenDraw();
+    }
+
+    // 7. INLINE CLASS THRESHOLDS & ADVANCED SETTINGS
+    let currentAIConfig = null;
+    const CLASS_METADATA = {
+      0: { short: 'Ô tô', icon: '🚗', name: 'Ô tô con (car)' },
+      1: { short: 'Xe máy', icon: '🏍️', name: 'Xe máy (motorcycle)', highlight: true },
+      2: { short: 'Xe đạp', icon: '🚲', name: 'Xe đạp (bicycle)' },
+      3: { short: 'Xe buýt', icon: '🚌', name: 'Xe buýt (bus)' },
+      4: { short: 'Xe tải', icon: '🚚', name: 'Xe tải (truck)' },
+      5: { short: 'Ba gác', icon: '🛺', name: 'Xe ba gác (tricycle)' },
+      6: { short: 'Cứu thương', icon: '🚑', name: 'Xe cứu thương (ambulance)' },
+      7: { short: 'Cứu hỏa', icon: '🚒', name: 'Xe cứu hỏa (fire_truck)' }
+    };
+
+    async function loadInlineThresholds() {
+      try {
+        const res = await fetch('/api/config/ai');
+        if (!res.ok) return;
+        currentAIConfig = await res.json();
+        renderInlineClassThresholds();
+      } catch (e) {
+        console.error('Error loading inline class thresholds:', e);
+      }
+    }
+
+    function renderInlineClassThresholds() {
+      const container = document.getElementById('inlineClassSliders');
+      if (!container || !currentAIConfig) return;
+      const perClass = currentAIConfig.per_class_conf || {};
+      let html = '';
+      for (let cid = 0; cid <= 7; cid++) {
+        const meta = CLASS_METADATA[cid] || { short: `Lớp ${cid}`, icon: '' };
+        const val = parseFloat(perClass[cid] ?? currentAIConfig.default_conf ?? 0.40);
+        const isHighlight = meta.highlight;
+        html += `
+          <div class="px-2 py-1 rounded border ${isHighlight ? 'bg-amber-500/10 border-amber-500/35' : 'bg-darkpanel/80 border-darkborder/70'} flex flex-col justify-between">
+            <div class="flex items-center justify-between text-[10px] mb-0.5">
+              <span class="text-slate-300 font-medium truncate">${meta.short}</span>
+              <span id="inlineClassVal_${cid}" class="font-mono font-bold ${isHighlight ? 'text-amber-300' : 'text-emerald-400'}">${val.toFixed(2)}</span>
+            </div>
+            <input type="range" id="inlineClassSlider_${cid}" min="0.10" max="0.80" step="0.01" value="${val}"
+                   oninput="syncClassThresholdInput(${cid}, this.value)"
+                   class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer ${isHighlight ? 'accent-amber-500' : 'accent-emerald-500'}">
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function syncClassThresholdInput(cid, value) {
+      const numStr = parseFloat(value).toFixed(2);
+      const inlineVal = document.getElementById(`inlineClassVal_${cid}`);
+      const inlineSlider = document.getElementById(`inlineClassSlider_${cid}`);
+      const modalVal = document.getElementById(`classVal_${cid}`);
+      const modalSlider = document.getElementById(`classSlider_${cid}`);
+      if (inlineVal) inlineVal.innerText = numStr;
+      if (inlineSlider && inlineSlider.value !== String(value)) inlineSlider.value = value;
+      if (modalVal) modalVal.innerText = numStr;
+      if (modalSlider && modalSlider.value !== String(value)) modalSlider.value = value;
+    }
+
+    async function saveInlineClassThresholds() {
+      const perClass = {};
+      for (let cid = 0; cid <= 7; cid++) {
+        const slider = document.getElementById(`inlineClassSlider_${cid}`);
+        if (slider) perClass[cid] = parseFloat(slider.value);
+      }
+      const payload = {
+        default_conf: currentAIConfig?.default_conf ?? 0.43,
+        iou_threshold: currentAIConfig?.iou_threshold ?? 0.45,
+        per_class_conf: perClass
+      };
+      try {
+        const res = await fetch('/api/config/ai', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          currentAIConfig = await res.json();
+          const toast = document.getElementById('inlineThresholdToast');
+          if (toast) {
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2500);
+          }
+        }
+      } catch (e) {
+        console.error('Error saving inline thresholds:', e);
+      }
+    }
+
+    // ROI Quick Display Modes
+    const ROI_MODES = [
+      { key: 'full', label: '👁️ ROI: Đầy đủ' },
+      { key: 'border_only', label: '🔲 ROI: Chỉ viền' },
+      { key: 'striped', label: '▦ ROI: Sọc chéo' },
+      { key: 'hidden', label: '🚫 ROI: Ẩn' }
+    ];
+    let currentRoiModeIndex = 0;
+
+    async function cycleRoiDisplayMode() {
+      currentRoiModeIndex = (currentRoiModeIndex + 1) % ROI_MODES.length;
+      const target = ROI_MODES[currentRoiModeIndex];
+      const btnText = document.getElementById('roiDisplayModeText');
+      if (btnText) btnText.innerText = target.label;
+
+      try {
+        const getRes = await fetch('/api/config/perspective');
+        const curCfg = await getRes.json();
+        curCfg.roi_display_mode = target.key;
+        await fetch('/api/config/perspective', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(curCfg)
+        });
+      } catch (err) {
+        console.error('Error cycling ROI display mode:', err);
+      }
+    }
+
+    async function openThresholdModal() {
+      const toast = document.getElementById('thresholdToast');
+      if (toast) toast.classList.add('hidden');
+      try {
+        const [aiRes, dedupRes, perspRes] = await Promise.all([
+          fetch('/api/config/ai'),
+          fetch('/api/config/deduplication'),
+          fetch('/api/config/perspective')
+        ]);
+        currentAIConfig = await aiRes.json();
+        const dedupCfg = await dedupRes.json();
+        const perspCfg = await perspRes.json();
+
+        document.getElementById('defaultConfSlider').value = currentAIConfig.default_conf;
+        document.getElementById('defaultConfVal').innerText = currentAIConfig.default_conf.toFixed(2);
+        document.getElementById('iouThreshSlider').value = currentAIConfig.iou_threshold;
+        document.getElementById('iouThreshVal').innerText = currentAIConfig.iou_threshold.toFixed(2);
+
+        // Populate Deduplication Controls (Layers 1, 2, 3)
+        if (document.getElementById('dedupEnabledCheck')) {
+          document.getElementById('dedupEnabledCheck').checked = Boolean(dedupCfg.enabled);
+          document.getElementById('plateCooldownSlider').value = dedupCfg.plate_cooldown_sec || 600;
+          document.getElementById('plateCooldownVal').innerText = (dedupCfg.plate_cooldown_sec || 600) + 's';
+          document.getElementById('spatialIouSlider').value = dedupCfg.spatial_iou_threshold || 0.65;
+          document.getElementById('spatialIouVal').innerText = parseFloat(dedupCfg.spatial_iou_threshold || 0.65).toFixed(2);
+          document.getElementById('exitGraceSlider').value = dedupCfg.exit_grace_sec || 45;
+          document.getElementById('exitGraceVal').innerText = (dedupCfg.exit_grace_sec || 45) + 's';
+          document.getElementById('fpCooldownSlider').value = dedupCfg.false_positive_cooldown_sec || 1800;
+          document.getElementById('fpCooldownVal').innerText = (dedupCfg.false_positive_cooldown_sec || 1800) + 's';
+        }
+
+        // Populate Perspective & Rendering Controls (Part 2)
+        if (document.getElementById('roiDisplayModeSelect')) {
+          document.getElementById('roiDisplayModeSelect').value = perspCfg.roi_display_mode || 'full';
+          document.getElementById('roiAlphaSlider').value = perspCfg.roi_alpha || 0.22;
+          document.getElementById('roiAlphaVal').innerText = parseFloat(perspCfg.roi_alpha || 0.22).toFixed(2);
+          document.getElementById('groundContactModeSelect').value = perspCfg.ground_contact_mode || 'bottom_center';
+          document.getElementById('enableHomographyToggle').checked = Boolean(perspCfg.enable_homography_calibration);
+
+          const foundIdx = ROI_MODES.findIndex(m => m.key === (perspCfg.roi_display_mode || 'full'));
+          if (foundIdx >= 0) {
+            currentRoiModeIndex = foundIdx;
+            const btnText = document.getElementById('roiDisplayModeText');
+            if (btnText) btnText.innerText = ROI_MODES[foundIdx].label;
+          }
+        }
+
+        renderClassSliders();
+        document.getElementById('thresholdModal').classList.remove('hidden');
+      } catch (err) {
+        console.error('Error fetching config:', err);
+        alert('Không thể tải cấu hình.');
+      }
+    }
+
+    function closeThresholdModal() {
+      document.getElementById('thresholdModal').classList.add('hidden');
+    }
+
+    function renderClassSliders() {
+      const container = document.getElementById('classSlidersContainer');
+      if (!container || !currentAIConfig) return;
+
+      const perClass = currentAIConfig.per_class_conf || {};
+      let html = '';
+
+      for (let cid = 0; cid <= 7; cid++) {
+        const meta = CLASS_METADATA[cid] || { icon: '🚘', name: `Lớp ${cid}` };
+        const val = perClass[cid] ?? currentAIConfig.default_conf ?? 0.40;
+        const isHighlight = meta.highlight;
+
+        html += `
+          <div class="p-2.5 rounded-lg border ${isHighlight ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20' : 'bg-darkbg/50 border-darkborder/50'}">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-medium text-white flex items-center space-x-1.5">
+                <span>${meta.icon}</span>
+                <span>${meta.name}</span>
+              </span>
+              <span id="classVal_${cid}" class="px-2 py-0.5 rounded ${isHighlight ? 'bg-amber-500/20 text-amber-300 font-bold' : 'bg-slate-700 text-slate-300'} font-mono">${parseFloat(val).toFixed(2)}</span>
+            </div>
+            <input type="range" id="classSlider_${cid}" min="0.10" max="0.80" step="0.01" value="${val}"
+                   oninput="syncClassThresholdInput(${cid}, this.value)"
+                   class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer ${isHighlight ? 'accent-amber-500' : 'accent-emerald-500'}">
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function presetMotorcycleBoost() {
+      syncClassThresholdInput(1, 0.28);
+      syncClassThresholdInput(2, 0.30);
+    }
+
+    function presetStandard() {
+      const std = { 0: 0.45, 1: 0.40, 2: 0.40, 3: 0.45, 4: 0.42, 5: 0.42, 6: 0.50, 7: 0.50 };
+      const defSlider = document.getElementById('defaultConfSlider');
+      const defVal = document.getElementById('defaultConfVal');
+      const iouSlider = document.getElementById('iouThreshSlider');
+      const iouVal = document.getElementById('iouThreshVal');
+      if (defSlider) defSlider.value = 0.43;
+      if (defVal) defVal.innerText = '0.43';
+      if (iouSlider) iouSlider.value = 0.45;
+      if (iouVal) iouVal.innerText = '0.45';
+
+      for (let cid = 0; cid <= 7; cid++) {
+        syncClassThresholdInput(cid, std[cid]);
+      }
+    }
+
+    async function saveAIThresholds() {
+      const defaultConf = parseFloat(document.getElementById('defaultConfSlider').value);
+      const iouThreshold = parseFloat(document.getElementById('iouThreshSlider').value);
+      const perClass = {};
+
+      for (let cid = 0; cid <= 7; cid++) {
+        const slider = document.getElementById(`classSlider_${cid}`);
+        if (slider) perClass[cid] = parseFloat(slider.value);
+      }
+
+      const payload = {
+        default_conf: defaultConf,
+        iou_threshold: iouThreshold,
+        per_class_conf: perClass
+      };
+
+      const dedupPayload = {
+        enabled: document.getElementById('dedupEnabledCheck') ? document.getElementById('dedupEnabledCheck').checked : true,
+        plate_cooldown_sec: parseFloat(document.getElementById('plateCooldownSlider')?.value || 600),
+        false_positive_cooldown_sec: parseFloat(document.getElementById('fpCooldownSlider')?.value || 1800),
+        max_plate_edit_dist: 1,
+        spatial_iou_threshold: parseFloat(document.getElementById('spatialIouSlider')?.value || 0.65),
+        exit_grace_sec: parseFloat(document.getElementById('exitGraceSlider')?.value || 45),
+        update_existing_duration: true
+      };
+
+      const perspPayload = {
+        roi_display_mode: document.getElementById('roiDisplayModeSelect')?.value || 'full',
+        roi_alpha: parseFloat(document.getElementById('roiAlphaSlider')?.value || 0.22),
+        use_static_mask_cache: true,
+        dual_contrast_border: true,
+        ground_contact_mode: document.getElementById('groundContactModeSelect')?.value || 'bottom_center',
+        draw_ground_contact_marker: true,
+        enable_homography_calibration: document.getElementById('enableHomographyToggle')?.checked || false,
+        homography_landmarks: []
+      };
+
+      try {
+        const [resAi, resDedup, resPersp] = await Promise.all([
+          fetch('/api/config/ai', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }),
+          fetch('/api/config/deduplication', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dedupPayload)
+          }),
+          fetch('/api/config/perspective', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(perspPayload)
+          })
+        ]);
+
+        if (resAi.ok && resDedup.ok && resPersp.ok) {
+          currentAIConfig = await resAi.json();
+          const foundIdx = ROI_MODES.findIndex(m => m.key === perspPayload.roi_display_mode);
+          if (foundIdx >= 0) {
+            currentRoiModeIndex = foundIdx;
+            const btnText = document.getElementById('roiDisplayModeText');
+            if (btnText) btnText.innerText = ROI_MODES[foundIdx].label;
+          }
+          const toast = document.getElementById('thresholdToast');
+          toast.classList.remove('hidden');
+          setTimeout(() => toast.classList.add('hidden'), 3500);
+        } else {
+          alert('Lỗi cập nhật cấu hình.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối khi cập nhật.');
+      }
+    }
+
+    // 8. MODAL: IMAGE INSPECTION
+    function openImageModal(violationId, tabName = 'crop') {
+      activeViolationForModal = violationId;
+      const v = liveViolations.find(item => item.id === violationId);
+      document.getElementById('imageModalTitle').innerText = `Bằng Chứng Vi Phạm #${violationId}`;
+      document.getElementById('imageModalSubtitle').innerText = v ? `Camera #${v.camera_id} • ${v.vehicle_class_name.toUpperCase()} • Biển: ${v.plate_number || 'N/A'}` : '';
+      document.getElementById('imageModal').classList.remove('hidden');
+      switchImageTab(tabName);
+    }
+
+    function closeImageModal() {
+      document.getElementById('imageModal').classList.add('hidden');
+    }
+
+    function switchImageTab(type) {
+      const tabs = ['annotated', 'raw', 'crop', 'plate'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (btn) {
+          if (t === type) btn.className = 'px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium';
+          else btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700';
+        }
+      });
+      const img = document.getElementById('modalInspectImage');
+      img.src = `/api/violations/${activeViolationForModal}/image/${type}?t=${Date.now()}`;
+    }
+
+    // 9. MODAL: FULL VIOLATIONS HISTORY & EXPORT ACTIVE LEARNING
+    function openViolationsHistoryModal() {
+      document.getElementById('historyModal').classList.remove('hidden');
+      fetchHistoryViolations();
+    }
+
+    function closeViolationsHistoryModal() {
+      document.getElementById('historyModal').classList.add('hidden');
+    }
+
+    let historyDebounce = null;
+    function debouncedHistoryFilter() {
+      clearTimeout(historyDebounce);
+      historyDebounce = setTimeout(fetchHistoryViolations, 300);
+    }
+
+    async function fetchHistoryViolations() {
+      const type = document.getElementById('filterType').value;
+      const vclass = document.getElementById('filterClass').value;
+      const status = document.getElementById('filterStatus').value;
+
+      let url = `/api/violations?page=${historyPage}&page_size=20`;
+      if (type) url += `&violation_type=${encodeURIComponent(type)}`;
+      if (vclass) url += `&vehicle_class_name=${encodeURIComponent(vclass)}`;
+      if (status) url += `&review_status=${encodeURIComponent(status)}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const items = data.items || [];
+        historyTotalPages = data.total_pages || 1;
+
+        const start = (historyPage - 1) * 20 + 1;
+        const end = Math.min(data.total, historyPage * 20);
+        document.getElementById('pageInfo').innerText = data.total > 0 ? `${start} - ${end} / ${data.total}` : '0 - 0 / 0';
+        document.getElementById('prevPageBtn').disabled = historyPage <= 1;
+        document.getElementById('nextPageBtn').disabled = historyPage >= historyTotalPages;
+
+        const tbody = document.getElementById('historyTableBody');
+        const search = document.getElementById('searchPlate').value.trim().toUpperCase();
+
+        let filtered = items;
+        if (search) filtered = filtered.filter(v => (v.plate_number || '').toUpperCase().includes(search));
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-500">Không có dữ liệu phù hợp.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(v => {
+          const timeStr = new Date(v.created_at).toLocaleString('vi-VN');
+          return `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-2.5 px-3"><span class="font-bold text-white">#${v.id}</span><span class="block text-[10px] text-slate-400">${timeStr}</span></td>
+              <td class="py-2.5 px-3">${getCameraDisplayName(v.camera_id)}</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-medium">${v.violation_type}</span></td>
+              <td class="py-2.5 px-3"><span class="font-semibold text-white">${v.vehicle_class_name}</span></td>
+              <td class="py-2.5 px-3 text-amber-400 font-medium">${v.dwell_duration_sec > 0 ? v.dwell_duration_sec + 's' : '-'}</td>
+              <td class="py-2.5 px-3"><span class="font-mono font-bold text-amber-300">${v.plate_number || 'N/A'}</span></td>
+              <td class="py-2.5 px-3">
+                <img src="/api/violations/${v.id}/image/crop" onclick="openImageModal(${v.id}, 'crop')" class="w-10 h-7 object-cover rounded border border-darkborder cursor-pointer hover:scale-110 transition" title="Xem ảnh">
+              </td>
+              <td class="py-2.5 px-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${v.review_status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300' : (v.review_status === 'false_positive' ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-700 text-slate-300')}">
+                  ${v.review_status}
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-right">
+                <button onclick="handleQuickReview(${v.id}, 'confirmed'); fetchHistoryViolations();" class="px-2 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[11px] font-medium mr-1">Duyệt</button>
+                <button onclick="handleQuickReview(${v.id}, 'false_positive'); fetchHistoryViolations();" class="px-2 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded text-[11px] font-medium">Sai</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    function changeHistoryPage(delta) {
+      historyPage = Math.max(1, Math.min(historyTotalPages, historyPage + delta));
+      fetchHistoryViolations();
+    }
+  </script>
+</body>
+</html>
